@@ -8,6 +8,7 @@ import me.gabriel.gwydion.log.LogLevel
 import me.gabriel.gwydion.log.MordantLogger
 import me.gabriel.gwydion.parsing.Parser
 import me.gabriel.gwydion.parsing.SyntaxTree
+import me.gabriel.gwydion.reader.AmbiguousSourceReader
 import me.gabriel.gwydion.util.findRowOfIndex
 import me.gabriel.gwydion.util.replaceAtIndex
 import me.gabriel.gwydion.util.trimIndentReturningWidth
@@ -17,11 +18,12 @@ fun main() {
     val logger = MordantLogger()
     logger.log(LogLevel.INFO) { +"Starting the Gwydion compiler..." }
 
-    val stdlib = readStdlib()
+    val reader = AmbiguousSourceReader(logger)
+    val stdlib = reader.read(findStdlib())
     val stdlibCompiled = compile(stdlib, logger) ?: return
 
-    val text = readText();
-    val compiled = compile(text, logger) ?: return
+    val example = reader.read(readText())
+    val compiled = compile(example, logger) ?: return
 
     stdlibCompiled.join(compiled)
     val executor = KotlinCodeExecutor(stdlibCompiled)
@@ -70,10 +72,10 @@ fun compile(text: String, logger: GwydionLogger): SyntaxTree? {
     return parsingResult.getRight()
 }
 
-fun readText(): String {
-    return File("src/main/resources/example.wy").readText()
+fun readText(): File {
+    return File("src/main/resources")
 }
 
-fun readStdlib(): String {
-    return File("stdlib/src/io.wy").readText()
+fun findStdlib(): File {
+    return File("stdlib/src/")
 }

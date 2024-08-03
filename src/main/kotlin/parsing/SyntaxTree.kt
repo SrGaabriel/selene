@@ -46,7 +46,7 @@ class BinaryOperatorNode(val left: SyntaxTreeNode, val operator: TokenKind, val 
         listOf(left, right)
 }
 
-open class FunctionNode(
+class FunctionNode(
     val name: String,
     val parameters: ParametersNode,
     val block: BlockNode,
@@ -87,3 +87,5 @@ class ParameterNode(val name: String): SyntaxTreeNode() {
 class CallParametersNode(val parameters: List<SyntaxTreeNode>): SyntaxTreeNode() {
     override fun getChildren(): List<SyntaxTreeNode> = parameters
 }
+
+class StringNode(val value: String): ConstantNode()

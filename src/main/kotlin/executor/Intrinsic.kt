@@ -9,7 +9,7 @@ abstract class IntrinsicFunction(
     val parameters: ParametersNode,
     val modifiers: MutableList<TokenKind>
 ) {
-   abstract fun execute(parameters: List<Int>): Int
+   abstract fun execute(parameters: List<Any>): Any
 }
 
 class PrintFunction: IntrinsicFunction(
@@ -19,8 +19,8 @@ class PrintFunction: IntrinsicFunction(
     )),
     mutableListOf()
 ) {
-    override fun execute(parameters: List<Int>): Int {
+    override fun execute(parameters: List<Any>): Any {
         println(parameters.first())
-        return 0
+        return Unit
     }
 }

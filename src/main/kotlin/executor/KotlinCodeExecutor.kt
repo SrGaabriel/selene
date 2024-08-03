@@ -6,7 +6,7 @@ import kotlin.math.exp
 
 class KotlinCodeExecutor(private val tree: SyntaxTree): CodeExecutor {
     val functions = mutableListOf<FunctionNode>()
-    val variables = mutableMapOf<String, Int>()
+    val variables = mutableMapOf<String, Any>()
     val intrinsics = mutableListOf<IntrinsicFunction>(
         PrintFunction()
     )
@@ -20,7 +20,7 @@ class KotlinCodeExecutor(private val tree: SyntaxTree): CodeExecutor {
         tree.join(otherTree)
     }
 
-    fun executeMain(): Int {
+    fun executeMain(): Any {
         val mainFunction = functions.find { it.name == "main" }
         if (mainFunction == null) {
             throw IllegalStateException("No main function found")
@@ -28,7 +28,7 @@ class KotlinCodeExecutor(private val tree: SyntaxTree): CodeExecutor {
         return executeBlock(mainFunction.block)
     }
 
-    fun executeBlock(block: BlockNode, expectReturn: Boolean=true): Int {
+    fun executeBlock(block: BlockNode, expectReturn: Boolean=true): Any {
         val statements = block.getChildren()
         statements.forEach { statement ->
             when (statement) {
@@ -56,7 +56,13 @@ class KotlinCodeExecutor(private val tree: SyntaxTree): CodeExecutor {
                 is CompoundAssignmentNode -> {
                     val expression = statement.expression
                     val value = executeExpression(expression)
+                    if (value !is Int) {
+                        throw IllegalStateException("Value is not an integer")
+                    }
                     val variable = variables[statement.name] ?: throw IllegalStateException("Variable ${statement.name} not found")
+                    if (variable !is Int) {
+                        throw IllegalStateException("Variable ${statement.name} is not an integer")
+                    }
                     val result = when (statement.operator) {
                         TokenKind.PLUS_ASSIGN -> variable + value
                         TokenKind.MINUS_ASSIGN -> variable - value
@@ -71,25 +77,41 @@ class KotlinCodeExecutor(private val tree: SyntaxTree): CodeExecutor {
                 }
             }
         }
-        return 0
+        return Unit
     }
 
     fun registerFunction(node: FunctionNode) {
         functions.add(node)
     }
 
-    fun executeExpression(expression: SyntaxTreeNode): Int {
+    fun executeExpression(expression: SyntaxTreeNode): Any {
         return when (expression) {
             is NumberNode -> expression.value
+            is StringNode -> expression.value
             is BinaryOperatorNode -> {
                 val left = executeExpression(expression.left)
+                if (left !is Int && left !is String) {
+                    throw IllegalStateException("Left side of binary operator is not an integer")
+                }
                 val right = executeExpression(expression.right)
-                when (expression.operator) {
-                    TokenKind.PLUS -> left + right
-                    TokenKind.MINUS -> left - right
-                    TokenKind.TIMES -> left * right
-                    TokenKind.DIVIDE -> left / right
-                    else -> throw IllegalStateException("Unknown operator")
+                if (right !is Int && right !is String) {
+                    throw IllegalStateException("Right side of binary operator is not an integer")
+                }
+                if (left is String && right is String) {
+                    return when (expression.operator) {
+                        TokenKind.PLUS -> left + right
+                        else -> throw IllegalStateException("Unknown operator for strings")
+                    }
+                } else if (left is Int && right is Int) {
+                    return when (expression.operator) {
+                        TokenKind.PLUS -> left + right
+                        TokenKind.MINUS -> left - right
+                        TokenKind.TIMES -> left * right
+                        TokenKind.DIVIDE -> left / right
+                        else -> throw IllegalStateException("Unknown operator for integers")
+                    }
+                } else {
+                    throw IllegalStateException("Cannot mix types in binary operator")
                 }
             }
             is VariableNode -> {
@@ -104,15 +126,15 @@ class KotlinCodeExecutor(private val tree: SyntaxTree): CodeExecutor {
         }
     }
 
-    fun executeFunction(name: String, parameters: List<Any>): Int {
+    fun executeFunction(name: String, parameters: List<Any>): Any {
         val function = functions.find { it.name == name } ?: throw IllegalStateException("Function $name not found")
         val block = function.block
         function.parameters.parameters.forEachIndexed { index, parameter ->
-            variables[parameter.name] = parameters[index] as Int
+            variables[parameter.name] = parameters[index]
         }
         if (function.modifiers.contains(TokenKind.INTRINSIC)) {
             val intrinsic = intrinsics.find { it.name == name } ?: throw IllegalStateException("Intrinsic $name not found")
-            return intrinsic.execute(parameters as List<Int>)
+            return intrinsic.execute(parameters)
         } else {
             return executeBlock(block)
         }

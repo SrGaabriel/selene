@@ -22,7 +22,8 @@ enum class TokenKind {
     IDENTIFIER,
     OPENING_BRACES,
     CLOSING_BRACES,
-    INTRINSIC
+    INTRINSIC,
+    STRING
 }
 
 data class Token(

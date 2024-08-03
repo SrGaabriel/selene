@@ -1,0 +1,3 @@
+macro funny() {
+    println("Hello, World!");
+}

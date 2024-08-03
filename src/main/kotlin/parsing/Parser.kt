@@ -213,14 +213,12 @@ class Parser(private val tokens: TokenStream) {
 
     fun parseExpression(): Either<ParsingError, SyntaxTreeNode> {
         val token = tokens[position]
-        println('-')
-        println(tokens[position-1])
-        println(token)
-        println(tokens[position+1])
-        println('-')
         return when (token.kind) {
             TokenKind.NUMBER -> {
                 parseNumericExpression()
+            }
+            TokenKind.STRING -> {
+                parseStringExpression()
             }
             TokenKind.IDENTIFIER -> {
                 if (peekNext().kind == TokenKind.OPENING_PARENTHESES) {
@@ -238,6 +236,43 @@ class Parser(private val tokens: TokenStream) {
         }
     }
 
+    fun parseStringExpression(): Either<ParsingError, SyntaxTreeNode> {
+        var left = parseStringTerm()
+        if (left.isLeft()) {
+            return Either.Left(left.getLeft())
+        }
+
+        while (peek().kind == TokenKind.PLUS) {
+            position++
+            val right = parseStringTerm()
+            if (right.isLeft()) {
+                return Either.Left(right.getLeft())
+            }
+            left = Either.Right(BinaryOperatorNode(left.unwrap(), TokenKind.PLUS, right.unwrap()))
+        }
+
+        return left
+    }
+
+    fun parseStringTerm(): Either<ParsingError, SyntaxTreeNode> {
+        return when (peek().kind) {
+            TokenKind.STRING -> {
+                Either.Right(StringNode(consume().value))
+            }
+            TokenKind.IDENTIFIER -> {
+                Either.Right(VariableNode(consume().value))
+            }
+            TokenKind.OPENING_PARENTHESES -> {
+                position++
+                val expr = parseStringExpression()
+                consume(TokenKind.CLOSING_PARENTHESES).ifLeft {
+                    return Either.Left(it)
+                }
+                expr
+            }
+            else -> Either.Left(ParsingError.UnexpectedToken(peek()))
+        }
+    }
     fun parseCallParameters(): Either<ParsingError, CallParametersNode> {
         consume(TokenKind.OPENING_PARENTHESES).ifLeft {
             return Either.Left(it)

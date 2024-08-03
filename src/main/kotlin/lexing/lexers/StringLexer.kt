@@ -20,6 +20,14 @@ class StringLexer(private val data: String): Lexer {
                 '(' -> tokens.add(Token(TokenKind.OPENING_PARENTHESES, "(", position)).also { position++ }
                 ')' -> tokens.add(Token(TokenKind.CLOSING_PARENTHESES, ")", position)).also { position++ }
                 ',' -> tokens.add(Token(TokenKind.COMMA, ",", position)).also { position++ }
+                '"' -> {
+                    val start = position
+                    position++
+                    while (position < data.length && data[position] != '"') {
+                        position++
+                    }
+                    tokens.add(Token(TokenKind.STRING, data.substring(start + 1, position), start)).also { position++ }
+                }
                 in '0'..'9' -> tokens.add(number())
                 in 'a'..'z' -> {
                     val identifier = identifier(token.toString())

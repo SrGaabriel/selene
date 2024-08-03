@@ -4,7 +4,7 @@ macro main () {
 
     sum := sum(abobora,banana);
     sum += 50;
-    println(5 + 50 + 60 + 80 * 20 * 50);
+    funny();
 }
 
 macro sum (a, b) {
