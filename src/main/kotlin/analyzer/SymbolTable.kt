@@ -14,7 +14,7 @@ class SymbolTable {
     }
 
     fun declare(name: String, type: Type) {
-        if (type == Type.UNKNOWN) {
+        if (type == Type.Unknown) {
             println("Unknown type for $name")
         }
         scopes.last()[name] = type

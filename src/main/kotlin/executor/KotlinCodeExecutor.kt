@@ -9,7 +9,8 @@ class KotlinCodeExecutor(private val tree: SyntaxTree): CodeExecutor {
     val variables = mutableMapOf<String, Any>()
     val intrinsics = mutableListOf(
         PrintFunction(),
-        ReadFunction()
+        ReadFunction(),
+        StringifyFunction()
     )
 
     override fun execute() {
@@ -26,7 +27,7 @@ class KotlinCodeExecutor(private val tree: SyntaxTree): CodeExecutor {
         if (mainFunction == null) {
             throw IllegalStateException("No main function found")
         }
-        return executeBlock(mainFunction.block)
+        return executeBlock(mainFunction.body)
     }
 
     fun parseRoot() {
@@ -63,9 +64,22 @@ class KotlinCodeExecutor(private val tree: SyntaxTree): CodeExecutor {
                     variables[statement.name] = value
                 }
                 is CallNode -> {
-                    executeFunction(statement.name, statement.parameters.parameters.map {
+                    executeFunction(statement.name, statement.arguments.map {
                         executeExpression(it)
                     })
+                }
+                is IfNode -> {
+                    val condition = executeExpression(statement.condition)
+                    if (condition !is Boolean) {
+                        throw IllegalStateException("Condition is not a boolean")
+                    }
+                    if (condition) {
+                        executeBlock(statement.body)
+                    } else {
+                        statement.elseBody?.let {
+                            executeBlock(it)
+                        }
+                    }
                 }
                 is CompoundAssignmentNode -> {
                     val expression = statement.expression
@@ -102,19 +116,20 @@ class KotlinCodeExecutor(private val tree: SyntaxTree): CodeExecutor {
         return when (expression) {
             is NumberNode -> {
                 when (expression.type) {
-                    Type.INT8 -> expression.value.toByte()
-                    Type.INT16 -> expression.value.toShort()
-                    Type.INT32 -> expression.value.toInt()
-                    Type.INT64 -> expression.value.toLong()
-                    Type.UINT8 -> expression.value.toUByte()
-                    Type.UINT16 -> expression.value.toUShort()
-                    Type.UINT32 -> expression.value.toUInt()
-                    Type.UINT64 -> expression.value.toULong()
-                    Type.FLOAT32 -> expression.value.toFloat()
-                    Type.FLOAT64 -> expression.value.toDouble()
+                    Type.Int8 -> expression.value.toByte()
+                    Type.Int16 -> expression.value.toShort()
+                    Type.Int32 -> expression.value.toInt()
+                    Type.Int64 -> expression.value.toLong()
+                    Type.UInt8 -> expression.value.toUByte()
+                    Type.UInt16 -> expression.value.toUShort()
+                    Type.UInt32 -> expression.value.toUInt()
+                    Type.UInt64 -> expression.value.toULong()
+                    Type.Float32 -> expression.value.toFloat()
+                    Type.Float64 -> expression.value.toDouble()
                     else -> throw IllegalStateException("Unknown number type")
                 }
             }
+            is BooleanNode -> expression.value
             is StringNode -> expression.value
             is BinaryOperatorNode -> {
                 val left = executeExpression(expression.left)
@@ -128,11 +143,11 @@ class KotlinCodeExecutor(private val tree: SyntaxTree): CodeExecutor {
                     return operateUnknownNumbers(left, expression.operator, right)
                 }
             }
-            is VariableNode -> {
+            is VariableReferenceNode -> {
                 variables[expression.name] ?: throw IllegalStateException("Variable ${expression.name} not found")
             }
             is CallNode -> {
-                executeFunction(expression.name, expression.parameters.parameters.map {
+                executeFunction(expression.name, expression.arguments.map {
                     executeExpression(it)
                 })
             }
@@ -142,15 +157,14 @@ class KotlinCodeExecutor(private val tree: SyntaxTree): CodeExecutor {
 
     fun executeFunction(name: String, parameters: List<Any>): Any {
         val function = functions.find { it.name == name } ?: throw IllegalStateException("Function $name not found")
-        val block = function.block
-        function.parameters.parameters.forEachIndexed { index, parameter ->
+        function.parameters.forEachIndexed { index, parameter ->
             variables[parameter.name] = parameters[index]
         }
-        if (function.modifiers.contains(TokenKind.INTRINSIC)) {
+        if (function.modifiers.contains(Modifiers.INTRINSIC)) {
             val intrinsic = intrinsics.find { it.name == name } ?: throw IllegalStateException("Intrinsic $name not found")
             return intrinsic.execute(parameters)
         } else {
-            return executeBlock(block)
+            return executeBlock(function.body)
         }
     }
 

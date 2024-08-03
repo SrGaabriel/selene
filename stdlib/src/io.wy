@@ -1,3 +1,9 @@
 intrinsic macro println (message: string) {}
 
 intrinsic macro readln () string {}
+
+intrinsic macro stringify (a: bool) string {}
+
+macro a () bool {
+    return true;
+}

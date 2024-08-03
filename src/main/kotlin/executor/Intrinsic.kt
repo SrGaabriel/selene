@@ -27,3 +27,12 @@ class ReadFunction: IntrinsicFunction(
         return readln()
     }
 }
+
+class StringifyFunction: IntrinsicFunction(
+    "stringify",
+    mutableListOf()
+) {
+    override fun execute(parameters: List<Any>): Any {
+        return parameters.first().toString()
+    }
+}

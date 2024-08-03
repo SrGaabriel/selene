@@ -24,6 +24,8 @@ enum class TokenKind {
     CLOSING_BRACES,
     INTRINSIC,
     STRING,
+    IF,
+    ELSE,
     TYPE_DECLARATION,
     INT8_TYPE,
     INT16_TYPE,
@@ -35,7 +37,8 @@ enum class TokenKind {
     UINT64_TYPE,
     FLOAT32_TYPE,
     FLOAT64_TYPE,
-    STRING_TYPE
+    STRING_TYPE,
+    BOOL_TYPE
 }
 
 val TYPE_TOKENS = listOf(
@@ -50,6 +53,7 @@ val TYPE_TOKENS = listOf(
     TokenKind.FLOAT32_TYPE,
     TokenKind.FLOAT64_TYPE,
     TokenKind.STRING_TYPE,
+    TokenKind.BOOL_TYPE,
     TokenKind.IDENTIFIER
 )
 

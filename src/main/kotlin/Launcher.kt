@@ -15,6 +15,8 @@ import me.gabriel.gwydion.util.findRowOfIndex
 import me.gabriel.gwydion.util.replaceAtIndex
 import me.gabriel.gwydion.util.trimIndentReturningWidth
 import java.io.File
+import java.time.Instant
+import kotlin.system.measureNanoTime
 
 fun main() {
     val logger = MordantLogger()
@@ -35,6 +37,7 @@ fun main() {
 }
 
 fun compile(text: String, logger: GwydionLogger, symbols: SymbolTable = SymbolTable()): Pair<SyntaxTree, SymbolTable>? {
+    val start = Instant.now()
     val lexer = StringLexer(text);
     val result = lexer.tokenize();
     if (result.isLeft()) {
@@ -44,9 +47,9 @@ fun compile(text: String, logger: GwydionLogger, symbols: SymbolTable = SymbolTa
         val newRelativeIndex = rowInfo.relativeIndex - trimWidth
 
         logger.log(LogLevel.ERROR) {
-            + "lexing: ${error.message}"
+            + "${bold("[lexing]")} ${error.message}"
             + "|"
-            + "| row: ${replaceAtIndex(contentTrim, newRelativeIndex, 1, colorful(contentTrim[newRelativeIndex].toString(), TextColors.red))}"
+            + "| row: ${replaceAtIndex(contentTrim, newRelativeIndex, 1, color(contentTrim[newRelativeIndex].toString(), TextColors.red))}"
             + ("| pos: " + " ".repeat(rowInfo.relativeIndex - trimWidth) + "^")
         }
         return null
@@ -62,9 +65,9 @@ fun compile(text: String, logger: GwydionLogger, symbols: SymbolTable = SymbolTa
         val (contentTrim, trimWidth) = rowInfo.content.trimIndentReturningWidth()
 
         logger.log(LogLevel.ERROR) {
-            + "parsing: ${error.message}"
+            + "${bold("[parsing]")} ${error.message}"
             + "|"
-            + "| row: ${contentTrim.replace(error.token.value, colorful(error.token.value, TextColors.red))}"
+            + "| row: ${contentTrim.replace(error.token.value, color(error.token.value, TextColors.red))}"
             + ("| pos: " + " ".repeat(rowInfo.relativeIndex - trimWidth) + "^".repeat(error.token.value.length))
         }
         return null
@@ -80,12 +83,13 @@ fun compile(text: String, logger: GwydionLogger, symbols: SymbolTable = SymbolTa
         }
         analysis.errors.forEachIndexed { index, error ->
             logger.log(LogLevel.ERROR) {
-                + "semantic: ${error.message}"
+                + "${bold("[semantic]")} ${error.message}"
             }
         }
         return null
     }
-
+    val end = Instant.now()
+    logger.log(LogLevel.INFO) { +"Compilation finished in ${end.toEpochMilli() - start.toEpochMilli()}ms" }
     return Pair(parsingResult.getRight(), analysis.table)
 }
 

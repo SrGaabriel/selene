@@ -23,7 +23,7 @@ class CumulativeSemanticAnalyzer(
     fun findSymbols(node: SyntaxTreeNode) {
         when (node) {
             is ParameterNode -> {
-                if (node.type == Type.UNKNOWN) {
+                if (node.type == Type.Unknown) {
                     errors.add(AnalysisError.UnknownType(node, node.type))
                     return
                 }
@@ -33,8 +33,8 @@ class CumulativeSemanticAnalyzer(
                 symbolTable.declare(node.name, node.returnType)
             }
             is AssignmentNode -> {
-                val type = if (node.type == Type.UNKNOWN) {
-                    getExpressionType(node.expression).getRightOrNull() ?: Type.UNKNOWN
+                val type = if (node.type == Type.Unknown) {
+                    getExpressionType(node.expression).getRightOrNull() ?: Type.Unknown
                 } else {
                     node.type
                 }
@@ -65,11 +65,11 @@ class CumulativeSemanticAnalyzer(
                 }
             }
             is FunctionNode -> {
-                if (node.modifiers.contains(TokenKind.INTRINSIC)) {
+                if (node.modifiers.contains(Modifiers.INTRINSIC)) {
                     return
                 }
 
-                val returnNode = node.block.getChildren().find { it is ReturnNode }
+                val returnNode = node.body.getChildren().find { it is ReturnNode }
                 var returnType = if (returnNode != null) {
                     val result = getExpressionType((returnNode as ReturnNode).expression)
                     if (result is Either.Left) {
@@ -78,12 +78,22 @@ class CumulativeSemanticAnalyzer(
                     }
                     result.unwrap()
                 } else {
-                    Type.VOID
+                    Type.Void
                 }
                 // If the user is returning an unknown type, we will assume that the function is returning that type
-                val inferredType = if (returnType == Type.UNKNOWN) { node.returnType } else { returnType }
+                val inferredType = if (returnType == Type.Unknown) { node.returnType } else { returnType }
                 if (inferredType != node.returnType) {
                     errors.add(AnalysisError.ReturnTypeMismatch(node, node.returnType, returnType))
+                }
+            }
+            is IfNode -> {
+                val conditionType = getExpressionType(node.condition)
+                if (conditionType is Either.Left) {
+                    errors.add(conditionType.value)
+                    return
+                }
+                if (conditionType.unwrap() != Type.Boolean) {
+                    errors.add(AnalysisError.InvalidCondition(node, conditionType.unwrap()))
                 }
             }
             else -> {}
@@ -93,10 +103,10 @@ class CumulativeSemanticAnalyzer(
 
     tailrec fun getExpressionType(node: SyntaxTreeNode): Either<AnalysisError, Type> {
         return when (node) {
-            is VariableNode -> {
+            is VariableReferenceNode -> {
                 Either.Right(symbolTable.lookup(node.name) ?: return Either.Left(AnalysisError.UndefinedVariable(node)))
             }
-            is ConstantNode -> Either.Right(node.type)
+            is TypedSyntaxTreeNode -> Either.Right(node.type)
             is BinaryOperatorNode -> getExpressionType(node.left)
             is CallNode -> Either.Right(inferCallType(node))
             else -> error("Unknown node type $node")
@@ -104,7 +114,7 @@ class CumulativeSemanticAnalyzer(
     }
 
     fun inferCallType(node: CallNode): Type {
-        val function = symbolTable.lookup(node.name) ?: return Type.UNKNOWN
+        val function = symbolTable.lookup(node.name) ?: return Type.Unknown
         return function
     }
 }

@@ -1,6 +1,7 @@
 package me.gabriel.gwydion.log
 
 import com.github.ajalt.mordant.rendering.TextColors
+import com.github.ajalt.mordant.rendering.TextStyles
 
 interface GwydionLogger {
     fun log(level: LogLevel, message: LogBuilder.() -> Unit)
@@ -17,12 +18,12 @@ class LogBuilder {
         builder.appendLine(this)
     }
 
-    fun color(text: String, color: TextColors) {
-        builder.append(color(text))
+    fun color(text: String, color: TextColors): String {
+        return color(text)
     }
 
-    fun colorful(text: String, color: TextColors): String {
-        return color(text)
+    fun bold(text: String): String {
+        return TextStyles.bold(text)
     }
 
     fun build(): String {
