@@ -1,8 +1,6 @@
 package me.gabriel.gwydion.executor
 
 import me.gabriel.gwydion.lexing.TokenKind
-import me.gabriel.gwydion.parsing.ParameterNode
-import me.gabriel.gwydion.parsing.ParametersNode
 
 abstract class IntrinsicFunction(
     val name: String,
@@ -18,5 +16,14 @@ class PrintFunction: IntrinsicFunction(
     override fun execute(parameters: List<Any>): Any {
         println(parameters.first())
         return Unit
+    }
+}
+
+class ReadFunction: IntrinsicFunction(
+    "readln",
+    mutableListOf()
+) {
+    override fun execute(parameters: List<Any>): Any {
+        return readln()
     }
 }

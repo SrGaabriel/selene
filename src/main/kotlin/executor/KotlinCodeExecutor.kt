@@ -7,8 +7,9 @@ import kotlin.math.exp
 class KotlinCodeExecutor(private val tree: SyntaxTree): CodeExecutor {
     val functions = mutableListOf<FunctionNode>()
     val variables = mutableMapOf<String, Any>()
-    val intrinsics = mutableListOf<IntrinsicFunction>(
-        PrintFunction()
+    val intrinsics = mutableListOf(
+        PrintFunction(),
+        ReadFunction()
     )
 
     override fun execute() {
@@ -100,7 +101,6 @@ class KotlinCodeExecutor(private val tree: SyntaxTree): CodeExecutor {
     fun executeExpression(expression: SyntaxTreeNode): Any {
         return when (expression) {
             is NumberNode -> {
-                println("type: ${expression.type}")
                 when (expression.type) {
                     Type.INT8 -> expression.value.toByte()
                     Type.INT16 -> expression.value.toShort()
@@ -155,7 +155,6 @@ class KotlinCodeExecutor(private val tree: SyntaxTree): CodeExecutor {
     }
 
     fun checkIfBothTypesAreEqual(left: Any, right: Any): Boolean {
-        println("left: ${left::class}, right: ${right::class}")
         return left::class == right::class
     }
 

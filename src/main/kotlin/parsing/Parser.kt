@@ -97,7 +97,7 @@ class Parser(private val tokens: TokenStream) {
                     consume(TokenKind.SEMICOLON).ifLeft {
                         return Either.Left(it)
                     }
-                    Either.Right(AssignmentNode(token.value, expression.getRight(), token))
+                    Either.Right(AssignmentNode(token.value, expression.getRight(), Type.UNKNOWN, token))
                 } else if (peek.kind == TokenKind.PLUS_ASSIGN || peek.kind == TokenKind.MINUS_ASSIGN || peek.kind == TokenKind.TIMES_ASSIGN || peek.kind == TokenKind.DIVIDE_ASSIGN) {
                     val compoundAssignment = parseCompoundAssignment(token)
                     if (compoundAssignment.isLeft()) {
@@ -221,7 +221,7 @@ class Parser(private val tokens: TokenStream) {
     }
 
     fun parseIdentifier(): Either<ParsingError, String> {
-        val token = tokens[position]
+        val token = peek()
         if (token.kind == TokenKind.IDENTIFIER) {
             position++
             return Either.Right(token.value)

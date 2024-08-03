@@ -5,17 +5,19 @@ import me.gabriel.gwydion.lexing.TokenKind
 import me.gabriel.gwydion.parsing.*
 import me.gabriel.gwydion.util.Either
 
-class CumulativeSemanticAnalyzer(private val tree: SyntaxTree): SemanticAnalyzer {
+class CumulativeSemanticAnalyzer(
+    private val tree: SyntaxTree,
+    private val symbolTable: SymbolTable = SymbolTable()
+): SemanticAnalyzer {
     private val errors = mutableListOf<AnalysisError>()
-    private val symbolTable = SymbolTable()
 
-    override fun analyzeTree(): List<AnalysisError> {
+    override fun analyzeTree(): AnalysisResult {
         findSymbols(tree.root)
         if (errors.isNotEmpty()) {
-            return errors
+            return AnalysisResult(symbolTable, errors)
         }
         analyzeNode(tree.root)
-        return errors
+        return AnalysisResult(symbolTable, errors)
     }
 
     fun findSymbols(node: SyntaxTreeNode) {
@@ -29,6 +31,14 @@ class CumulativeSemanticAnalyzer(private val tree: SyntaxTree): SemanticAnalyzer
             }
             is FunctionNode -> {
                 symbolTable.declare(node.name, node.returnType)
+            }
+            is AssignmentNode -> {
+                val type = if (node.type == Type.UNKNOWN) {
+                    getExpressionType(node.expression).getRightOrNull() ?: Type.UNKNOWN
+                } else {
+                    node.type
+                }
+                symbolTable.declare(node.name, type)
             }
             else -> {}
         }
@@ -50,17 +60,15 @@ class CumulativeSemanticAnalyzer(private val tree: SyntaxTree): SemanticAnalyzer
                 }
                 val leftType = getLeftType.unwrap()
                 val rightType = getRightType.unwrap()
-                if (node.operator == TokenKind.PLUS) {
-                    if (node.left !is AlgebraicNode && node.right !is StringNode) {
-                        errors.add(AnalysisError.InvalidOperation(node, leftType, node.operator, rightType))
-                    }
-                }
-
                 if (leftType != rightType) {
                     errors.add(AnalysisError.InvalidOperation(node, leftType, node.operator, rightType))
                 }
             }
             is FunctionNode -> {
+                if (node.modifiers.contains(TokenKind.INTRINSIC)) {
+                    return
+                }
+
                 val returnNode = node.block.getChildren().find { it is ReturnNode }
                 var returnType = if (returnNode != null) {
                     val result = getExpressionType((returnNode as ReturnNode).expression)
@@ -75,7 +83,6 @@ class CumulativeSemanticAnalyzer(private val tree: SyntaxTree): SemanticAnalyzer
                 // If the user is returning an unknown type, we will assume that the function is returning that type
                 val inferredType = if (returnType == Type.UNKNOWN) { node.returnType } else { returnType }
                 if (inferredType != node.returnType) {
-                    println("return type mismatch: expected ${node.returnType}, got $returnType for function ${node.name}")
                     errors.add(AnalysisError.ReturnTypeMismatch(node, node.returnType, returnType))
                 }
             }
@@ -91,7 +98,13 @@ class CumulativeSemanticAnalyzer(private val tree: SyntaxTree): SemanticAnalyzer
             }
             is ConstantNode -> Either.Right(node.type)
             is BinaryOperatorNode -> getExpressionType(node.left)
+            is CallNode -> Either.Right(inferCallType(node))
             else -> error("Unknown node type $node")
         }
+    }
+
+    fun inferCallType(node: CallNode): Type {
+        val function = symbolTable.lookup(node.name) ?: return Type.UNKNOWN
+        return function
     }
 }

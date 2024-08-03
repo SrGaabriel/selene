@@ -2,6 +2,7 @@ package me.gabriel.gwydion;
 
 import com.github.ajalt.mordant.rendering.TextColors
 import me.gabriel.gwydion.analyzer.CumulativeSemanticAnalyzer
+import me.gabriel.gwydion.analyzer.SymbolTable
 import me.gabriel.gwydion.executor.KotlinCodeExecutor
 import me.gabriel.gwydion.lexing.lexers.StringLexer
 import me.gabriel.gwydion.log.GwydionLogger
@@ -21,10 +22,10 @@ fun main() {
 
     val reader = AmbiguousSourceReader(logger)
     val stdlib = reader.read(findStdlib())
-    val stdlibCompiled = compile(stdlib, logger) ?: return
+    val (stdlibCompiled, stdlibSymbols) = compile(stdlib, logger) ?: return
 
     val example = reader.read(readText())
-    val compiled = compile(example, logger) ?: return
+    val (compiled, _) = compile(example, logger, stdlibSymbols) ?: return
 
     stdlibCompiled.join(compiled)
     val executor = KotlinCodeExecutor(stdlibCompiled)
@@ -33,7 +34,7 @@ fun main() {
     logger.log(LogLevel.INFO) { +"The code was executed with exit code 0" }
 }
 
-fun compile(text: String, logger: GwydionLogger): SyntaxTree? {
+fun compile(text: String, logger: GwydionLogger, symbols: SymbolTable = SymbolTable()): Pair<SyntaxTree, SymbolTable>? {
     val lexer = StringLexer(text);
     val result = lexer.tokenize();
     if (result.isLeft()) {
@@ -71,13 +72,13 @@ fun compile(text: String, logger: GwydionLogger): SyntaxTree? {
         logger.log(LogLevel.DEBUG) { +"The parsing was successful!" }
     }
 
-    val analyzer = CumulativeSemanticAnalyzer(parsingResult.getRight())
-    val errors = analyzer.analyzeTree()
-    if (errors.isNotEmpty()) {
+    val analyzer = CumulativeSemanticAnalyzer(parsingResult.getRight(), symbols)
+    val analysis = analyzer.analyzeTree()
+    if (analysis.errors.isNotEmpty()) {
         logger.log(LogLevel.ERROR) {
-            +"There were ${errors.size} error(s) during the semantic analysis:"
+            +"There were ${analysis.errors.size} error(s) during the semantic analysis:"
         }
-        errors.forEachIndexed { index, error ->
+        analysis.errors.forEachIndexed { index, error ->
             logger.log(LogLevel.ERROR) {
                 + "semantic: ${error.message}"
             }
@@ -85,7 +86,7 @@ fun compile(text: String, logger: GwydionLogger): SyntaxTree? {
         return null
     }
 
-    return parsingResult.getRight()
+    return Pair(parsingResult.getRight(), analysis.table)
 }
 
 fun readText(): File {

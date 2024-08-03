@@ -1,12 +1,4 @@
 macro main () {
-    abobora := 15;
-    banana := 10;
-
-    sum := sum(abobora,5*5+(50) + 30);
-    sum += 50;
-    println(sum);
-}
-
-macro sum (a: int32, b: int16) int32 {
-    return a * b;
+    reading := readln();
+    println("You typed: " + reading);
 }

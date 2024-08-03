@@ -100,7 +100,7 @@ class CallNode(val name: String, val parameters: CallParametersNode): SyntaxTree
     override fun getChildren(): List<SyntaxTreeNode> = parameters.parameters
 }
 
-class AssignmentNode(val name: String, val expression: SyntaxTreeNode, variableToken: Token): SyntaxTreeNode(
+class AssignmentNode(val name: String, val expression: SyntaxTreeNode, val type: Type, variableToken: Token): SyntaxTreeNode(
     variableToken,
     expression.endToken
 ) {
