@@ -13,9 +13,13 @@ class StringLexer(private val data: String): Lexer {
         val tokens = mutableListOf<Token>()
         while (position < data.length) {
             when (val token = data[position]) {
-                ' ', '\n' -> position++
+                ' ', '\n', '\t', '\r' -> position++
                 '+' -> tokens.add(Token(TokenKind.PLUS, "+")).also { position++ }
                 ';' -> tokens.add(Token(TokenKind.SEMICOLON, ";")).also { position++ }
+                '{' -> tokens.add(Token(TokenKind.OPENING_BRACES, "{")).also { position++ }
+                '}' -> tokens.add(Token(TokenKind.CLOSING_BRACES, "}")).also { position++ }
+                '(' -> tokens.add(Token(TokenKind.OPENING_PARENTHESES, "(")).also { position++ }
+                ')' -> tokens.add(Token(TokenKind.CLOSING_PARENTHESES, ")")).also { position++ }
                 in '0'..'9' -> tokens.add(number())
                 in 'a'..'z' -> {
                     val identifier = identifier(token.toString())
@@ -45,8 +49,9 @@ class StringLexer(private val data: String): Lexer {
         }
         val value = data.substring(start, position)
         return when (value) {
+            "fn" -> Either.Right(Token(TokenKind.FUNCTION, value))
             "return" -> Either.Right(Token(TokenKind.RETURN, value))
-            else -> Either.Left(LexingError.UnknownToken(value))
+            else -> Either.Right(Token(TokenKind.IDENTIFIER, value))
         }
     }
 }

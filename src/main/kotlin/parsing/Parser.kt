@@ -26,13 +26,24 @@ class Parser(private val tokens: TokenStream) {
             if (statement.isLeft()) {
                 return Either.Left(statement.getLeft())
             }
-            statements.add(statement.getRight())
+            statement.getRight()?.let { statements.add(it) }
         }
         return Either.Right(statements)
     }
 
-    fun parseStatement(): Either<ParsingError, SyntaxTreeNode> {
+    fun parseBlock(): Either<ParsingError, BlockNode> {
+        consume(TokenKind.OPENING_BRACES)
+        val statements = parseStatementSequence()
+        if (statements.isLeft()) {
+            return Either.Left(statements.getLeft())
+        }
+        consume(TokenKind.CLOSING_BRACES)
+        return Either.Right(BlockNode(statements.getRight().toMutableList()))
+    }
+
+    fun parseStatement(): Either<ParsingError, SyntaxTreeNode?> {
         val token = tokens[position]
+        println("Parsing statement starting with " + token.kind)
         return when (token.kind) {
             TokenKind.RETURN -> {
                 position++
@@ -43,8 +54,37 @@ class Parser(private val tokens: TokenStream) {
                 consume(TokenKind.SEMICOLON)
                 Either.Right(ReturnNode(expression.getRight()))
             }
+            TokenKind.FUNCTION -> {
+                position++
+                val identifier = parseIdentifier()
+                if (identifier.isLeft()) {
+                    return Either.Left(identifier.getLeft())
+                }
+                val block = parseBlock()
+                if (block.isLeft()) {
+                    return Either.Left(block.getLeft())
+                }
+                val function = FunctionNode(identifier.unwrap(), block.unwrap())
+                println("func")
+                Either.Right(function)
+            }
+            TokenKind.CLOSING_BRACES -> {
+                // We are probably reading the parent's closing braces
+                // Don't know if this is the right way to handle this
+                position++
+                Either.Right(null)
+            }
             else -> Either.Left(ParsingError.UnexpectedToken(token.value))
         }
+    }
+
+    fun parseIdentifier(): Either<ParsingError, String> {
+        val token = tokens[position]
+        if (token.kind == TokenKind.IDENTIFIER) {
+            position++
+            return Either.Right(token.value)
+        }
+        return Either.Left(ParsingError.UnexpectedToken(token.value))
     }
 
     fun parseExpression(): Either<ParsingError, SyntaxTreeNode> {

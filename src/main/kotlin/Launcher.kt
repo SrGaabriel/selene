@@ -1,5 +1,6 @@
 package me.gabriel.gwydion;
 
+import me.gabriel.gwydion.executor.KotlinCodeExecutor
 import me.gabriel.gwydion.lexing.lexers.StringLexer
 import me.gabriel.gwydion.parsing.Parser
 import java.io.File
@@ -27,9 +28,12 @@ fun main() {
     val syntaxTree = parsingResult.getRight()
     println("Parsed! Syntax tree:")
     println(syntaxTree)
+
+    val executor = KotlinCodeExecutor(syntaxTree)
+    println("Executing... Result:")
+    executor.execute()
 }
 
-// Maybe lexing by bytes would be a better idea? I don't know!
 fun readText(): String {
-    return File("src/main/resources/example.wyrm").readText()
+    return File("src/main/resources/example.draco").readText()
 }

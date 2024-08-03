@@ -16,7 +16,7 @@ sealed class SyntaxTreeNode {
     abstract fun getChildren(): List<SyntaxTreeNode>
 }
 
-abstract class BlockNode(private val children: MutableList<SyntaxTreeNode>): SyntaxTreeNode() {
+open class BlockNode(private val children: MutableList<SyntaxTreeNode>): SyntaxTreeNode() {
     fun addChild(node: SyntaxTreeNode) {
         children.add(node)
     }
@@ -40,4 +40,9 @@ class NumberNode(val value: Int): ConstantNode()
 class BinaryOperatorNode(val left: SyntaxTreeNode, val operator: TokenKind, val right: SyntaxTreeNode): SyntaxTreeNode() {
     override fun getChildren(): List<SyntaxTreeNode> =
         listOf(left, right)
+}
+
+class FunctionNode(val name: String, val block: BlockNode): SyntaxTreeNode() {
+    override fun getChildren(): List<SyntaxTreeNode> =
+        listOf(block)
 }
