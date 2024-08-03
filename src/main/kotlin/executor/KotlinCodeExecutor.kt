@@ -12,7 +12,7 @@ class KotlinCodeExecutor(private val tree: SyntaxTree): CodeExecutor {
     )
 
     override fun execute() {
-        executeBlock(tree.root, false)
+        parseRoot()
         executeMain()
     }
 
@@ -28,12 +28,25 @@ class KotlinCodeExecutor(private val tree: SyntaxTree): CodeExecutor {
         return executeBlock(mainFunction.block)
     }
 
+    fun parseRoot() {
+        tree.root.getChildren().forEach { node ->
+            when (node) {
+                is FunctionNode -> {
+                    registerFunction(node)
+                }
+                else -> {
+                    throw IllegalStateException("Unknown node type $node")
+                }
+            }
+        }
+    }
+
     fun executeBlock(block: BlockNode, expectReturn: Boolean=true): Any {
         val statements = block.getChildren()
         statements.forEach { statement ->
             when (statement) {
                 is FunctionNode -> {
-                    registerFunction(statement)
+                    throw IllegalStateException("Function declaration inside function")
                 }
                 is ReturnNode -> {
                     val expression = statement.expression
@@ -86,7 +99,21 @@ class KotlinCodeExecutor(private val tree: SyntaxTree): CodeExecutor {
 
     fun executeExpression(expression: SyntaxTreeNode): Any {
         return when (expression) {
-            is NumberNode -> expression.value
+            is NumberNode -> {
+                when (expression.type) {
+                    Type.INT8 -> expression.value.toByte()
+                    Type.INT16 -> expression.value.toShort()
+                    Type.INT32 -> expression.value.toInt()
+                    Type.INT64 -> expression.value.toLong()
+                    Type.UINT8 -> expression.value.toUByte()
+                    Type.UINT16 -> expression.value.toUShort()
+                    Type.UINT32 -> expression.value.toUInt()
+                    Type.UINT64 -> expression.value.toULong()
+                    Type.FLOAT32 -> expression.value.toFloat()
+                    Type.FLOAT64 -> expression.value.toDouble()
+                    else -> throw IllegalStateException("Unknown number type")
+                }
+            }
             is StringNode -> expression.value
             is BinaryOperatorNode -> {
                 val left = executeExpression(expression.left)
@@ -100,7 +127,7 @@ class KotlinCodeExecutor(private val tree: SyntaxTree): CodeExecutor {
                 if (left is String && right is String) {
                     return when (expression.operator) {
                         TokenKind.PLUS -> left + right
-                        else -> throw IllegalStateException("Unknown operator for strings")
+                        else -> throw IllegalStateException("Unknown operator for strings ${expression.operator}")
                     }
                 } else if (left is Int && right is Int) {
                     return when (expression.operator) {

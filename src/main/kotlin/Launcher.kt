@@ -1,6 +1,7 @@
 package me.gabriel.gwydion;
 
 import com.github.ajalt.mordant.rendering.TextColors
+import me.gabriel.gwydion.analyzer.CumulativeSemanticAnalyzer
 import me.gabriel.gwydion.executor.KotlinCodeExecutor
 import me.gabriel.gwydion.lexing.lexers.StringLexer
 import me.gabriel.gwydion.log.GwydionLogger
@@ -29,6 +30,7 @@ fun main() {
     val executor = KotlinCodeExecutor(stdlibCompiled)
     logger.log(LogLevel.INFO) { +"Now executing the code... Output:" }
     executor.execute()
+    logger.log(LogLevel.INFO) { +"The code was executed with exit code 0" }
 }
 
 fun compile(text: String, logger: GwydionLogger): SyntaxTree? {
@@ -67,6 +69,20 @@ fun compile(text: String, logger: GwydionLogger): SyntaxTree? {
         return null
     } else {
         logger.log(LogLevel.DEBUG) { +"The parsing was successful!" }
+    }
+
+    val analyzer = CumulativeSemanticAnalyzer(parsingResult.getRight())
+    val errors = analyzer.analyzeTree()
+    if (errors.isNotEmpty()) {
+        logger.log(LogLevel.ERROR) {
+            +"There were ${errors.size} error(s) during the semantic analysis:"
+        }
+        errors.forEachIndexed { index, error ->
+            logger.log(LogLevel.ERROR) {
+                + "semantic: ${error.message}"
+            }
+        }
+        return null
     }
 
     return parsingResult.getRight()

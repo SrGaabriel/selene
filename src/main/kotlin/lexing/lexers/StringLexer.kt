@@ -94,6 +94,16 @@ class StringLexer(private val data: String): Lexer {
         return when (value) {
             "macro" -> Either.Right(Token(TokenKind.FUNCTION, value, start))
             "return" -> Either.Right(Token(TokenKind.RETURN, value, start))
+            "int8" -> Either.Right(Token(TokenKind.INT8_TYPE, value, start))
+            "int16" -> Either.Right(Token(TokenKind.INT16_TYPE, value, start))
+            "int32" -> Either.Right(Token(TokenKind.INT32_TYPE, value, start))
+            "int64" -> Either.Right(Token(TokenKind.INT64_TYPE, value, start))
+            "uint8" -> Either.Right(Token(TokenKind.UINT8_TYPE, value, start))
+            "uint16" -> Either.Right(Token(TokenKind.UINT16_TYPE, value, start))
+            "uint32" -> Either.Right(Token(TokenKind.UINT32_TYPE, value, start))
+            "uint64" -> Either.Right(Token(TokenKind.UINT64_TYPE, value, start))
+            "float32" -> Either.Right(Token(TokenKind.FLOAT32_TYPE, value, start))
+            "float64" -> Either.Right(Token(TokenKind.FLOAT64_TYPE, value, start))
             "intrinsic" -> Either.Right(Token(TokenKind.INTRINSIC, value, start))
             else -> Either.Right(Token(TokenKind.IDENTIFIER, value, start))
         }

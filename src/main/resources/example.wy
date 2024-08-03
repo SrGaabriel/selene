@@ -2,11 +2,11 @@ macro main () {
     abobora := 15;
     banana := 10;
 
-    sum := sum(abobora,banana);
+    sum := sum(abobora,5*5+(50) + 30);
     sum += 50;
-    funny();
+    println(sum);
 }
 
-macro sum (a, b) {
+macro sum (a, b) int32 {
     return a * b;
 }
