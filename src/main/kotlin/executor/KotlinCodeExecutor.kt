@@ -100,6 +100,7 @@ class KotlinCodeExecutor(private val tree: SyntaxTree): CodeExecutor {
     fun executeExpression(expression: SyntaxTreeNode): Any {
         return when (expression) {
             is NumberNode -> {
+                println("type: ${expression.type}")
                 when (expression.type) {
                     Type.INT8 -> expression.value.toByte()
                     Type.INT16 -> expression.value.toShort()
@@ -121,24 +122,10 @@ class KotlinCodeExecutor(private val tree: SyntaxTree): CodeExecutor {
                     throw IllegalStateException("Left side of binary operator is not an integer")
                 }
                 val right = executeExpression(expression.right)
-                if (right !is Int && right !is String) {
-                    throw IllegalStateException("Right side of binary operator is not an integer")
-                }
-                if (left is String && right is String) {
-                    return when (expression.operator) {
-                        TokenKind.PLUS -> left + right
-                        else -> throw IllegalStateException("Unknown operator for strings ${expression.operator}")
-                    }
-                } else if (left is Int && right is Int) {
-                    return when (expression.operator) {
-                        TokenKind.PLUS -> left + right
-                        TokenKind.MINUS -> left - right
-                        TokenKind.TIMES -> left * right
-                        TokenKind.DIVIDE -> left / right
-                        else -> throw IllegalStateException("Unknown operator for integers")
-                    }
+                if (!checkIfBothTypesAreEqual(left, right)) {
+                    throw IllegalStateException("Both sides of binary operator are not the same type")
                 } else {
-                    throw IllegalStateException("Cannot mix types in binary operator")
+                    return operateUnknownNumbers(left, expression.operator, right)
                 }
             }
             is VariableNode -> {
@@ -164,6 +151,43 @@ class KotlinCodeExecutor(private val tree: SyntaxTree): CodeExecutor {
             return intrinsic.execute(parameters)
         } else {
             return executeBlock(block)
+        }
+    }
+
+    fun checkIfBothTypesAreEqual(left: Any, right: Any): Boolean {
+        println("left: ${left::class}, right: ${right::class}")
+        return left::class == right::class
+    }
+
+    // All we know is that both left and right have the same types. The return type needs to be the same as well.
+    fun operateUnknownNumbers(left: Any, operator: TokenKind, right: Any): Any {
+        return when (operator) {
+            TokenKind.PLUS -> {
+                when (left) {
+                    is Int -> left + right as Int
+                    is String -> left + right as String
+                    else -> throw IllegalStateException("Unknown type for operator")
+                }
+            }
+            TokenKind.MINUS -> {
+                when (left) {
+                    is Int -> left - right as Int
+                    else -> throw IllegalStateException("Unknown type for operator")
+                }
+            }
+            TokenKind.TIMES -> {
+                when (left) {
+                    is Int -> left * right as Int
+                    else -> throw IllegalStateException("Unknown type for operator")
+                }
+            }
+            TokenKind.DIVIDE -> {
+                when (left) {
+                    is Int -> left / right as Int
+                    else -> throw IllegalStateException("Unknown type for operator")
+                }
+            }
+            else -> throw IllegalStateException("Unknown operator")
         }
     }
 }

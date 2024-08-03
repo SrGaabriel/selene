@@ -210,7 +210,14 @@ class Parser(private val tokens: TokenStream) {
         if (identifier.isLeft()) {
             return Either.Left(identifier.getLeft())
         }
-        return Either.Right(ParameterNode(identifier.unwrap(), token, Type.UNKNOWN))
+        val next = peek()
+        if (next.kind != TokenKind.TYPE_DECLARATION) {
+            return Either.Left(ParsingError.ParameterMissingTypeDeclaration(tokens[position-1]))
+        }
+        position++
+        val type = parseTypeOrNull() ?: return Either.Left(ParsingError.UnexpectedToken(peek()))
+
+        return Either.Right(ParameterNode(identifier.unwrap(), token, type))
     }
 
     fun parseIdentifier(): Either<ParsingError, String> {

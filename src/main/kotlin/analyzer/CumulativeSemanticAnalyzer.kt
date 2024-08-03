@@ -11,13 +11,20 @@ class CumulativeSemanticAnalyzer(private val tree: SyntaxTree): SemanticAnalyzer
 
     override fun analyzeTree(): List<AnalysisError> {
         findSymbols(tree.root)
+        if (errors.isNotEmpty()) {
+            return errors
+        }
         analyzeNode(tree.root)
         return errors
     }
 
     fun findSymbols(node: SyntaxTreeNode) {
         when (node) {
-            is VariableNode -> {
+            is ParameterNode -> {
+                if (node.type == Type.UNKNOWN) {
+                    errors.add(AnalysisError.UnknownType(node, node.type))
+                    return
+                }
                 symbolTable.declare(node.name, node.type)
             }
             is FunctionNode -> {
@@ -31,28 +38,30 @@ class CumulativeSemanticAnalyzer(private val tree: SyntaxTree): SemanticAnalyzer
     fun analyzeNode(node: SyntaxTreeNode) {
         when (node) {
             is BinaryOperatorNode -> {
+                val getLeftType = getExpressionType(node.left)
+                val getRightType = getExpressionType(node.right)
+
+                if (getLeftType is Either.Left) {
+                    errors.add(getLeftType.value)
+                    return
+                } else if (getRightType is Either.Left) {
+                    errors.add(getRightType.value)
+                    return
+                }
+                val leftType = getLeftType.unwrap()
+                val rightType = getRightType.unwrap()
                 if (node.operator == TokenKind.PLUS) {
                     if (node.left !is AlgebraicNode && node.right !is StringNode) {
-                        errors.add(AnalysisError.InvalidAddition(node))
+                        errors.add(AnalysisError.InvalidOperation(node, leftType, node.operator, rightType))
                     }
                 }
-                if (node.left is StringNode && node.right !is StringNode) {
-                    errors.add(AnalysisError.InvalidAddition(node))
-                } else if (node.left !is StringNode && node.right is StringNode) {
-                    errors.add(AnalysisError.InvalidAddition(node))
-                } else if (node.left is AlgebraicNode && node.right !is AlgebraicNode) {
-                    if (node.operator != TokenKind.PLUS) {
-                        errors.add(AnalysisError.InvalidAddition(node))
-                    }
-                } else if (node.left !is AlgebraicNode && node.right is AlgebraicNode) {
-                    if (node.operator != TokenKind.PLUS) {
-                        errors.add(AnalysisError.InvalidAddition(node))
-                    }
+
+                if (leftType != rightType) {
+                    errors.add(AnalysisError.InvalidOperation(node, leftType, node.operator, rightType))
                 }
             }
             is FunctionNode -> {
                 val returnNode = node.block.getChildren().find { it is ReturnNode }
-                println(node.returnType)
                 var returnType = if (returnNode != null) {
                     val result = getExpressionType((returnNode as ReturnNode).expression)
                     if (result is Either.Left) {
@@ -75,7 +84,7 @@ class CumulativeSemanticAnalyzer(private val tree: SyntaxTree): SemanticAnalyzer
         node.getChildren().forEach { analyzeNode(it) }
     }
 
-    fun getExpressionType(node: SyntaxTreeNode): Either<AnalysisError, Type> {
+    tailrec fun getExpressionType(node: SyntaxTreeNode): Either<AnalysisError, Type> {
         return when (node) {
             is VariableNode -> {
                 Either.Right(symbolTable.lookup(node.name) ?: return Either.Left(AnalysisError.UndefinedVariable(node)))

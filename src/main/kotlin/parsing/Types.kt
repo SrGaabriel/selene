@@ -16,7 +16,8 @@ fun tokenKindToType(kind: TokenKind) = when (kind) {
     TokenKind.UINT64_TYPE -> Type.UINT64
     TokenKind.FLOAT32_TYPE -> Type.FLOAT32
     TokenKind.FLOAT64_TYPE -> Type.FLOAT64
-    TokenKind.STRING -> Type.STRING
+    TokenKind.STRING_TYPE -> Type.STRING
+    TokenKind.IDENTIFIER -> Type.UNKNOWN
     else -> error("Unknown token kind $kind")
 }
 

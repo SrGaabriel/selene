@@ -1,1 +1,1 @@
-intrinsic macro println (x) {}
+intrinsic macro println (message: string) {}

@@ -40,7 +40,7 @@ class StringLexer(private val data: String): Lexer {
                     if (data[position + 1] == '=') {
                         tokens.add(Token(TokenKind.ASSIGN, ":=", position)).also { position += 2 }
                     } else {
-                        return Either.Left(LexingError.UnknownToken(token.toString(), position))
+                        tokens.add(Token(TokenKind.TYPE_DECLARATION, ":", position)).also { position++ }
                     }
                 }
                 '+' -> {
@@ -94,6 +94,7 @@ class StringLexer(private val data: String): Lexer {
         return when (value) {
             "macro" -> Either.Right(Token(TokenKind.FUNCTION, value, start))
             "return" -> Either.Right(Token(TokenKind.RETURN, value, start))
+            "string" -> Either.Right(Token(TokenKind.STRING_TYPE, value, start))
             "int8" -> Either.Right(Token(TokenKind.INT8_TYPE, value, start))
             "int16" -> Either.Right(Token(TokenKind.INT16_TYPE, value, start))
             "int32" -> Either.Right(Token(TokenKind.INT32_TYPE, value, start))

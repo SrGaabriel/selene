@@ -7,6 +7,6 @@ macro main () {
     println(sum);
 }
 
-macro sum (a, b) int32 {
+macro sum (a: int32, b: int16) int32 {
     return a * b;
 }

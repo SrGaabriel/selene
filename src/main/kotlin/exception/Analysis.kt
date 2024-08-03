@@ -1,12 +1,13 @@
 package me.gabriel.gwydion.exception
 
-import me.gabriel.gwydion.parsing.BinaryOperatorNode
+import me.gabriel.gwydion.lexing.TokenKind
 import me.gabriel.gwydion.parsing.SyntaxTreeNode
 import me.gabriel.gwydion.parsing.Type
+import me.gabriel.gwydion.parsing.VariableNode
 
 sealed class AnalysisError(val message: String, val node: SyntaxTreeNode) {
-    class InvalidAddition(node: BinaryOperatorNode) : AnalysisError(
-        "invalid addition: ${node.left.startToken?.kind} + ${node.right.startToken?.kind}",
+    class InvalidOperation(node: SyntaxTreeNode, leftType: Type, operator: TokenKind, rightType: Type) : AnalysisError(
+        "invalid operation: cannot run $operator on $leftType and $rightType",
         node
     )
 
@@ -15,8 +16,13 @@ sealed class AnalysisError(val message: String, val node: SyntaxTreeNode) {
         node
     )
 
-    class UndefinedVariable(node: SyntaxTreeNode) : AnalysisError(
-        "undefined variable: ${node.startToken?.kind}",
+    class UndefinedVariable(node: VariableNode) : AnalysisError(
+        "undefined variable: ${node.name}",
+        node
+    )
+
+    class UnknownType(node: SyntaxTreeNode, type: Type) : AnalysisError(
+        "unknown type: $type",
         node
     )
 }

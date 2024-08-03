@@ -93,7 +93,7 @@ class FunctionNode(
     }
 
     override fun getChildren(): List<SyntaxTreeNode> =
-        listOf(block)
+        listOf(block, parameters)
 }
 
 class CallNode(val name: String, val parameters: CallParametersNode): SyntaxTreeNode(parameters.startToken, parameters.endToken) {

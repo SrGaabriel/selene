@@ -64,7 +64,7 @@ fun compile(text: String, logger: GwydionLogger): SyntaxTree? {
             + "parsing: ${error.message}"
             + "|"
             + "| row: ${contentTrim.replace(error.token.value, colorful(error.token.value, TextColors.red))}"
-            + ("| pos: " + " ".repeat(rowInfo.relativeIndex - trimWidth) + "^")
+            + ("| pos: " + " ".repeat(rowInfo.relativeIndex - trimWidth) + "^".repeat(error.token.value.length))
         }
         return null
     } else {

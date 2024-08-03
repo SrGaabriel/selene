@@ -11,4 +11,6 @@ sealed class ParsingError(val message: String, val token: Token) {
     class InvalidModifier(token: Token) : ParsingError("invalid macro modifier: ${token.value}", token)
 
     class UnexpectedIdentifier(token: Token) : ParsingError("unexpected identifier: ${token.value}", token)
+
+    class ParameterMissingTypeDeclaration(token: Token) : ParsingError("parameter missing type declaration", token)
 }
