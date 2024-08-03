@@ -65,26 +65,24 @@ class Parser(private val tokens: TokenStream) {
                 Either.Right(ReturnNode(expression.getRight()))
             }
             TokenKind.FUNCTION -> {
-                position++
-                val identifier = parseIdentifier()
-                if (identifier.isLeft()) {
-                    return Either.Left(identifier.getLeft())
+                val function = parseFunctionNode()
+                if (function.isLeft()) {
+                    return Either.Left(function.getLeft())
                 }
-                val parameters = parseParameters()
-                if (parameters.isLeft()) {
-                    return Either.Left(parameters.getLeft())
-                }
-                val block = parseBlock()
-                if (block.isLeft()) {
-                    return Either.Left(block.getLeft())
-                }
-                val function = FunctionNode(identifier.unwrap(), parameters.unwrap(), block.unwrap())
-                Either.Right(function)
+                Either.Right(function.getRight())
             }
             TokenKind.CLOSING_BRACES -> {
                 // We are probably reading the parent's closing braces
                 // Don't know if this is the right way to handle this
                 Either.Right(null)
+            }
+            TokenKind.INTRINSIC -> {
+                position++
+                val function = parseWholeFunction(listOf(TokenKind.INTRINSIC))
+                if (function.isLeft()) {
+                    return Either.Left(function.getLeft())
+                }
+                Either.Right(function.getRight())
             }
             TokenKind.IDENTIFIER -> {
                 position++;
@@ -108,12 +106,54 @@ class Parser(private val tokens: TokenStream) {
                         return Either.Left(it)
                     }
                     Either.Right(compoundAssignment.unwrap())
+                } else if (peek.kind == TokenKind.OPENING_PARENTHESES) {
+                    val parameters = parseCallParameters()
+                    if (parameters.isLeft()) {
+                        return Either.Left(parameters.getLeft())
+                    }
+                    consume(TokenKind.SEMICOLON).ifLeft {
+                        return Either.Left(it)
+                    }
+                    Either.Right(CallNode(token.value, parameters.unwrap()))
                 } else {
                     Either.Left(ParsingError.UnexpectedIdentifier(token))
                 }
             }
             else -> Either.Left(ParsingError.UnexpectedToken(token))
         }
+    }
+
+    fun parseWholeFunction(modifiers: List<TokenKind>): Either<ParsingError, FunctionNode> {
+        val next = peek()
+        return when (next.kind) {
+            TokenKind.FUNCTION -> {
+                val function = parseFunctionNode()
+                if (function.isLeft()) {
+                    return Either.Left(function.getLeft())
+                }
+                function.getRight().modifiers.addAll(modifiers)
+                Either.Right(function.getRight())
+            }
+            else -> Either.Left(ParsingError.InvalidModifier(next))
+        }
+    }
+
+    fun parseFunctionNode(): Either<ParsingError, FunctionNode> {
+        position++
+        val identifier = parseIdentifier()
+        if (identifier.isLeft()) {
+            return Either.Left(identifier.getLeft())
+        }
+        val parameters = parseParameters()
+        if (parameters.isLeft()) {
+            return Either.Left(parameters.getLeft())
+        }
+        val block = parseBlock()
+        if (block.isLeft()) {
+            return Either.Left(block.getLeft())
+        }
+        val function = FunctionNode(identifier.unwrap(), parameters.unwrap(), block.unwrap(), mutableListOf())
+        return Either.Right(function)
     }
 
     fun parseCompoundAssignment(token: String): Either<ParsingError, SyntaxTreeNode> {
@@ -173,6 +213,11 @@ class Parser(private val tokens: TokenStream) {
 
     fun parseExpression(): Either<ParsingError, SyntaxTreeNode> {
         val token = tokens[position]
+        println('-')
+        println(tokens[position-1])
+        println(token)
+        println(tokens[position+1])
+        println('-')
         return when (token.kind) {
             TokenKind.NUMBER -> {
                 parseNumericExpression()
@@ -218,37 +263,40 @@ class Parser(private val tokens: TokenStream) {
     }
 
     fun parseNumericExpression(): Either<ParsingError, SyntaxTreeNode> {
-        val left = parseTerm()
+        var left = parseTerm()
         if (left.isLeft()) {
             return Either.Left(left.getLeft())
         }
-        val peek = peek().kind
-        return if (peek == TokenKind.PLUS || peek == TokenKind.MINUS) {
+
+        while (peek().kind == TokenKind.PLUS || peek().kind == TokenKind.MINUS) {
+            val operator = peek().kind
             position++
-            val right = parseFactor()
+            val right = parseTerm()
             if (right.isLeft()) {
                 return Either.Left(right.getLeft())
             }
-            Either.Right(BinaryOperatorNode(left.unwrap(), TokenKind.PLUS, right.getRight()))
-        } else {
-            left
+            left = Either.Right(BinaryOperatorNode(left.unwrap(), operator, right.unwrap()))
         }
+
+        return left
     }
 
     fun parseTerm(): Either<ParsingError, SyntaxTreeNode> {
-        val left = parseFactor()
+        var left = parseFactor()
         if (left.isLeft()) {
             return Either.Left(left.getLeft())
         }
-        val peek = peek().kind
-        if (peek == TokenKind.TIMES || peek == TokenKind.DIVIDE) {
+
+        while (peek().kind == TokenKind.TIMES || peek().kind == TokenKind.DIVIDE) {
+            val operator = peek().kind
             position++
             val right = parseFactor()
             if (right.isLeft()) {
                 return Either.Left(right.getLeft())
             }
-            return Either.Right(BinaryOperatorNode(left.unwrap(), peek, right.unwrap()))
+            left = Either.Right(BinaryOperatorNode(left.unwrap(), operator, right.unwrap()))
         }
+
         return left
     }
 

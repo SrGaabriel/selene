@@ -10,6 +10,10 @@ data class SyntaxTree(val root: RootNode = RootNode(mutableListOf())) {
     fun addAllNodes(nodes: List<SyntaxTreeNode>) {
         nodes.forEach { addNode(it) }
     }
+
+    fun join(tree: SyntaxTree) {
+        addAllNodes(tree.root.getChildren())
+    }
 }
 
 sealed class SyntaxTreeNode {
@@ -42,7 +46,16 @@ class BinaryOperatorNode(val left: SyntaxTreeNode, val operator: TokenKind, val 
         listOf(left, right)
 }
 
-class FunctionNode(val name: String, val parameters: ParametersNode, val block: BlockNode): SyntaxTreeNode() {
+open class FunctionNode(
+    val name: String,
+    val parameters: ParametersNode,
+    val block: BlockNode,
+    val modifiers: MutableList<TokenKind>
+): SyntaxTreeNode() {
+    fun addModifier(modifier: TokenKind) {
+        modifiers.add(modifier)
+    }
+
     override fun getChildren(): List<SyntaxTreeNode> =
         listOf(block)
 }

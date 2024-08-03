@@ -8,5 +8,7 @@ sealed class ParsingError(val message: String, val token: Token) {
 
     class IncorrectToken(token: Token, expected: TokenKind) : ParsingError("expected $expected, got ${token.kind}", token)
 
+    class InvalidModifier(token: Token) : ParsingError("invalid macro modifier: ${token.value}", token)
+
     class UnexpectedIdentifier(token: Token) : ParsingError("unexpected identifier: ${token.value}", token)
 }

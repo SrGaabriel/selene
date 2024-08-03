@@ -7,10 +7,17 @@ import kotlin.math.exp
 class KotlinCodeExecutor(private val tree: SyntaxTree): CodeExecutor {
     val functions = mutableListOf<FunctionNode>()
     val variables = mutableMapOf<String, Int>()
+    val intrinsics = mutableListOf<IntrinsicFunction>(
+        PrintFunction()
+    )
 
     override fun execute() {
         executeBlock(tree.root, false)
-        println(executeMain())
+        executeMain()
+    }
+
+    fun join(otherTree: SyntaxTree) {
+        tree.join(otherTree)
     }
 
     fun executeMain(): Int {
@@ -41,6 +48,11 @@ class KotlinCodeExecutor(private val tree: SyntaxTree): CodeExecutor {
                     val value = executeExpression(expression)
                     variables[statement.name] = value
                 }
+                is CallNode -> {
+                    executeFunction(statement.name, statement.parameters.parameters.map {
+                        executeExpression(it)
+                    })
+                }
                 is CompoundAssignmentNode -> {
                     val expression = statement.expression
                     val value = executeExpression(expression)
@@ -59,7 +71,7 @@ class KotlinCodeExecutor(private val tree: SyntaxTree): CodeExecutor {
                 }
             }
         }
-        if (expectReturn) throw IllegalStateException("No return statement found") else return 0
+        return 0
     }
 
     fun registerFunction(node: FunctionNode) {
@@ -98,6 +110,11 @@ class KotlinCodeExecutor(private val tree: SyntaxTree): CodeExecutor {
         function.parameters.parameters.forEachIndexed { index, parameter ->
             variables[parameter.name] = parameters[index] as Int
         }
-        return executeBlock(block)
+        if (function.modifiers.contains(TokenKind.INTRINSIC)) {
+            val intrinsic = intrinsics.find { it.name == name } ?: throw IllegalStateException("Intrinsic $name not found")
+            return intrinsic.execute(parameters as List<Int>)
+        } else {
+            return executeBlock(block)
+        }
     }
 }

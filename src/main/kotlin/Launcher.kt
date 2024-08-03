@@ -3,9 +3,11 @@ package me.gabriel.gwydion;
 import com.github.ajalt.mordant.rendering.TextColors
 import me.gabriel.gwydion.executor.KotlinCodeExecutor
 import me.gabriel.gwydion.lexing.lexers.StringLexer
+import me.gabriel.gwydion.log.GwydionLogger
 import me.gabriel.gwydion.log.LogLevel
 import me.gabriel.gwydion.log.MordantLogger
 import me.gabriel.gwydion.parsing.Parser
+import me.gabriel.gwydion.parsing.SyntaxTree
 import me.gabriel.gwydion.util.findRowOfIndex
 import me.gabriel.gwydion.util.replaceAtIndex
 import me.gabriel.gwydion.util.trimIndentReturningWidth
@@ -15,7 +17,19 @@ fun main() {
     val logger = MordantLogger()
     logger.log(LogLevel.INFO) { +"Starting the Gwydion compiler..." }
 
+    val stdlib = readStdlib()
+    val stdlibCompiled = compile(stdlib, logger) ?: return
+
     val text = readText();
+    val compiled = compile(text, logger) ?: return
+
+    stdlibCompiled.join(compiled)
+    val executor = KotlinCodeExecutor(stdlibCompiled)
+    logger.log(LogLevel.INFO) { +"Now executing the code... Output:" }
+    executor.execute()
+}
+
+fun compile(text: String, logger: GwydionLogger): SyntaxTree? {
     val lexer = StringLexer(text);
     val result = lexer.tokenize();
     if (result.isLeft()) {
@@ -30,7 +44,7 @@ fun main() {
             + "| row: ${replaceAtIndex(contentTrim, newRelativeIndex, 1, colorful(contentTrim[newRelativeIndex].toString(), TextColors.red))}"
             + ("| pos: " + " ".repeat(rowInfo.relativeIndex - trimWidth) + "^")
         }
-        return
+        return null
     }
     val tokenStream = result.getRight();
     logger.log(LogLevel.DEBUG) { +"The lexing was successful with ${tokenStream.count()} tokens!" }
@@ -48,18 +62,18 @@ fun main() {
             + "| row: ${contentTrim.replace(error.token.value, colorful(error.token.value, TextColors.red))}"
             + ("| pos: " + " ".repeat(rowInfo.relativeIndex - trimWidth) + "^")
         }
-        return
+        return null
     } else {
         logger.log(LogLevel.DEBUG) { +"The parsing was successful!" }
     }
 
-    val syntaxTree = parsingResult.getRight()
-
-    val executor = KotlinCodeExecutor(syntaxTree)
-    logger.log(LogLevel.INFO) { +"Now executing the code... Output:" }
-    executor.execute()
+    return parsingResult.getRight()
 }
 
 fun readText(): String {
     return File("src/main/resources/example.wy").readText()
+}
+
+fun readStdlib(): String {
+    return File("stdlib/src/io.wy").readText()
 }

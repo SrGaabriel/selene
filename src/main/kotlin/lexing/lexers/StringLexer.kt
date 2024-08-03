@@ -86,6 +86,7 @@ class StringLexer(private val data: String): Lexer {
         return when (value) {
             "macro" -> Either.Right(Token(TokenKind.FUNCTION, value, start))
             "return" -> Either.Right(Token(TokenKind.RETURN, value, start))
+            "intrinsic" -> Either.Right(Token(TokenKind.INTRINSIC, value, start))
             else -> Either.Right(Token(TokenKind.IDENTIFIER, value, start))
         }
     }
