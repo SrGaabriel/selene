@@ -2,6 +2,7 @@ package me.gabriel.gwydion.executor
 
 import me.gabriel.gwydion.lexing.TokenKind
 import me.gabriel.gwydion.parsing.*
+import kotlin.math.exp
 
 class KotlinCodeExecutor(private val tree: SyntaxTree): CodeExecutor {
     val functions = mutableListOf<FunctionNode>()
@@ -70,11 +71,20 @@ class KotlinCodeExecutor(private val tree: SyntaxTree): CodeExecutor {
                 variables[expression.name] ?: throw IllegalStateException("Variable ${expression.name} not found")
             }
             is CallNode -> {
-                functions.find { it.name == expression.name }?.let {
-                    return executeBlock(it.block)
-                } ?: throw IllegalStateException("Function ${expression.name} not found")
+                executeFunction(expression.name, expression.parameters.parameters.map {
+                    executeExpression(it)
+                })
             }
             else -> throw IllegalStateException("Unknown expression type $expression")
         }
+    }
+
+    fun executeFunction(name: String, parameters: List<Any>): Int {
+        val function = functions.find { it.name == name } ?: throw IllegalStateException("Function $name not found")
+        val block = function.block
+        function.parameters.parameters.forEachIndexed { index, parameter ->
+            variables[parameter.name] = parameters[index] as Int
+        }
+        return executeBlock(block)
     }
 }

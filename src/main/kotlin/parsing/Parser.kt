@@ -64,11 +64,15 @@ class Parser(private val tokens: TokenStream) {
                 if (identifier.isLeft()) {
                     return Either.Left(identifier.getLeft())
                 }
+                val parameters = parseParameters()
+                if (parameters.isLeft()) {
+                    return Either.Left(parameters.getLeft())
+                }
                 val block = parseBlock()
                 if (block.isLeft()) {
                     return Either.Left(block.getLeft())
                 }
-                val function = FunctionNode(identifier.unwrap(), block.unwrap())
+                val function = FunctionNode(identifier.unwrap(), parameters.unwrap(), block.unwrap())
                 Either.Right(function)
             }
             TokenKind.CLOSING_BRACES -> {
@@ -95,6 +99,34 @@ class Parser(private val tokens: TokenStream) {
         }
     }
 
+    fun parseParameters(): Either<ParsingError, ParametersNode> {
+        consume(TokenKind.OPENING_PARENTHESES)
+        val parameters = mutableListOf<ParameterNode>()
+        while (peek().kind != TokenKind.CLOSING_PARENTHESES) {
+            val parameter = parseParameter()
+            if (parameter.isLeft()) {
+                return Either.Left(parameter.getLeft())
+            }
+            parameters.add(parameter.getRight())
+            if (peek().kind == TokenKind.COMMA) {
+                position++
+            }
+            if (position >= tokens.count()) {
+                throw IllegalArgumentException("Unexpected end of file")
+            }
+        }
+        consume(TokenKind.CLOSING_PARENTHESES)
+        return Either.Right(ParametersNode(parameters))
+    }
+
+    fun parseParameter(): Either<ParsingError, ParameterNode> {
+        val identifier = parseIdentifier()
+        if (identifier.isLeft()) {
+            return Either.Left(identifier.getLeft())
+        }
+        return Either.Right(ParameterNode(identifier.unwrap()))
+    }
+
     fun parseIdentifier(): Either<ParsingError, String> {
         val token = tokens[position]
         if (token.kind == TokenKind.IDENTIFIER) {
@@ -111,19 +143,39 @@ class Parser(private val tokens: TokenStream) {
                 parseNumericExpression()
             }
             TokenKind.IDENTIFIER -> {
-                position++
-                val peek = peek()
-                if (peek.kind == TokenKind.OPENING_PARENTHESES) {
-                    position++
-//                    val expression = parseExpression()
-                    consume(TokenKind.CLOSING_PARENTHESES)
-                    Either.Right(CallNode(token.value))
+                if (peekNext().kind == TokenKind.OPENING_PARENTHESES) {
+                    position ++
+                    val parameters = parseCallParameters()
+                    if (parameters.isLeft()) {
+                        return Either.Left(parameters.getLeft())
+                    }
+                    Either.Right(CallNode(token.value, parameters.unwrap()))
                 } else {
-                    Either.Right(VariableNode(token.value))
+                    parseNumericExpression()
                 }
             }
             else -> Either.Left(ParsingError.UnexpectedToken(token.value))
         }
+    }
+
+    fun parseCallParameters(): Either<ParsingError, CallParametersNode> {
+        consume(TokenKind.OPENING_PARENTHESES)
+        val parameters = mutableListOf<SyntaxTreeNode>()
+        while (peek().kind != TokenKind.CLOSING_PARENTHESES) {
+            val expression = parseExpression()
+            if (expression.isLeft()) {
+                return Either.Left(expression.getLeft())
+            }
+            parameters.add(expression.getRight())
+            if (peek().kind == TokenKind.COMMA) {
+                position++
+            }
+            if (position >= tokens.count()) {
+                throw IllegalArgumentException("Unexpected end of file")
+            }
+        }
+        consume(TokenKind.CLOSING_PARENTHESES)
+        return Either.Right(CallParametersNode(parameters))
     }
 
     fun parseNumericExpression(): Either<ParsingError, SyntaxTreeNode> {
@@ -170,11 +222,14 @@ class Parser(private val tokens: TokenStream) {
                 node
             }
             TokenKind.NUMBER -> Either.Right(NumberNode(consume().value.toInt()))
+            TokenKind.IDENTIFIER -> Either.Right(VariableNode(consume().value))
             else -> throw IllegalArgumentException("Unexpected token: ${peek()}")
         }
     }
 
     private fun peek(): Token = if (position < tokens.count()) tokens[position] else tokens.last()
+
+    private fun peekNext(): Token = if (position + 1 < tokens.count()) tokens[position + 1] else tokens.last()
 
     private fun consume(): Token = tokens[position++]
 
@@ -182,7 +237,7 @@ class Parser(private val tokens: TokenStream) {
         if (peek().kind == expected) {
             position++
         } else {
-            throw IllegalArgumentException("Expected $expected, found ${peek().kind}")
+            throw IllegalArgumentException("Expected $expected, found ${peek().kind} (${peek().value})")
         }
     }
 }

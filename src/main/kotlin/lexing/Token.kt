@@ -11,6 +11,7 @@ enum class TokenKind {
     RETURN,
     SEMICOLON,
     ASSIGN,
+    COMMA,
     OPENING_PARENTHESES,
     CLOSING_PARENTHESES,
     FUNCTION,

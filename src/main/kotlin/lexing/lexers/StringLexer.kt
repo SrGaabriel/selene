@@ -23,6 +23,7 @@ class StringLexer(private val data: String): Lexer {
                 '}' -> tokens.add(Token(TokenKind.CLOSING_BRACES, "}")).also { position++ }
                 '(' -> tokens.add(Token(TokenKind.OPENING_PARENTHESES, "(")).also { position++ }
                 ')' -> tokens.add(Token(TokenKind.CLOSING_PARENTHESES, ")")).also { position++ }
+                ',' -> tokens.add(Token(TokenKind.COMMA, ",")).also { position++ }
                 in '0'..'9' -> tokens.add(number())
                 in 'a'..'z' -> {
                     val identifier = identifier(token.toString())

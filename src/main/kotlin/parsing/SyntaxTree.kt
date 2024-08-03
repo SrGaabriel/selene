@@ -42,13 +42,13 @@ class BinaryOperatorNode(val left: SyntaxTreeNode, val operator: TokenKind, val 
         listOf(left, right)
 }
 
-class FunctionNode(val name: String, val block: BlockNode): SyntaxTreeNode() {
+class FunctionNode(val name: String, val parameters: ParametersNode, val block: BlockNode): SyntaxTreeNode() {
     override fun getChildren(): List<SyntaxTreeNode> =
         listOf(block)
 }
 
-class CallNode(val name: String): SyntaxTreeNode() {
-    override fun getChildren(): List<SyntaxTreeNode> = emptyList()
+class CallNode(val name: String, val parameters: CallParametersNode): SyntaxTreeNode() {
+    override fun getChildren(): List<SyntaxTreeNode> = parameters.parameters
 }
 
 class AssignmentNode(val name: String, val expression: SyntaxTreeNode): SyntaxTreeNode() {
@@ -57,3 +57,15 @@ class AssignmentNode(val name: String, val expression: SyntaxTreeNode): SyntaxTr
 }
 
 class VariableNode(val name: String): ConstantNode()
+
+class ParametersNode(val parameters: List<ParameterNode>): SyntaxTreeNode() {
+    override fun getChildren(): List<SyntaxTreeNode> = parameters
+}
+
+class ParameterNode(val name: String): SyntaxTreeNode() {
+    override fun getChildren(): List<SyntaxTreeNode> = emptyList()
+}
+
+class CallParametersNode(val parameters: List<SyntaxTreeNode>): SyntaxTreeNode() {
+    override fun getChildren(): List<SyntaxTreeNode> = parameters
+}
