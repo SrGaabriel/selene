@@ -109,6 +109,7 @@ class CumulativeSemanticAnalyzer(
             is TypedSyntaxTreeNode -> Either.Right(node.type)
             is BinaryOperatorNode -> getExpressionType(node.left)
             is CallNode -> Either.Right(inferCallType(node))
+            is EqualsNode -> Either.Right(Type.Boolean)
             else -> error("Unknown node type $node")
         }
     }

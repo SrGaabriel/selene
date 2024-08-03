@@ -71,6 +71,13 @@ class StringLexer(private val data: String): Lexer {
                         tokens.add(Token(TokenKind.DIVIDE, "/", position)).also { position++ }
                     }
                 }
+                '=' -> {
+                    if (data[position + 1] == '=') {
+                        tokens.add(Token(TokenKind.EQUALS, "==", position)).also { position += 2 }
+                    } else {
+                        return Either.Left(LexingError.UnknownToken(token.toString(), position))
+                    }
+                }
                 else -> return Either.Left(LexingError.UnknownToken(token.toString(), position))
             }
         }
@@ -99,6 +106,7 @@ class StringLexer(private val data: String): Lexer {
             "true", "false" -> Either.Right(Token(TokenKind.BOOL_TYPE, value, start))
             "if" -> Either.Right(Token(TokenKind.IF, value, start))
             "else" -> Either.Right(Token(TokenKind.ELSE, value, start))
+            "any" -> Either.Right(Token(TokenKind.ANY_TYPE, value, start))
             "int8" -> Either.Right(Token(TokenKind.INT8_TYPE, value, start))
             "int16" -> Either.Right(Token(TokenKind.INT16_TYPE, value, start))
             "int32" -> Either.Right(Token(TokenKind.INT32_TYPE, value, start))

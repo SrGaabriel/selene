@@ -143,6 +143,11 @@ class KotlinCodeExecutor(private val tree: SyntaxTree): CodeExecutor {
                     return operateUnknownNumbers(left, expression.operator, right)
                 }
             }
+            is EqualsNode -> {
+                val left = executeExpression(expression.left)
+                val right = executeExpression(expression.right)
+                return left == right
+            }
             is VariableReferenceNode -> {
                 variables[expression.name] ?: throw IllegalStateException("Variable ${expression.name} not found")
             }

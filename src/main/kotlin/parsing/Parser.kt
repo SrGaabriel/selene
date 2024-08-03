@@ -81,15 +81,9 @@ class Parser(private val tokens: TokenStream) {
             }
             TokenKind.IF -> {
                 position++
-                consume(TokenKind.OPENING_PARENTHESES).ifLeft {
-                    return Either.Left(it)
-                }
                 val condition = parseExpression()
                 if (condition.isLeft()) {
                     return Either.Left(condition.getLeft())
-                }
-                consume(TokenKind.CLOSING_PARENTHESES).ifLeft {
-                    return Either.Left(it)
                 }
                 val block = parseBlock()
                 if (block.isLeft()) {
@@ -280,8 +274,22 @@ class Parser(private val tokens: TokenStream) {
         return Either.Left(ParsingError.UnexpectedToken(token))
     }
 
-    fun parseExpression(): Either<ParsingError, SyntaxTreeNode> {
+    fun parseExpression(ignoreEquals: Boolean = false): Either<ParsingError, SyntaxTreeNode> {
         val token = tokens[position]
+        if (!ignoreEquals && peekNext().kind == TokenKind.EQUALS) {
+            val left = parseExpression(true)
+            if (left.isLeft()) {
+                return Either.Left(left.getLeft())
+            }
+            consume(TokenKind.EQUALS).ifLeft {
+                return Either.Left(it)
+            }
+            val right = parseExpression()
+            if (right.isLeft()) {
+                return Either.Left(right.getLeft())
+            }
+            return Either.Right(EqualsNode(left.unwrap(), right.unwrap(), token))
+        }
         return when (token.kind) {
             TokenKind.NUMBER -> {
                 parseNumericExpression()

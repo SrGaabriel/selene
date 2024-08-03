@@ -8,6 +8,7 @@ enum class TokenKind {
     MINUS,
     TIMES,
     DIVIDE,
+    EQUALS,
     PLUS_ASSIGN,
     MINUS_ASSIGN,
     TIMES_ASSIGN,
@@ -27,6 +28,7 @@ enum class TokenKind {
     IF,
     ELSE,
     TYPE_DECLARATION,
+    ANY_TYPE,
     INT8_TYPE,
     INT16_TYPE,
     INT32_TYPE,
@@ -42,6 +44,7 @@ enum class TokenKind {
 }
 
 val TYPE_TOKENS = listOf(
+    TokenKind.ANY_TYPE,
     TokenKind.INT8_TYPE,
     TokenKind.INT16_TYPE,
     TokenKind.INT32_TYPE,

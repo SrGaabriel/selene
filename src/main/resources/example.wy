@@ -1,12 +1,10 @@
 macro main () {
-    println(stringify(a()));
-
-    if (true) {
-        println("true");
-    } else {
-        println("false");
-    }
-
     reading := readln();
     println("You typed: " + reading);
+
+    if reading == "banana" {
+        println("You typed banana!");
+    } else {
+        println("You didn't type banana.");
+    }
 }

@@ -82,6 +82,14 @@ class BinaryOperatorNode(
     override fun getChildren(): List<SyntaxTreeNode> = listOf(left, right)
 }
 
+class EqualsNode(
+    val left: SyntaxTreeNode,
+    val right: SyntaxTreeNode,
+    start: Token?
+) : SyntaxTreeNode(start, right.end) {
+    override fun getChildren(): List<SyntaxTreeNode> = listOf(left, right)
+}
+
 class ReturnNode(
     val expression: SyntaxTreeNode,
     start: Token

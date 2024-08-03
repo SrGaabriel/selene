@@ -3,6 +3,7 @@ package me.gabriel.gwydion.parsing
 import me.gabriel.gwydion.lexing.TokenKind
 
 sealed class Type(val name: kotlin.String) {
+    data object Any : Type("any")
     data object Int8 : Type("int8")
     data object Int16 : Type("int16")
     data object Int32 : Type("int32")
@@ -22,6 +23,7 @@ sealed class Type(val name: kotlin.String) {
 }
 
 fun tokenKindToType(kind: TokenKind) = when (kind) {
+    TokenKind.ANY_TYPE -> Type.Any
     TokenKind.INT8_TYPE -> Type.Int8
     TokenKind.INT16_TYPE -> Type.Int16
     TokenKind.INT32_TYPE -> Type.Int32
