@@ -1,10 +1,12 @@
-fn main() {
-    abobora := 5;
+macro main () {
+    abobora := 15;
     banana := 10;
+
     sum := sum(abobora,banana);
+    sum += 50;
     return sum;
 }
 
-fn sum(a, b) {
+macro sum (a, b) {
     return a * b;
 }

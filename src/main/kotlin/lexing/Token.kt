@@ -8,6 +8,10 @@ enum class TokenKind {
     MINUS,
     TIMES,
     DIVIDE,
+    PLUS_ASSIGN,
+    MINUS_ASSIGN,
+    TIMES_ASSIGN,
+    DIVIDE_ASSIGN,
     RETURN,
     SEMICOLON,
     ASSIGN,
@@ -20,10 +24,8 @@ enum class TokenKind {
     CLOSING_BRACES,
 }
 
-
-
 data class Token(
     val kind: TokenKind,
-    val value: String
+    val value: String,
+    val position: Int
 )
-

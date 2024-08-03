@@ -41,6 +41,19 @@ class KotlinCodeExecutor(private val tree: SyntaxTree): CodeExecutor {
                     val value = executeExpression(expression)
                     variables[statement.name] = value
                 }
+                is CompoundAssignmentNode -> {
+                    val expression = statement.expression
+                    val value = executeExpression(expression)
+                    val variable = variables[statement.name] ?: throw IllegalStateException("Variable ${statement.name} not found")
+                    val result = when (statement.operator) {
+                        TokenKind.PLUS_ASSIGN -> variable + value
+                        TokenKind.MINUS_ASSIGN -> variable - value
+                        TokenKind.TIMES_ASSIGN -> variable * value
+                        TokenKind.DIVIDE_ASSIGN -> variable / value
+                        else -> throw IllegalStateException("Unknown operator")
+                    }
+                    variables[statement.name] = result
+                }
                 else -> {
                     throw IllegalStateException("Unknown statement type $statement")
                 }

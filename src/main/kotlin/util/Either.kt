@@ -120,6 +120,20 @@ public sealed class Either<Left, Right> private constructor() {
      */
     public fun unwrap(): Right = getRight()
 
+    /**
+     * Maps the left value if it is present.
+     */
+    public inline fun ifLeft(block: (Left) -> Unit): Either<Left, Right> {
+        if (isLeft()) block(getLeft())
+        return this
+    }
+
+    /**
+     * Folds the left value if it is present.
+     */
+    public inline fun foldIfLeft(block: (Either<Left, Right>) -> Unit) {
+        if (isLeft()) block(this)
+    }
 
     public companion object {
         public fun <Left, Right> left(value: Left): Either<Left, Right> = Left(value)

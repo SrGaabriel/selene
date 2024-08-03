@@ -56,6 +56,11 @@ class AssignmentNode(val name: String, val expression: SyntaxTreeNode): SyntaxTr
         listOf(expression)
 }
 
+class CompoundAssignmentNode(val name: String, val operator: TokenKind, val expression: SyntaxTreeNode): SyntaxTreeNode() {
+    override fun getChildren(): List<SyntaxTreeNode> =
+        listOf(expression)
+}
+
 class VariableNode(val name: String): ConstantNode()
 
 class ParametersNode(val parameters: List<ParameterNode>): SyntaxTreeNode() {
