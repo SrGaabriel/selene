@@ -5,8 +5,12 @@ import me.gabriel.gwydion.lexing.lexers.StringLexer
 enum class TokenKind {
     NUMBER,
     PLUS,
+    MINUS,
+    TIMES,
+    DIVIDE,
     RETURN,
     SEMICOLON,
+    ASSIGN,
     OPENING_PARENTHESES,
     CLOSING_PARENTHESES,
     FUNCTION,

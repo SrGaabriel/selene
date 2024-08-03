@@ -26,7 +26,12 @@ class Parser(private val tokens: TokenStream) {
             if (statement.isLeft()) {
                 return Either.Left(statement.getLeft())
             }
-            statement.getRight()?.let { statements.add(it) }
+            val node = statement.getRight()
+            if (node != null) {
+                statements.add(node)
+            } else {
+                break
+            }
         }
         return Either.Right(statements)
     }
@@ -43,7 +48,6 @@ class Parser(private val tokens: TokenStream) {
 
     fun parseStatement(): Either<ParsingError, SyntaxTreeNode?> {
         val token = tokens[position]
-        println("Parsing statement starting with " + token.kind)
         return when (token.kind) {
             TokenKind.RETURN -> {
                 position++
@@ -65,14 +69,27 @@ class Parser(private val tokens: TokenStream) {
                     return Either.Left(block.getLeft())
                 }
                 val function = FunctionNode(identifier.unwrap(), block.unwrap())
-                println("func")
                 Either.Right(function)
             }
             TokenKind.CLOSING_BRACES -> {
                 // We are probably reading the parent's closing braces
                 // Don't know if this is the right way to handle this
-                position++
                 Either.Right(null)
+            }
+            TokenKind.IDENTIFIER -> {
+                position++;
+                val peek = peek()
+                if (peek.kind == TokenKind.ASSIGN) {
+                    position++
+                    val expression = parseExpression()
+                    if (expression.isLeft()) {
+                        return Either.Left(expression.getLeft())
+                    }
+                    consume(TokenKind.SEMICOLON)
+                    Either.Right(AssignmentNode(token.value, expression.getRight()))
+                } else {
+                    Either.Left(ParsingError.UnexpectedIdentifier(token.value))
+                }
             }
             else -> Either.Left(ParsingError.UnexpectedToken(token.value))
         }
@@ -91,21 +108,57 @@ class Parser(private val tokens: TokenStream) {
         val token = tokens[position]
         return when (token.kind) {
             TokenKind.NUMBER -> {
+                parseNumericExpression()
+            }
+            TokenKind.IDENTIFIER -> {
                 position++
-                val left = NumberNode(token.value.toInt())
-                if (peek().kind == TokenKind.PLUS) {
+                val peek = peek()
+                if (peek.kind == TokenKind.OPENING_PARENTHESES) {
                     position++
-                    val right = parseFactor()
-                    if (right.isLeft()) {
-                        return Either.Left(right.getLeft())
-                    }
-                    Either.Right(BinaryOperatorNode(left, TokenKind.PLUS, right.getRight()))
+//                    val expression = parseExpression()
+                    consume(TokenKind.CLOSING_PARENTHESES)
+                    Either.Right(CallNode(token.value))
                 } else {
-                    Either.Right(left)
+                    Either.Right(VariableNode(token.value))
                 }
             }
             else -> Either.Left(ParsingError.UnexpectedToken(token.value))
         }
+    }
+
+    fun parseNumericExpression(): Either<ParsingError, SyntaxTreeNode> {
+        val left = parseTerm()
+        if (left.isLeft()) {
+            return Either.Left(left.getLeft())
+        }
+        val peek = peek().kind
+        return if (peek == TokenKind.PLUS || peek == TokenKind.MINUS) {
+            position++
+            val right = parseFactor()
+            if (right.isLeft()) {
+                return Either.Left(right.getLeft())
+            }
+            Either.Right(BinaryOperatorNode(left.unwrap(), TokenKind.PLUS, right.getRight()))
+        } else {
+            left
+        }
+    }
+
+    fun parseTerm(): Either<ParsingError, SyntaxTreeNode> {
+        val left = parseFactor()
+        if (left.isLeft()) {
+            return Either.Left(left.getLeft())
+        }
+        val peek = peek().kind
+        if (peek == TokenKind.TIMES || peek == TokenKind.DIVIDE) {
+            position++
+            val right = parseFactor()
+            if (right.isLeft()) {
+                return Either.Left(right.getLeft())
+            }
+            return Either.Right(BinaryOperatorNode(left.unwrap(), peek, right.unwrap()))
+        }
+        return left
     }
 
     fun parseFactor(): Either<ParsingError, SyntaxTreeNode> {

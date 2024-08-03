@@ -46,3 +46,14 @@ class FunctionNode(val name: String, val block: BlockNode): SyntaxTreeNode() {
     override fun getChildren(): List<SyntaxTreeNode> =
         listOf(block)
 }
+
+class CallNode(val name: String): SyntaxTreeNode() {
+    override fun getChildren(): List<SyntaxTreeNode> = emptyList()
+}
+
+class AssignmentNode(val name: String, val expression: SyntaxTreeNode): SyntaxTreeNode() {
+    override fun getChildren(): List<SyntaxTreeNode> =
+        listOf(expression)
+}
+
+class VariableNode(val name: String): ConstantNode()

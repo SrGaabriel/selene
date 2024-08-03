@@ -1,3 +1,12 @@
+fn calculate {
+    return 5 * (15 + 2);
+}
+
 fn main {
-    return 15 + 2;
+    a := test();
+    return a;
+}
+
+fn test {
+    return calculate();
 }

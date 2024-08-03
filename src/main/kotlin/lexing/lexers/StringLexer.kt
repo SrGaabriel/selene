@@ -15,6 +15,9 @@ class StringLexer(private val data: String): Lexer {
             when (val token = data[position]) {
                 ' ', '\n', '\t', '\r' -> position++
                 '+' -> tokens.add(Token(TokenKind.PLUS, "+")).also { position++ }
+                '-' -> tokens.add(Token(TokenKind.MINUS, "-")).also { position++ }
+                '*' -> tokens.add(Token(TokenKind.TIMES, "*")).also { position++ }
+                '/' -> tokens.add(Token(TokenKind.DIVIDE, "/")).also { position++ }
                 ';' -> tokens.add(Token(TokenKind.SEMICOLON, ";")).also { position++ }
                 '{' -> tokens.add(Token(TokenKind.OPENING_BRACES, "{")).also { position++ }
                 '}' -> tokens.add(Token(TokenKind.CLOSING_BRACES, "}")).also { position++ }
@@ -27,6 +30,13 @@ class StringLexer(private val data: String): Lexer {
                         return Either.Left(identifier.getLeft())
                     }
                     tokens.add(identifier.getRight())
+                }
+                ':' -> {
+                    if (data[position + 1] == '=') {
+                        tokens.add(Token(TokenKind.ASSIGN, ":=")).also { position += 2 }
+                    } else {
+                        return Either.Left(LexingError.UnknownToken(token.toString()))
+                    }
                 }
                 else -> return Either.Left(LexingError.UnknownToken(token.toString()))
             }

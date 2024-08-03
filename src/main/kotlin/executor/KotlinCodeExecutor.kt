@@ -5,21 +5,22 @@ import me.gabriel.gwydion.parsing.*
 
 class KotlinCodeExecutor(private val tree: SyntaxTree): CodeExecutor {
     val functions = mutableListOf<FunctionNode>()
+    val variables = mutableMapOf<String, Int>()
 
     override fun execute() {
-        executeBlock(tree.root)
-        executeMain()
+        executeBlock(tree.root, false)
+        println(executeMain())
     }
 
-    fun executeMain() {
+    fun executeMain(): Int {
         val mainFunction = functions.find { it.name == "main" }
         if (mainFunction == null) {
             throw IllegalStateException("No main function found")
         }
-        executeBlock(mainFunction.block)
+        return executeBlock(mainFunction.block)
     }
 
-    fun executeBlock(block: BlockNode) {
+    fun executeBlock(block: BlockNode, expectReturn: Boolean=true): Int {
         val statements = block.getChildren()
         statements.forEach { statement ->
             when (statement) {
@@ -28,31 +29,52 @@ class KotlinCodeExecutor(private val tree: SyntaxTree): CodeExecutor {
                 }
                 is ReturnNode -> {
                     val expression = statement.expression
-                    println(evaluateExpression(expression))
+                    if (expectReturn) {
+                        return executeExpression(expression)
+                    } else {
+                        throw IllegalStateException("Unexpected return statement")
+                    }
+                }
+                is AssignmentNode -> {
+                    val expression = statement.expression
+                    val value = executeExpression(expression)
+                    variables[statement.name] = value
                 }
                 else -> {
                     throw IllegalStateException("Unknown statement type $statement")
                 }
             }
         }
+        if (expectReturn) throw IllegalStateException("No return statement found") else return 0
     }
 
     fun registerFunction(node: FunctionNode) {
         functions.add(node)
     }
 
-    fun evaluateExpression(expression: SyntaxTreeNode): Int {
+    fun executeExpression(expression: SyntaxTreeNode): Int {
         return when (expression) {
             is NumberNode -> expression.value
             is BinaryOperatorNode -> {
-                val left = evaluateExpression(expression.left)
-                val right = evaluateExpression(expression.right)
+                val left = executeExpression(expression.left)
+                val right = executeExpression(expression.right)
                 when (expression.operator) {
                     TokenKind.PLUS -> left + right
+                    TokenKind.MINUS -> left - right
+                    TokenKind.TIMES -> left * right
+                    TokenKind.DIVIDE -> left / right
                     else -> throw IllegalStateException("Unknown operator")
                 }
             }
-            else -> throw IllegalStateException("Unknown expression type")
+            is VariableNode -> {
+                variables[expression.name] ?: throw IllegalStateException("Variable ${expression.name} not found")
+            }
+            is CallNode -> {
+                functions.find { it.name == expression.name }?.let {
+                    return executeBlock(it.block)
+                } ?: throw IllegalStateException("Function ${expression.name} not found")
+            }
+            else -> throw IllegalStateException("Unknown expression type $expression")
         }
     }
 }
