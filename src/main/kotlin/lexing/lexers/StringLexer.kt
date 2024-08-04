@@ -53,6 +53,8 @@ class StringLexer(private val data: String): Lexer {
                 '-' -> {
                     if (data[position + 1] == '=') {
                         tokens.add(Token(TokenKind.MINUS_ASSIGN, "--", position)).also { position += 2 }
+                    } else if (data[position + 1] == '>') {
+                        tokens.add(Token(TokenKind.RETURN_TYPE_DECLARATION, "->", position)).also { position += 2 }
                     } else {
                         tokens.add(Token(TokenKind.MINUS, "-", position)).also { position++ }
                     }

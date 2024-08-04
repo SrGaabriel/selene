@@ -28,6 +28,7 @@ enum class TokenKind {
     IF,
     ELSE,
     TYPE_DECLARATION,
+    RETURN_TYPE_DECLARATION,
     ANY_TYPE,
     INT8_TYPE,
     INT16_TYPE,

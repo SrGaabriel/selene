@@ -31,6 +31,9 @@ class LLVMCodeGeneratorProcess(
     fun setup() {
         dependencies.addAll(intrinsics.flatMap { it.dependencies() })
         ir.add("declare i32 @strcmp(i8*, i8*)")
+        ir.add("declare i32 @strlen(i8*)")
+        ir.add("declare i8* @malloc(i32)")
+        ir.add("declare void @memcpy(i8*, i8*, i32)")
         ir.add("@format_s = private unnamed_addr constant [3 x i8] c\"%s\\00\"")
         ir.add("@format_n = private unnamed_addr constant [3 x i8] c\"%d\\00\"")
         dependencies.forEach {
@@ -116,7 +119,31 @@ class LLVMCodeGeneratorProcess(
     private fun generateBinaryOperator(block: MemoryBlock, node: BinaryOperatorNode): Int {
         val leftReg = generateNode(node.left, block)
         val rightReg = generateNode(node.right, block)
-        val resultReg = block.getNextRegister()
+        val typeResult = getExpressionType(block, node.left)
+        if (typeResult.isLeft()) {
+            throw IllegalStateException("Unknown type for binary operator")
+        }
+        val type = typeResult.unwrap()
+        val resultReg = if (type == Type.String) {
+            val leftLengthReg = block.getNextRegister()
+            ir.add("    %$leftLengthReg = call i32 @strlen(i8* %$leftReg)")
+            val rightLengthReg = block.getNextRegister()
+            ir.add("    %$rightLengthReg = call i32 @strlen(i8* %$rightReg)")
+
+            val totalLengthWithoutNullReg = block.getNextRegister()
+            ir.add("    %$totalLengthWithoutNullReg = add i32 %$leftLengthReg, %$rightLengthReg")
+            val totalLengthReg = block.getNextRegister()
+            ir.add("    %$totalLengthReg = add i32 %$totalLengthWithoutNullReg, 1")
+
+            val resultReg = block.getNextRegister()
+            ir.add("    %$resultReg = call i8* @malloc(i32 %$totalLengthReg)")
+            ir.add("    call void @memcpy(i8* %$resultReg, i8* %$leftReg, i32 %$totalLengthReg)")
+            val resultOffsetReg = block.getNextRegister()
+            ir.add("    %$resultOffsetReg = getelementptr inbounds i8, i8* %$resultReg, i32 %$leftLengthReg")
+            ir.add("    call void @memcpy(i8* %$resultOffsetReg, i8* %$rightReg, i32 %$totalLengthReg)")
+            return resultReg
+        } else block.getNextRegister()
+
         val instruction = when (node.operator) {
             TokenKind.PLUS -> "add"
             TokenKind.MINUS -> "sub"
@@ -124,7 +151,7 @@ class LLVMCodeGeneratorProcess(
             TokenKind.DIVIDE -> "sdiv"
             else -> throw UnsupportedOperationException("Unsupported binary operator: ${node.operator}")
         }
-        ir.add("    %$resultReg = $instruction i32 %$leftReg, %$rightReg")
+        ir.add("    %$resultReg = $instruction ${getLLVMType(type)} %$leftReg, %$rightReg")
         return resultReg
     }
 
@@ -207,6 +234,7 @@ class LLVMCodeGeneratorProcess(
     private fun generateNumber(block: MemoryBlock, node: NumberNode): Int {
         val resultReg = block.getNextRegister()
         ir.add("    %$resultReg = add i32 ${node.value}, 0")
+        block.memory.allocate(node.value, resultReg)
         return resultReg
     }
 
@@ -232,8 +260,11 @@ class LLVMCodeGeneratorProcess(
         val nullReg = block.getNextRegister()
         ir.add("    %$nullReg = getelementptr inbounds [$length x i8], [$length x i8]* %$pointerReg, i32 0, i32 ${node.value.length}")
         ir.add("    store i8 0, i8* %$nullReg")
-
-        return firstPointer ?: throw IllegalStateException("No pointer found")
+        if (firstPointer == null) {
+            firstPointer = nullReg
+        }
+        block.memory.allocate(node.value, firstPointer!!)
+        return firstPointer!!
     }
 
     fun generateEqualsComparison(block: MemoryBlock, node: EqualsNode): Int {

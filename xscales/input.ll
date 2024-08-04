@@ -1,4 +1,7 @@
 declare i32 @strcmp(i8*, i8*)
+declare i32 @strlen(i8*)
+declare i8* @malloc(i32)
+declare void @memcpy(i8*, i8*, i32)
 @format_s = private unnamed_addr constant [3 x i8] c"%s\00"
 @format_n = private unnamed_addr constant [3 x i8] c"%d\00"
 @buffer = global [256 x i8] zeroinitializer
@@ -175,43 +178,83 @@ endif_2:
 }
 define void @check_typed() {
 entry:
-    %1 = alloca [16 x i8]
-    %2 = getelementptr inbounds [16 x i8], [16 x i8]* %1, i32 0, i32 0
-    store i8 84, i8* %2
-    %3 = getelementptr inbounds [16 x i8], [16 x i8]* %1, i32 0, i32 1
-    store i8 121, i8* %3
-    %4 = getelementptr inbounds [16 x i8], [16 x i8]* %1, i32 0, i32 2
-    store i8 112, i8* %4
-    %5 = getelementptr inbounds [16 x i8], [16 x i8]* %1, i32 0, i32 3
-    store i8 101, i8* %5
-    %6 = getelementptr inbounds [16 x i8], [16 x i8]* %1, i32 0, i32 4
-    store i8 32, i8* %6
-    %7 = getelementptr inbounds [16 x i8], [16 x i8]* %1, i32 0, i32 5
-    store i8 115, i8* %7
-    %8 = getelementptr inbounds [16 x i8], [16 x i8]* %1, i32 0, i32 6
-    store i8 111, i8* %8
-    %9 = getelementptr inbounds [16 x i8], [16 x i8]* %1, i32 0, i32 7
-    store i8 109, i8* %9
-    %10 = getelementptr inbounds [16 x i8], [16 x i8]* %1, i32 0, i32 8
-    store i8 101, i8* %10
-    %11 = getelementptr inbounds [16 x i8], [16 x i8]* %1, i32 0, i32 9
-    store i8 116, i8* %11
-    %12 = getelementptr inbounds [16 x i8], [16 x i8]* %1, i32 0, i32 10
-    store i8 104, i8* %12
-    %13 = getelementptr inbounds [16 x i8], [16 x i8]* %1, i32 0, i32 11
-    store i8 105, i8* %13
-    %14 = getelementptr inbounds [16 x i8], [16 x i8]* %1, i32 0, i32 12
-    store i8 110, i8* %14
-    %15 = getelementptr inbounds [16 x i8], [16 x i8]* %1, i32 0, i32 13
-    store i8 103, i8* %15
-    %16 = getelementptr inbounds [16 x i8], [16 x i8]* %1, i32 0, i32 14
-    store i8 58, i8* %16
-    %17 = getelementptr inbounds [16 x i8], [16 x i8]* %1, i32 0, i32 15
-    store i8 0, i8* %17
+    %1 = alloca [1 x i8]
+    %2 = getelementptr inbounds [1 x i8], [1 x i8]* %1, i32 0, i32 0
+    store i8 0, i8* %2
     call void @println_str(i8* %2)
-    %19 = call i8* @readln()
-    %20 = alloca i8*
-    store i8* %19, i8** %20
-    call void @check_if_typed_apple(i8* %19)
+    %4 = alloca [17 x i8]
+    %5 = getelementptr inbounds [17 x i8], [17 x i8]* %4, i32 0, i32 0
+    store i8 84, i8* %5
+    %6 = getelementptr inbounds [17 x i8], [17 x i8]* %4, i32 0, i32 1
+    store i8 121, i8* %6
+    %7 = getelementptr inbounds [17 x i8], [17 x i8]* %4, i32 0, i32 2
+    store i8 112, i8* %7
+    %8 = getelementptr inbounds [17 x i8], [17 x i8]* %4, i32 0, i32 3
+    store i8 101, i8* %8
+    %9 = getelementptr inbounds [17 x i8], [17 x i8]* %4, i32 0, i32 4
+    store i8 32, i8* %9
+    %10 = getelementptr inbounds [17 x i8], [17 x i8]* %4, i32 0, i32 5
+    store i8 115, i8* %10
+    %11 = getelementptr inbounds [17 x i8], [17 x i8]* %4, i32 0, i32 6
+    store i8 111, i8* %11
+    %12 = getelementptr inbounds [17 x i8], [17 x i8]* %4, i32 0, i32 7
+    store i8 109, i8* %12
+    %13 = getelementptr inbounds [17 x i8], [17 x i8]* %4, i32 0, i32 8
+    store i8 101, i8* %13
+    %14 = getelementptr inbounds [17 x i8], [17 x i8]* %4, i32 0, i32 9
+    store i8 116, i8* %14
+    %15 = getelementptr inbounds [17 x i8], [17 x i8]* %4, i32 0, i32 10
+    store i8 104, i8* %15
+    %16 = getelementptr inbounds [17 x i8], [17 x i8]* %4, i32 0, i32 11
+    store i8 105, i8* %16
+    %17 = getelementptr inbounds [17 x i8], [17 x i8]* %4, i32 0, i32 12
+    store i8 110, i8* %17
+    %18 = getelementptr inbounds [17 x i8], [17 x i8]* %4, i32 0, i32 13
+    store i8 103, i8* %18
+    %19 = getelementptr inbounds [17 x i8], [17 x i8]* %4, i32 0, i32 14
+    store i8 58, i8* %19
+    %20 = getelementptr inbounds [17 x i8], [17 x i8]* %4, i32 0, i32 15
+    store i8 32, i8* %20
+    %21 = getelementptr inbounds [17 x i8], [17 x i8]* %4, i32 0, i32 16
+    store i8 0, i8* %21
+    %22 = call i32 @printf(i8* %5)
+    %23 = call i8* @readln()
+    %24 = alloca i8*
+    store i8* %23, i8** %24
+    %25 = alloca [12 x i8]
+    %26 = getelementptr inbounds [12 x i8], [12 x i8]* %25, i32 0, i32 0
+    store i8 89, i8* %26
+    %27 = getelementptr inbounds [12 x i8], [12 x i8]* %25, i32 0, i32 1
+    store i8 111, i8* %27
+    %28 = getelementptr inbounds [12 x i8], [12 x i8]* %25, i32 0, i32 2
+    store i8 117, i8* %28
+    %29 = getelementptr inbounds [12 x i8], [12 x i8]* %25, i32 0, i32 3
+    store i8 32, i8* %29
+    %30 = getelementptr inbounds [12 x i8], [12 x i8]* %25, i32 0, i32 4
+    store i8 116, i8* %30
+    %31 = getelementptr inbounds [12 x i8], [12 x i8]* %25, i32 0, i32 5
+    store i8 121, i8* %31
+    %32 = getelementptr inbounds [12 x i8], [12 x i8]* %25, i32 0, i32 6
+    store i8 112, i8* %32
+    %33 = getelementptr inbounds [12 x i8], [12 x i8]* %25, i32 0, i32 7
+    store i8 101, i8* %33
+    %34 = getelementptr inbounds [12 x i8], [12 x i8]* %25, i32 0, i32 8
+    store i8 100, i8* %34
+    %35 = getelementptr inbounds [12 x i8], [12 x i8]* %25, i32 0, i32 9
+    store i8 58, i8* %35
+    %36 = getelementptr inbounds [12 x i8], [12 x i8]* %25, i32 0, i32 10
+    store i8 32, i8* %36
+    %37 = getelementptr inbounds [12 x i8], [12 x i8]* %25, i32 0, i32 11
+    store i8 0, i8* %37
+    %38 = call i32 @strlen(i8* %26)
+    %39 = call i32 @strlen(i8* %23)
+    %40 = add i32 %38, %39
+    %41 = add i32 %40, 1
+    %42 = call i8* @malloc(i32 %41)
+    call void @memcpy(i8* %42, i8* %26, i32 %41)
+    %43 = getelementptr inbounds i8, i8* %42, i32 %38
+    call void @memcpy(i8* %43, i8* %23, i32 %41)
+    call void @println_str(i8* %42)
+    call void @check_if_typed_apple(i8* %23)
     ret void
 }

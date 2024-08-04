@@ -183,7 +183,16 @@ class Parser(private val tokens: TokenStream) {
         if (parameters.isLeft()) {
             return Either.Left(parameters.getLeft())
         }
-        val returnType = parseTypeOrNull() ?: Type.Void
+
+        val returnType = if (peek().kind != TokenKind.OPENING_BRACES) {
+            consume(TokenKind.RETURN_TYPE_DECLARATION).ifLeft {
+                return Either.Left(it)
+            }
+
+            parseTypeOrNull() ?: return Either.Left(ParsingError.UnexpectedToken(peek()))
+        } else {
+            Type.Void
+        }
         val block = parseBlock()
         if (block.isLeft()) {
             return Either.Left(block.getLeft())

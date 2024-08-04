@@ -26,6 +26,14 @@ sealed class TypedSyntaxTreeNode(
     val type: Type
 ) : SyntaxTreeNode(start, end)
 
+sealed class SizedSyntaxTreeNode(
+    start: Token?,
+    end: Token?,
+    type: Type,
+) : TypedSyntaxTreeNode(start, end, type) {
+    abstract val size: Int
+}
+
 data class RootNode(private val children: MutableList<SyntaxTreeNode>) : SyntaxTreeNode(null, null) {
     fun addNode(node: SyntaxTreeNode) {
         children.add(node)
@@ -77,7 +85,7 @@ class AssignmentNode(
 class BinaryOperatorNode(
     val left: SyntaxTreeNode,
     val operator: TokenKind,
-    val right: SyntaxTreeNode
+    val right: SyntaxTreeNode,
 ) : SyntaxTreeNode(left.start, right.end) {
     override fun getChildren(): List<SyntaxTreeNode> = listOf(left, right)
 }
@@ -124,14 +132,16 @@ class NumberNode(
     val value: String,
     type: Type,
     start: Token
-) : TypedSyntaxTreeNode(start, start, type) {
+) : SizedSyntaxTreeNode(start, start, type) {
+    override val size: Int = value.length // todo: fix
     override fun getChildren(): List<SyntaxTreeNode> = emptyList()
 }
 
 class StringNode(
     val value: String,
     start: Token
-) : TypedSyntaxTreeNode(start, start, Type.String) {
+) : SizedSyntaxTreeNode(start, start, Type.String) {
+    override val size: Int = value.length
     override fun getChildren(): List<SyntaxTreeNode> = emptyList()
 }
 
