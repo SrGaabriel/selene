@@ -38,9 +38,6 @@ fun main() {
         outputFileName = "output.exe"
     )
 
-    // Step 2: Compile LLVM IR to object code using llc
-
-    return
     val reader = AmbiguousSourceReader(logger)
     val stdlib = reader.read(findStdlib())
     val (stdlibCompiled, stdlibSymbols) = compile(stdlib, logger) ?: return

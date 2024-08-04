@@ -12,6 +12,7 @@ class AmbiguousSourceReader(
         logger.log(LogLevel.DEBUG) { +"Reading the directory: ${directory.absolutePath}" }
         val builder = StringBuilder()
         directory.listFiles()?.forEach {
+            if (it.extension != "wy") return@forEach
             logger.log(LogLevel.DEBUG) { +"Reading the file: ${it.name}" }
             builder.appendLine(it.readText())
         }
