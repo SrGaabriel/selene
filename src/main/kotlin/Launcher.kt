@@ -2,11 +2,11 @@ package me.gabriel.gwydion;
 
 import com.github.ajalt.mordant.rendering.TextColors
 import me.gabriel.gwydion.analyzer.CumulativeSemanticAnalyzer
-import me.gabriel.gwydion.analyzer.SymbolTable
 import me.gabriel.gwydion.compiler.ProgramMemoryRepository
 import me.gabriel.gwydion.compiler.llvm.LLVMCodeGenerator
 import me.gabriel.gwydion.executor.KotlinCodeExecutor
 import me.gabriel.gwydion.executor.PrintFunction
+import me.gabriel.gwydion.executor.PrintlnFunction
 import me.gabriel.gwydion.lexing.lexers.StringLexer
 import me.gabriel.gwydion.log.GwydionLogger
 import me.gabriel.gwydion.log.LogLevel
@@ -27,26 +27,35 @@ fun main() {
     logger.log(LogLevel.INFO) { +"Starting the Gwydion compiler..." }
 
     if (COMPILE) {
+        val memoryStart = Instant.now()
         val example2 = File("src/main/resources/example2.wy").readText()
         val memory = ProgramMemoryRepository()
         val tree = compile(example2, logger, memory) ?: return
         val llvmCodeGenerator = LLVMCodeGenerator()
         llvmCodeGenerator.registerIntrinsicFunction(
-            PrintFunction()
+            PrintFunction(),
+            PrintlnFunction()
         )
+        val memoryEnd = Instant.now()
+        val memoryDelay = memoryEnd.toEpochMilli() - memoryStart.toEpochMilli()
+        logger.log(LogLevel.INFO) { +"Memory analysis took ${memoryDelay}ms" }
+        val generationStart = Instant.now()
         val generated = llvmCodeGenerator.generate(tree, memory)
-        logger.log(LogLevel.INFO) { +"Generated code:" }
+        val generationEnd = Instant.now()
+        val generationDelay = generationEnd.toEpochMilli() - generationStart.toEpochMilli()
+        logger.log(LogLevel.INFO) { +"Code generation took ${generationDelay}ms" }
         println(generated)
+        val compilingStart = Instant.now()
         llvmCodeGenerator.generateExecutable(
             llvmIr = generated,
             outputDir = "xscales",
             outputFileName = "output.exe"
         )
-        val process = ProcessBuilder("xscales/output.exe").start()
-        val output = process.inputStream.bufferedReader().use { it.readText() }
-        logger.log(LogLevel.INFO) { +"The output of the program is: $output" }
-        val exitCode = process.waitFor()
+        val executionEnd = Instant.now()
+        val executionDelay = executionEnd.toEpochMilli() - compilingStart.toEpochMilli()
+        logger.log(LogLevel.INFO) { +"Compiling took ${executionDelay}ms" }
 
+        logger.log(LogLevel.INFO) { +"The total time to generate and compile the code was ${executionDelay + generationDelay + memoryDelay}ms" }
         return
     }
     val reader = AmbiguousSourceReader(logger)

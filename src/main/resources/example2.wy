@@ -2,9 +2,17 @@ macro main () {
     a := "Hello, World!";
     b := "Hello, World!";
     ab := sum(1, 2);
+    ab2 := times(ab, 6);
+
+    printf(a);
     printf(b);
+    printf(ab2);
 }
 
 macro sum(a: int32, b: int32) int32 {
     return a + b;
+}
+
+macro times(a: int32, b: int32) int32 {
+    return a * b;
 }

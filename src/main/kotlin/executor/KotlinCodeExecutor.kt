@@ -9,8 +9,6 @@ class KotlinCodeExecutor(private val tree: SyntaxTree): CodeExecutor {
     val variables = mutableMapOf<String, Any>()
     val intrinsics = mutableListOf(
         PrintFunction(),
-        ReadFunction(),
-        StringifyFunction()
     )
 
     override fun execute() {

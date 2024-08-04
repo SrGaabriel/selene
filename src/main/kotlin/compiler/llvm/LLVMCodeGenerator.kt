@@ -17,8 +17,8 @@ class LLVMCodeGenerator: CodeGenerator {
         return process.finish()
     }
 
-    override fun registerIntrinsicFunction(function: IntrinsicFunction) {
-        intrinsics.add(function)
+    override fun registerIntrinsicFunction(vararg functions: IntrinsicFunction) {
+        intrinsics.addAll(functions)
     }
 
     fun generateExecutable(llvmIr: String, outputDir: String, outputFileName: String) {
@@ -33,7 +33,7 @@ class LLVMCodeGenerator: CodeGenerator {
         File(outputExePath).delete()
         File(inputLlPath).writeText(llvmIr)
 
-        val clangProcess = ProcessBuilder("clang", inputLlPath, "-v", "-o", outputExePath)
+        val clangProcess = ProcessBuilder("clang", inputLlPath, "", "-o", outputExePath)
             .redirectError(ProcessBuilder.Redirect.INHERIT)
             .start()
         clangProcess.waitFor()

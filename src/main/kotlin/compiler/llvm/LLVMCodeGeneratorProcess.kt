@@ -123,11 +123,6 @@ class LLVMCodeGeneratorProcess(
     }
 
     private fun generateFunctionCall(block: MemoryBlock, node: CallNode): Int {
-        // Todo: workaround
-        if (node.name == "printf") {
-            return generatePrintfCall(block, node)
-        }
-
         val argRegs = node.arguments.mapIndexed { index, syntaxTreeNode -> getExpressionType(block, syntaxTreeNode) to generateNode(syntaxTreeNode, block) }
         val functionType = block.figureOutSymbol(node.name) ?: throw IllegalStateException("Undefined function: ${node.name}")
         val resultReg = block.getNextRegister()
@@ -142,7 +137,23 @@ class LLVMCodeGeneratorProcess(
             }
             "${getLLVMType(type.unwrap())} %$argReg"
         }
-        ir.add("    %$resultReg = call ${getLLVMType(functionType)} @${node.name}($argTypes)")
+
+        val intrinsic = intrinsics.find { it.name == node.name }
+        val call = if (intrinsic != null) {
+            intrinsic.handleCall(
+                node,
+                node.arguments.map { getExpressionType(block, it).unwrap() },
+                argTypes
+            )
+        } else {
+            "call ${getLLVMType(functionType)} @${node.name}($argTypes)"
+        }
+
+        if (functionType !== Type.Void) {
+            ir.add("    %$resultReg = $call")
+        } else {
+            ir.add("    $call")
+        }
         return resultReg
     }
 
@@ -194,16 +205,16 @@ class LLVMCodeGeneratorProcess(
         node.value.forEachIndexed { index, char ->
             val charReg = block.getNextRegister()
             val ascii = char.code
-            ir.add("    %$charReg = getelementptr inbounds [$length x i8], [$length x i8]* %$pointerReg, i64 0, i64 $index")
+            ir.add("    %$charReg = getelementptr inbounds [$length x i8], [$length x i8]* %$pointerReg, i32 0, i32 $index")
             ir.add("    store i8 $ascii, i8* %$charReg")
         }
         // null-terminate the string
         val nullReg = block.getNextRegister()
-        ir.add("    %$nullReg = getelementptr inbounds [$length x i8], [$length x i8]* %$pointerReg, i64 0, i64 ${node.value.length}")
+        ir.add("    %$nullReg = getelementptr inbounds [$length x i8], [$length x i8]* %$pointerReg, i32 0, i32 ${node.value.length}")
 
         // Return a pointer to the first character of the string
         val reg = block.getNextRegister()
-        ir.add("    %$reg = getelementptr inbounds [$length x i8], [$length x i8]* %$pointerReg, i64 0, i64 0")
+        ir.add("    %$reg = getelementptr inbounds [$length x i8], [$length x i8]* %$pointerReg, i32 0, i32 0")
 
         return reg
     }
@@ -218,28 +229,6 @@ class LLVMCodeGeneratorProcess(
             Type.Void -> "void"
             else -> throw UnsupportedOperationException("Unsupported type: $type")
         }
-    }
-
-    private fun generatePrintfCall(block: MemoryBlock, node: CallNode): Int {
-        val formatTypeResult = node.arguments.firstOrNull()?.let { getExpressionType(block, it) } ?: return -1
-        if (formatTypeResult.isLeft()) {
-            throw IllegalStateException("Unknown type for format")
-        }
-        val formatType = chooseFormat(formatTypeResult.unwrap())
-
-        val argRegs = node.arguments.mapIndexed { index, syntaxTreeNode -> getExpressionType(block, syntaxTreeNode) to generateNode(syntaxTreeNode, block) }
-        val argTypes = argRegs.joinToString(", ") {
-            val (type, argReg) = it
-            if (type.isLeft()) {
-                throw IllegalStateException("Unknown type for argument")
-            }
-            "${getLLVMType(type.unwrap())} %$argReg"
-        }
-
-        val resultReg = block.getNextRegister()
-        ir.add("    %$resultReg = call i32 (i8*, ...) @printf(i8* bitcast ([3 x i8]* @${formatType} to i8*), $argTypes)")
-
-        return resultReg
     }
 
     fun finish(): String {
@@ -257,14 +246,6 @@ class LLVMCodeGeneratorProcess(
             is CallNode -> Either.Right(inferCallType(block, node))
             is EqualsNode -> Either.Right(Type.Boolean)
             else -> error("Unknown node type $node")
-        }
-    }
-
-    fun chooseFormat(type: Type): String {
-        return when (type) {
-            Type.Int32 -> "format_n"
-            Type.String -> "format_s"
-            else -> throw IllegalStateException("Unsupported format type $type")
         }
     }
 
