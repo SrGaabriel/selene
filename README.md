@@ -12,17 +12,26 @@ You may look at the code and think the means to my desired end are incorrect and
 
 ```go
 func main () {
-    reading := readln();
-    println("You typed: " + reading);
-
-    check_if_typed_banana(reading);
+    check_typed();
 }
 
-func check_if_typed_banana (reading: string) {
-    if reading == "banana" {
-        println("You typed banana!");
+func check_if_typed_apple(reading: string) {
+    variable := "apple";
+    if reading == variable {
+        println("You typed 'apple'");
     } else {
-        println("You didn't type banana.");
+        println("You didn't type 'apple'.");
+        check_typed();
     }
+}
+
+func check_typed() {
+    println("");
+    printf("Type something: ");
+
+    reading := readln();
+    println("You typed $reading");
+    
+    check_if_typed_apple(reading);
 }
 ```

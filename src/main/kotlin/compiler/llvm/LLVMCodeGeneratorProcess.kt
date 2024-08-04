@@ -242,29 +242,94 @@ class LLVMCodeGeneratorProcess(
         val pointerReg = block.getNextRegister()
         val length = node.value.length+1
 
-        // Allocate space for the string
-        ir.add("    %$pointerReg = alloca [$length x i8]")
+        val isFlat = node.segments.all { it is StringNode.Segment.Text }
+        if (isFlat) {
+            val text = node.segments.joinToString("") { (it as StringNode.Segment.Text).text }
+            println(text)
+            ir.add("    %$pointerReg = alloca [$length x i8]")
 
-        // Store each character individually
-        var firstPointer: Int? = null
-        node.value.forEachIndexed { index, char ->
-            val charReg = block.getNextRegister()
-            if (firstPointer == null) {
-                firstPointer = charReg
+            var firstPointer: Int? = null
+            text.forEachIndexed { index, char ->
+                val charReg = block.getNextRegister()
+                if (firstPointer == null) {
+                    firstPointer = charReg
+                }
+                val ascii = char.code
+                ir.add("    %$charReg = getelementptr inbounds [$length x i8], [$length x i8]* %$pointerReg, i32 0, i32 $index")
+                ir.add("    store i8 $ascii, i8* %$charReg")
             }
-            val ascii = char.code
-            ir.add("    %$charReg = getelementptr inbounds [$length x i8], [$length x i8]* %$pointerReg, i32 0, i32 $index")
-            ir.add("    store i8 $ascii, i8* %$charReg")
+            // null-terminate the string
+            val nullReg = block.getNextRegister()
+            ir.add("    %$nullReg = getelementptr inbounds [$length x i8], [$length x i8]* %$pointerReg, i32 0, i32 ${text.length}")
+            ir.add("    store i8 0, i8* %$nullReg")
+            if (firstPointer == null) {
+                firstPointer = nullReg
+            }
+            block.memory.allocate(text, firstPointer!!)
+            return firstPointer!!
         }
-        // null-terminate the string
-        val nullReg = block.getNextRegister()
-        ir.add("    %$nullReg = getelementptr inbounds [$length x i8], [$length x i8]* %$pointerReg, i32 0, i32 ${node.value.length}")
-        ir.add("    store i8 0, i8* %$nullReg")
-        if (firstPointer == null) {
-            firstPointer = nullReg
+        val segmentRegs = mutableListOf<Triple<Int, Int, Boolean>>()
+        var totalLengthReg = block.getNextRegister()
+        ir.add("    %$totalLengthReg = add i32 1, 0")
+
+        node.segments.forEach { segment ->
+            when (segment) {
+                is StringNode.Segment.Text -> {
+                    val textReg = block.getNextRegister()
+                    val length = segment.text.length + 1
+                    ir.add("    %$textReg = alloca [$length x i8]")
+                    segment.text.forEachIndexed { index, char ->
+                        val charReg = block.getNextRegister()
+                        val ascii = char.code
+                        ir.add("    %$charReg = getelementptr inbounds [$length x i8], [$length x i8]* %$textReg, i32 0, i32 $index")
+                        ir.add("    store i8 $ascii, i8* %$charReg")
+                    }
+                    ir.add("    %${block.getNextRegister()} = getelementptr inbounds [$length x i8], [$length x i8]* %$textReg, i32 0, i32 ${segment.text.length}")
+                    ir.add("    store i8 0, i8* %${block.getNextRegister() - 1}")
+                    segmentRegs.add(Triple(textReg, length - 1, false))
+                    ir.add("    %${block.getNextRegister()} = add i32 %$totalLengthReg, ${length - 1}")
+                    totalLengthReg = block.getNextRegister() - 1
+                }
+                is StringNode.Segment.Reference -> {
+                    val refReg = generateVariableReference(block, segment.node)
+                    val lengthReg = block.getNextRegister()
+                    ir.add("    %$lengthReg = call i32 @strlen(i8* %$refReg)")
+                    segmentRegs.add(Triple(refReg, lengthReg, true))
+                    ir.add("    %${block.getNextRegister()} = add i32 %$totalLengthReg, %$lengthReg")
+                    totalLengthReg = block.getNextRegister() - 1
+                }
+                is StringNode.Segment.Expression -> {
+                    error("String interpolation not yet implemented")
+                }
+            }
         }
-        block.memory.allocate(node.value, firstPointer!!)
-        return firstPointer!!
+
+        val finalReg = block.getNextRegister()
+        ir.add("    %$finalReg = call i8* @malloc(i32 %$totalLengthReg)")
+
+        var offsetReg = block.getNextRegister()
+        ir.add("    %$offsetReg = add i32 0, 0")
+        segmentRegs.forEach { (valueReg, lengthReg, isDynamic) ->
+            val destReg = block.getNextRegister()
+            ir.add("    %$destReg = getelementptr inbounds i8, i8* %$finalReg, i32 %$offsetReg")
+            if (isDynamic) {
+                ir.add("    call void @memcpy(i8* %$destReg, i8* %$valueReg, i32 %$lengthReg)")
+                val newOffsetReg = block.getNextRegister()
+                ir.add("    %$newOffsetReg = add i32 %$offsetReg, %$lengthReg")
+                offsetReg = newOffsetReg
+            } else {
+                ir.add("    call void @memcpy(i8* %$destReg, i8* %$valueReg, i32 $lengthReg)")
+                val newOffsetReg = block.getNextRegister()
+                ir.add("    %$newOffsetReg = add i32 %$offsetReg, $lengthReg")
+                offsetReg = newOffsetReg
+            }
+        }
+
+        val nullTermReg = block.getNextRegister()
+        ir.add("    %$nullTermReg = getelementptr inbounds i8, i8* %$finalReg, i32 %$offsetReg")
+        ir.add("    store i8 0, i8* %$nullTermReg")
+
+        return finalReg
     }
 
     fun generateEqualsComparison(block: MemoryBlock, node: EqualsNode): Int {

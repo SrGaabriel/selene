@@ -20,14 +20,7 @@ class StringLexer(private val data: String): Lexer {
                 '(' -> tokens.add(Token(TokenKind.OPENING_PARENTHESES, "(", position)).also { position++ }
                 ')' -> tokens.add(Token(TokenKind.CLOSING_PARENTHESES, ")", position)).also { position++ }
                 ',' -> tokens.add(Token(TokenKind.COMMA, ",", position)).also { position++ }
-                '"' -> {
-                    val start = position
-                    position++
-                    while (position < data.length && data[position] != '"') {
-                        position++
-                    }
-                    tokens.add(Token(TokenKind.STRING, data.substring(start + 1, position), start)).also { position++ }
-                }
+                '"' -> return Either.left(lexString(tokens) ?: continue)
                 in '0'..'9' -> tokens.add(number())
                 in 'a'..'z' -> {
                     val identifier = identifier(token.toString())
@@ -122,5 +115,55 @@ class StringLexer(private val data: String): Lexer {
             "intrinsic" -> Either.Right(Token(TokenKind.INTRINSIC, value, start))
             else -> Either.Right(Token(TokenKind.IDENTIFIER, value, start))
         }
+    }
+
+    fun lexString(tokens: MutableList<Token>): LexingError? {
+        var startPosition = position
+        position++ // Skip the opening quote
+
+        tokens.add(Token(TokenKind.STRING_START, "\"", startPosition))
+
+        while (position < data.length && data[position] != '"') {
+            when (data[position]) {
+                '$' -> {
+                    if (position > startPosition + 1) {
+                        tokens.add(Token(TokenKind.STRING_TEXT, data.substring(startPosition + 1, position), startPosition + 1))
+                    }
+                    position++ // Skip the $
+                    if (data[position] == '{') {
+                        position++ // Skip the {
+                        val variableStart = position
+                        while (position < data.length && data[position] != '}') {
+                            position++
+                        }
+                        if (position == data.length) {
+                            return LexingError.UnterminatedStringVariableReference(variableStart)
+                        }
+                        tokens.add(Token(TokenKind.STRING_VARIABLE_REFERENCE, data.substring(variableStart, position), variableStart))
+                        position++ // Skip the }
+                    } else {
+                        val variableStart = position
+                        while (position < data.length && (data[position].isLetterOrDigit() || data[position] == '_')) {
+                            position++
+                        }
+                        tokens.add(Token(TokenKind.STRING_VARIABLE_REFERENCE, data.substring(variableStart, position), variableStart))
+                    }
+                    startPosition = position - 1
+                }
+                else -> position++
+            }
+        }
+
+        if (position == data.length) {
+            return LexingError.UnclosedString(startPosition)
+        }
+
+        if (position > startPosition + 1) {
+            tokens.add(Token(TokenKind.STRING_TEXT, data.substring(startPosition + 1, position), startPosition + 1))
+        }
+
+        tokens.add(Token(TokenKind.STRING_END, "\"", position))
+        position++
+        return null
     }
 }

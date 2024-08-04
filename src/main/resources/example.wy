@@ -5,7 +5,7 @@ func main () {
 func check_if_typed_apple(reading: string) {
     variable := "apple";
     if reading == variable {
-        println("You typed 'apple'!");
+        println("You typed 'apple'");
     } else {
         println("You didn't type 'apple'.");
         check_typed();
@@ -16,6 +16,6 @@ func check_typed() {
     println("");
     printf("Type something: ");
     reading := readln();
-    println("You typed: " + reading);
+    println("You typed $reading");
     check_if_typed_apple(reading);
 }

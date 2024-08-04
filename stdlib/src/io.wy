@@ -1,5 +1,5 @@
-intrinsic func printf (message: string) {}
+intrinsic func printf (message: any) {}
 
-intrinsic func println (message: string) {}
+intrinsic func println (message: any) {}
 
 intrinsic func readln () -> string {}

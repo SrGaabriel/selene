@@ -303,7 +303,7 @@ class Parser(private val tokens: TokenStream) {
             TokenKind.NUMBER -> {
                 parseNumericExpression()
             }
-            TokenKind.STRING -> {
+            TokenKind.STRING_START -> {
                 parseStringExpression()
             }
             TokenKind.BOOL_TYPE -> {
@@ -349,9 +349,8 @@ class Parser(private val tokens: TokenStream) {
 
     fun parseStringTerm(): Either<ParsingError, SyntaxTreeNode> {
         return when (peek().kind) {
-            TokenKind.STRING -> {
-                val consumed = consume()
-                Either.Right(StringNode(consumed.value, consumed))
+            TokenKind.STRING_START -> {
+                parseStringNode()
             }
             TokenKind.IDENTIFIER -> {
                 val consumed = consume()
@@ -371,6 +370,48 @@ class Parser(private val tokens: TokenStream) {
             else -> Either.Left(ParsingError.UnexpectedToken(peek()))
         }
     }
+
+    fun parseStringNode(): Either<ParsingError, SyntaxTreeNode> {
+        val start = consume(TokenKind.STRING_START).ifLeft {
+            return Either.Left(it)
+        }
+        val segments = mutableListOf<StringNode.Segment>()
+        while (position < tokens.count() && peek().kind != TokenKind.STRING_END) {
+            val segment = when (peek().kind) {
+                TokenKind.STRING_TEXT -> {
+                    println("Consuming text")
+                    val text = consume().value
+                    StringNode.Segment.Text(text)
+                }
+                TokenKind.STRING_VARIABLE_REFERENCE -> {
+                    val consumed = consume()
+                    StringNode.Segment.Reference(VariableReferenceNode(consumed.value, consumed))
+                }
+                TokenKind.STRING_EXPRESSION_REFERENCE -> {
+                    position++
+                    val expression = parseExpression()
+                    if (expression.isLeft()) {
+                        return Either.Left(expression.getLeft())
+                    }
+                    StringNode.Segment.Expression(expression.getRight())
+                }
+                else -> return Either.Left(ParsingError.UnexpectedToken(peek()))
+            }
+            segments.add(segment)
+        }
+        consume(TokenKind.STRING_END).ifLeft {
+            return Either.Left(it)
+        }
+        return Either.Right(StringNode(
+            value = "",
+            segments = segments,
+            start = start.unwrap()
+        ).also {
+            println("String node: $it")
+            println("Segments: ${it.segments}")
+        })
+    }
+
     fun parseCallParameters(): Either<ParsingError, List<SyntaxTreeNode>> {
         consume(TokenKind.OPENING_PARENTHESES).ifLeft {
             return Either.Left(it)

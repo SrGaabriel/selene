@@ -139,10 +139,17 @@ class NumberNode(
 
 class StringNode(
     val value: String,
+    val segments: List<Segment>,
     start: Token
 ) : SizedSyntaxTreeNode(start, start, Type.String) {
     override val size: Int = value.length
     override fun getChildren(): List<SyntaxTreeNode> = emptyList()
+
+    sealed class Segment {
+        data class Text(val text: String) : Segment()
+        data class Reference(val node: VariableReferenceNode) : Segment()
+        data class Expression(val node: SyntaxTreeNode) : Segment()
+    }
 }
 
 class BooleanNode(
