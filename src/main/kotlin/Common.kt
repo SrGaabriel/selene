@@ -1,79 +1,19 @@
-package me.gabriel.gwydion;
+package me.gabriel.gwydion
 
 import com.github.ajalt.mordant.rendering.TextColors
 import me.gabriel.gwydion.analyzer.CumulativeSemanticAnalyzer
 import me.gabriel.gwydion.compiler.ProgramMemoryRepository
-import me.gabriel.gwydion.compiler.llvm.LLVMCodeGenerator
-import me.gabriel.gwydion.executor.KotlinCodeExecutor
-import me.gabriel.gwydion.executor.PrintFunction
-import me.gabriel.gwydion.executor.PrintlnFunction
 import me.gabriel.gwydion.lexing.lexers.StringLexer
 import me.gabriel.gwydion.log.GwydionLogger
 import me.gabriel.gwydion.log.LogLevel
-import me.gabriel.gwydion.log.MordantLogger
 import me.gabriel.gwydion.parsing.Parser
 import me.gabriel.gwydion.parsing.SyntaxTree
-import me.gabriel.gwydion.reader.AmbiguousSourceReader
 import me.gabriel.gwydion.util.findRowOfIndex
 import me.gabriel.gwydion.util.replaceAtIndex
 import me.gabriel.gwydion.util.trimIndentReturningWidth
-import java.io.File
 import java.time.Instant
 
-const val COMPILE = true
-
-fun main() {
-    val logger = MordantLogger()
-    logger.log(LogLevel.INFO) { +"Starting the Gwydion compiler..." }
-
-    if (COMPILE) {
-        val memoryStart = Instant.now()
-        val example2 = File("src/main/resources/example2.wy").readText()
-        val memory = ProgramMemoryRepository()
-        val tree = compile(example2, logger, memory) ?: return
-        val llvmCodeGenerator = LLVMCodeGenerator()
-        llvmCodeGenerator.registerIntrinsicFunction(
-            PrintFunction(),
-            PrintlnFunction()
-        )
-        val memoryEnd = Instant.now()
-        val memoryDelay = memoryEnd.toEpochMilli() - memoryStart.toEpochMilli()
-        logger.log(LogLevel.INFO) { +"Memory analysis took ${memoryDelay}ms" }
-        val generationStart = Instant.now()
-        val generated = llvmCodeGenerator.generate(tree, memory)
-        val generationEnd = Instant.now()
-        val generationDelay = generationEnd.toEpochMilli() - generationStart.toEpochMilli()
-        logger.log(LogLevel.INFO) { +"Code generation took ${generationDelay}ms" }
-        println(generated)
-        val compilingStart = Instant.now()
-        llvmCodeGenerator.generateExecutable(
-            llvmIr = generated,
-            outputDir = "xscales",
-            outputFileName = "output.exe"
-        )
-        val executionEnd = Instant.now()
-        val executionDelay = executionEnd.toEpochMilli() - compilingStart.toEpochMilli()
-        logger.log(LogLevel.INFO) { +"Compiling took ${executionDelay}ms" }
-
-        logger.log(LogLevel.INFO) { +"The total time to generate and compile the code was ${executionDelay + generationDelay + memoryDelay}ms" }
-        return
-    }
-    val reader = AmbiguousSourceReader(logger)
-    val stdlib = reader.read(findStdlib())
-    val memory = ProgramMemoryRepository()
-    val stdlibCompiled = compile(stdlib, logger, memory) ?: return
-
-    val example = reader.read(readText())
-    val compiled = compile(example, logger, memory) ?: return
-
-    stdlibCompiled.join(compiled)
-    val executor = KotlinCodeExecutor(stdlibCompiled)
-    logger.log(LogLevel.INFO) { +"Now executing the code... Output:" }
-    executor.execute()
-    logger.log(LogLevel.INFO) { +"The code was executed with exit code 0" }
-}
-
-fun compile(text: String, logger: GwydionLogger, memory: ProgramMemoryRepository): SyntaxTree? {
+fun parse(logger: GwydionLogger, text: String, memory: ProgramMemoryRepository): SyntaxTree? {
     val start = Instant.now()
     val lexer = StringLexer(text);
     val result = lexer.tokenize();
@@ -128,12 +68,4 @@ fun compile(text: String, logger: GwydionLogger, memory: ProgramMemoryRepository
     val end = Instant.now()
     logger.log(LogLevel.INFO) { +"Compilation finished in ${end.toEpochMilli() - start.toEpochMilli()}ms" }
     return parsingResult.getRight()
-}
-
-fun readText(): File {
-    return File("src/main/resources")
-}
-
-fun findStdlib(): File {
-    return File("stdlib/src/")
 }

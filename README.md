@@ -10,15 +10,15 @@ You may look at the code and think the means to my desired end are incorrect and
 
 # Example
 
-```rust
-macro main () {
+```go
+func main () {
     reading := readln();
     println("You typed: " + reading);
 
     check_if_typed_banana(reading);
 }
 
-macro check_if_typed_banana (reading: string) {
+func check_if_typed_banana (reading: string) {
     if reading == "banana" {
         println("You typed banana!");
     } else {

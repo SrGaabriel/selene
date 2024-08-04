@@ -99,7 +99,7 @@ class StringLexer(private val data: String): Lexer {
         }
         val value = data.substring(start, position)
         return when (value) {
-            "macro" -> Either.Right(Token(TokenKind.FUNCTION, value, start))
+            "func" -> Either.Right(Token(TokenKind.FUNCTION, value, start))
             "return" -> Either.Right(Token(TokenKind.RETURN, value, start))
             "string" -> Either.Right(Token(TokenKind.STRING_TYPE, value, start))
             "bool" -> Either.Right(Token(TokenKind.BOOL_TYPE, value, start))

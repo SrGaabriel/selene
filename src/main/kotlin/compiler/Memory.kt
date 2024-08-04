@@ -25,7 +25,6 @@ data class MemoryBlock(
 
     fun figureOutSymbol(name: String): Type? {
         val symbol = symbols.lookup(name)
-        println("Looking for $name in ${this.name}")
         return symbol ?: parent?.figureOutSymbol(name)
     }
 }
@@ -45,7 +44,6 @@ class ProgramMemoryRepository {
         symbols: SymbolTable = SymbolTable(),
         table: MemoryTable = MemoryTable()
     ): MemoryBlock {
-        println("Creating block $name in ${parent.name}")
         val block = MemoryBlock(name, symbols, table, parent)
         parent.children.add(block)
         return block

@@ -1,5 +1,5 @@
-intrinsic macro println (message: string) {}
+intrinsic func println (message: string) {}
 
-intrinsic macro readln () string {}
+intrinsic func readln () string {}
 
-intrinsic macro stringify (object: any) string {}
+intrinsic func stringify (object: any) string {}

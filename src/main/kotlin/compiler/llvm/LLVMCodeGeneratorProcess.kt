@@ -1,5 +1,6 @@
 package me.gabriel.gwydion.compiler.llvm
 
+import me.gabriel.gwydion.analyzer.getExpressionType
 import me.gabriel.gwydion.compiler.MemoryBlock
 import me.gabriel.gwydion.compiler.MemoryTable
 import me.gabriel.gwydion.compiler.ProgramMemoryRepository
@@ -55,11 +56,18 @@ class LLVMCodeGeneratorProcess(
             is ReturnNode -> generateReturn(block, node)
             is CallNode -> generateFunctionCall(block, node)
             is IfNode -> generateIf(block, node)
+            is BooleanNode -> generateBoolean(block, node)
             is StringNode -> generateString(block, node)
             is VariableReferenceNode -> generateVariableReference(block, node)
             is NumberNode -> generateNumber(block, node)
             else -> throw UnsupportedOperationException("Unsupported node type: ${node::class.simpleName}")
         }
+    }
+
+    fun generateBoolean(block: MemoryBlock, node: BooleanNode): Int {
+        val resultReg = block.getNextRegister()
+        ir.add("    %$resultReg = add i1 ${node.value}, 0")
+        return resultReg
     }
 
     private fun generateFunction(node: FunctionNode): Int {
@@ -163,7 +171,7 @@ class LLVMCodeGeneratorProcess(
         val elseLabel = getNextLabel("else")
         val endLabel = getNextLabel("endif")
 
-        ir.add("    %cmp = icmp ne i32 %$conditionReg, 0")
+        ir.add("    %cmp = icmp ne i1 %$conditionReg, 0")
         ir.add("    br i1 %cmp, label %$thenLabel, label %$elseLabel")
 
         ir.add("$thenLabel:")
@@ -233,24 +241,5 @@ class LLVMCodeGeneratorProcess(
 
     fun finish(): String {
         return ir.joinToString("\n")
-    }
-
-    // TODO: repeated code
-    tailrec fun getExpressionType(block: MemoryBlock, node: SyntaxTreeNode): Either<AnalysisError, Type> {
-        return when (node) {
-            is VariableReferenceNode -> {
-                Either.Right(block.figureOutSymbol(node.name) ?: return Either.Left(AnalysisError.UndefinedVariable(node, block)))
-            }
-            is TypedSyntaxTreeNode -> Either.Right(node.type)
-            is BinaryOperatorNode -> getExpressionType(block, node.left)
-            is CallNode -> Either.Right(inferCallType(block, node))
-            is EqualsNode -> Either.Right(Type.Boolean)
-            else -> error("Unknown node type $node")
-        }
-    }
-
-    fun inferCallType(block: MemoryBlock, node: CallNode): Type {
-        val function = block.figureOutSymbol(node.name) ?: return Type.Unknown
-        return function
     }
 }

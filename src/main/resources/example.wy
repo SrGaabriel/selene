@@ -1,11 +1,11 @@
-macro main () {
+func main () {
     reading := readln();
     println("You typed: " + reading);
 
     check_if_typed_banana(reading);
 }
 
-macro check_if_typed_banana (reading: string) {
+func check_if_typed_banana (reading: string) {
     if reading == "banana" {
         println("You typed banana!");
     } else {

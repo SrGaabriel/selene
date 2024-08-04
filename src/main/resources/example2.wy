@@ -1,18 +1,22 @@
-macro main () {
+func main () {
     a := "Hello, World!";
-    b := "Hello, World!";
-    ab := sum(1, 2);
-    ab2 := times(ab, 6);
+    ab := sum(56782, 42839);
+    ab2 := times(ab, 7);
 
-    printf(a);
-    printf(b);
-    printf(ab2);
+    if false {
+        println("If block");
+    } else {
+        println("Else block");
+    }
+
+    println(a);
+    println(ab2);
 }
 
-macro sum(a: int32, b: int32) int32 {
+func sum(a: int32, b: int32) int32 {
     return a + b;
 }
 
-macro times(a: int32, b: int32) int32 {
+func times(a: int32, b: int32) int32 {
     return a * b;
 }

@@ -31,13 +31,12 @@ class LLVMCodeGenerator: CodeGenerator {
         val outputExePath = "$outputDir/$outputFileName"
 
         File(outputExePath).delete()
+        File(inputLlPath).delete()
         File(inputLlPath).writeText(llvmIr)
 
         val clangProcess = ProcessBuilder("clang", inputLlPath, "", "-o", outputExePath)
             .redirectError(ProcessBuilder.Redirect.INHERIT)
             .start()
         clangProcess.waitFor()
-
-        File(inputLlPath).delete()
     }
 }
