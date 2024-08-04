@@ -37,7 +37,12 @@ fun main() {
         outputDir = "xscales",
         outputFileName = "output.exe"
     )
+    val process = ProcessBuilder("xscales/output.exe").start()
+    val output = process.inputStream.bufferedReader().use { it.readText() }
+    logger.log(LogLevel.INFO) { +"The output of the program is: $output" }
+    val exitCode = process.waitFor()
 
+    return
     val reader = AmbiguousSourceReader(logger)
     val stdlib = reader.read(findStdlib())
     val (stdlibCompiled, stdlibSymbols) = compile(stdlib, logger) ?: return

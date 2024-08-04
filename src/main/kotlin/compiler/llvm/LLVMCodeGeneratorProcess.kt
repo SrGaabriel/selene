@@ -1,9 +1,11 @@
 package me.gabriel.gwydion.compiler.llvm
 
 import me.gabriel.gwydion.analyzer.SymbolTable
+import me.gabriel.gwydion.exception.AnalysisError
 import me.gabriel.gwydion.executor.IntrinsicFunction
 import me.gabriel.gwydion.lexing.TokenKind
 import me.gabriel.gwydion.parsing.*
+import me.gabriel.gwydion.util.Either
 
 class LLVMCodeGeneratorProcess(
     private val tree: SyntaxTree,
@@ -17,8 +19,13 @@ class LLVMCodeGeneratorProcess(
     fun setup() {
         intrinsics.forEach { intrinsic ->
             ir.add(intrinsic.llvmIr())
+            symbols.declare(intrinsic.name, intrinsic.returnType)
+            intrinsic.params.forEachIndexed { index, type ->
+                symbols.declare("param$index", type)
+            }
         }
-        ir.add("@format = private unnamed_addr constant [3 x i8] c\"%s\\00\"")
+        ir.add("@format_s = private unnamed_addr constant [3 x i8] c\"%s\\00\"")
+        ir.add("@format_n = private unnamed_addr constant [3 x i8] c\"%d\\00\"")
     }
 
 
@@ -108,10 +115,21 @@ class LLVMCodeGeneratorProcess(
     }
 
     private fun generateFunctionCall(node: CallNode): Int {
-        val argRegs = node.arguments.map { generateNode(it) }
+        val argRegs = node.arguments.mapIndexed { index, syntaxTreeNode -> getExpressionType(syntaxTreeNode) to generateNode(syntaxTreeNode) }
+        val functionType = symbols.lookup(node.name) ?: throw IllegalStateException("Undefined function: ${node.name}")
         val resultReg = getNextRegister()
-        val argTypes = argRegs.joinToString(", ") { "${getLLVMType(Type.String)} %$it" }
-        ir.add("    %$resultReg = call i32 @${node.name}(i8* bitcast ([3 x i8]* @format to i8*), $argTypes)")
+        var initialType: Type = Type.Unknown
+        val argTypes = argRegs.joinToString(", ") {
+            val (type, argReg) = it
+            if (type.isLeft()) {
+                throw IllegalStateException("Unknown type for argument")
+            }
+            if (initialType == Type.Unknown) {
+                initialType = type.unwrap()
+            }
+            "${getLLVMType(type.unwrap())} %$argReg"
+        }
+        ir.add("    %$resultReg = call ${getLLVMType(functionType)} @${node.name}(i8* bitcast ([3 x i8]* @${chooseFormat(initialType)} to i8*), $argTypes)")
         return resultReg
     }
 
@@ -151,7 +169,7 @@ class LLVMCodeGeneratorProcess(
 
     private fun generateString(node: StringNode): Int {
         val pointerReg = getNextRegister()
-        val length = node.value.length
+        val length = node.value.length+1
 
         // Allocate space for the string
         ir.add("    %$pointerReg = alloca [$length x i8]")
@@ -163,6 +181,9 @@ class LLVMCodeGeneratorProcess(
             ir.add("    %$charReg = getelementptr inbounds [$length x i8], [$length x i8]* %$pointerReg, i64 0, i64 $index")
             ir.add("    store i8 $ascii, i8* %$charReg")
         }
+        // null-terminate the string
+        val nullReg = getNextRegister()
+        ir.add("    %$nullReg = getelementptr inbounds [$length x i8], [$length x i8]* %$pointerReg, i64 0, i64 ${node.value.length}")
 
         // Return a pointer to the first character of the string
         val reg = getNextRegister()
@@ -187,5 +208,32 @@ class LLVMCodeGeneratorProcess(
 
     fun finish(): String {
         return ir.joinToString("\n")
+    }
+
+    // TODO: repeated code
+    tailrec fun getExpressionType(node: SyntaxTreeNode): Either<AnalysisError, Type> {
+        return when (node) {
+            is VariableReferenceNode -> {
+                Either.Right(symbols.lookup(node.name) ?: return Either.Left(AnalysisError.UndefinedVariable(node)))
+            }
+            is TypedSyntaxTreeNode -> Either.Right(node.type)
+            is BinaryOperatorNode -> getExpressionType(node.left)
+            is CallNode -> Either.Right(inferCallType(node))
+            is EqualsNode -> Either.Right(Type.Boolean)
+            else -> error("Unknown node type $node")
+        }
+    }
+
+    fun chooseFormat(type: Type): String {
+        return when (type) {
+            Type.Int32 -> "format_n"
+            Type.String -> "format_s"
+            else -> throw IllegalStateException("Unsupported format type $type")
+        }
+    }
+
+    fun inferCallType(node: CallNode): Type {
+        val function = symbols.lookup(node.name) ?: return Type.Unknown
+        return function
     }
 }
