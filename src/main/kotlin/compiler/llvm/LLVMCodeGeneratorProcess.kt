@@ -1,6 +1,8 @@
 package me.gabriel.gwydion.compiler.llvm
 
-import me.gabriel.gwydion.analyzer.SymbolTable
+import me.gabriel.gwydion.compiler.MemoryBlock
+import me.gabriel.gwydion.compiler.MemoryTable
+import me.gabriel.gwydion.compiler.ProgramMemoryRepository
 import me.gabriel.gwydion.exception.AnalysisError
 import me.gabriel.gwydion.executor.IntrinsicFunction
 import me.gabriel.gwydion.lexing.TokenKind
@@ -9,16 +11,25 @@ import me.gabriel.gwydion.util.Either
 
 class LLVMCodeGeneratorProcess(
     private val tree: SyntaxTree,
-    private val symbols: SymbolTable,
+    private val repository: ProgramMemoryRepository,
     private val intrinsics: List<IntrinsicFunction>
 ) {
     private val ir = mutableListOf<String>()
     private var labelCounter = 0
     private var registerCounter = 1
 
+    fun allocate(block: MemoryBlock, name: String, pointer: Int): Int {
+        return block.memory.allocate(name, pointer)
+    }
+
+    fun lookup(block: MemoryBlock, name: String): Int? {
+        return block.figureOutMemory(name)
+    }
+
     fun setup() {
         intrinsics.forEach { intrinsic ->
             ir.add(intrinsic.llvmIr())
+            val symbols = repository.root.symbols
             symbols.declare(intrinsic.name, intrinsic.returnType)
             intrinsic.params.forEachIndexed { index, type ->
                 symbols.declare("param$index", type)
@@ -28,49 +39,41 @@ class LLVMCodeGeneratorProcess(
         ir.add("@format_n = private unnamed_addr constant [3 x i8] c\"%d\\00\"")
     }
 
-
-    fun generate(tree: SyntaxTree): List<String> {
-        ir.clear()
-        generateNode(tree.root)
-        return ir
-    }
-
-    fun generateNode(node: SyntaxTreeNode): Int {
+    fun generateNode(node: SyntaxTreeNode, block: MemoryBlock): Int {
         return when (node) {
             is RootNode -> {
-                node.getChildren().forEach { generateNode(it) }
+                node.getChildren().forEach { generateNode(it, block) }
                 -1
             }
             is FunctionNode -> generateFunction(node)
             is BlockNode -> {
-                node.getChildren().forEach { generateNode(it) }
+                node.getChildren().forEach { generateNode(it, block) }
                 -1
             }
-            is AssignmentNode -> generateAssignment(node)
-            is BinaryOperatorNode -> generateBinaryOperator(node)
-            is ReturnNode -> generateReturn(node)
-            is CallNode -> generateFunctionCall(node)
-            is IfNode -> generateIf(node)
-            is StringNode -> generateString(node)
-            is VariableReferenceNode -> generateVariableReference(node)
-            is NumberNode -> generateNumber(node)
+            is AssignmentNode -> generateAssignment(block, node)
+            is BinaryOperatorNode -> generateBinaryOperator(block, node)
+            is ReturnNode -> generateReturn(block, node)
+            is CallNode -> generateFunctionCall(block, node)
+            is IfNode -> generateIf(block, node)
+            is StringNode -> generateString(block, node)
+            is VariableReferenceNode -> generateVariableReference(block, node)
+            is NumberNode -> generateNumber(block, node)
             else -> throw UnsupportedOperationException("Unsupported node type: ${node::class.simpleName}")
         }
     }
 
     private fun generateFunction(node: FunctionNode): Int {
+        val block = repository.root.surfaceSearchChild(node.name) ?: throw IllegalStateException("Undefined function: ${node.name}")
         val returnType = getLLVMType(node.returnType)
-        val paramTypes = node.parameters.map { getLLVMType(it.type) }.joinToString(", ")
-        ir.add("define $returnType @${node.name}($paramTypes) {")
-
-        // Allocate parameters
-        node.parameters.forEachIndexed { index, param ->
-            val reg = getNextRegister()
-            ir.add("    %$reg = alloca ${getLLVMType(param.type)}")
-            ir.add("    store ${getLLVMType(param.type)} %${index}, ${getLLVMType(param.type)}* %$reg")
+        val paramTypes = node.parameters.joinToString(", ") {
+            val register = block.getNextRegister()
+            block.memory.allocate(it.name, register)
+            getLLVMType(it.type) + " %$register"
         }
+        ir.add("define $returnType @${node.name}($paramTypes) {")
+        ir.add("entry:")
 
-        generateNode(node.body)
+        generateNode(node.body, block)
 
         if (node.returnType == Type.Void) {
             ir.add("    ret void")
@@ -80,23 +83,24 @@ class LLVMCodeGeneratorProcess(
         return -1
     }
 
-    private fun generateAssignment(node: AssignmentNode): Int {
-        val valueReg = generateNode(node.expression)
-        val allocaReg = getNextRegister()
+    private fun generateAssignment(block: MemoryBlock, node: AssignmentNode): Int {
+        val valueReg = generateNode(node.expression, block)
+        val allocaReg = block.getNextRegister()
         val type = getLLVMType(if (node.type == Type.Unknown) {
-            symbols.lookup(node.name) ?: throw IllegalStateException("Undefined variable: ${node.name}")
+            block.figureOutSymbol(node.name) ?: throw IllegalStateException("Undefined function: ${node.name}")
         } else {
             node.type
         })
         ir.add("    %$allocaReg = alloca $type")
         ir.add("    store $type %$valueReg, $type* %$allocaReg")
-        return allocaReg
+        allocate(block, node.name, valueReg)
+        return valueReg
     }
 
-    private fun generateBinaryOperator(node: BinaryOperatorNode): Int {
-        val leftReg = generateNode(node.left)
-        val rightReg = generateNode(node.right)
-        val resultReg = getNextRegister()
+    private fun generateBinaryOperator(block: MemoryBlock, node: BinaryOperatorNode): Int {
+        val leftReg = generateNode(node.left, block)
+        val rightReg = generateNode(node.right, block)
+        val resultReg = block.getNextRegister()
         val instruction = when (node.operator) {
             TokenKind.PLUS -> "add"
             TokenKind.MINUS -> "sub"
@@ -108,16 +112,25 @@ class LLVMCodeGeneratorProcess(
         return resultReg
     }
 
-    private fun generateReturn(node: ReturnNode): Int {
-        val valueReg = generateNode(node.expression)
-        ir.add("    ret i32 %$valueReg")
+    private fun generateReturn(block: MemoryBlock, node: ReturnNode): Int {
+        val valueReg = generateNode(node.expression, block)
+        val type = getExpressionType(block, node.expression)
+        if (type.isLeft()) {
+            throw IllegalStateException("Unknown type for return value")
+        }
+        ir.add("    ret ${getLLVMType(type.unwrap())} %$valueReg")
         return -1
     }
 
-    private fun generateFunctionCall(node: CallNode): Int {
-        val argRegs = node.arguments.mapIndexed { index, syntaxTreeNode -> getExpressionType(syntaxTreeNode) to generateNode(syntaxTreeNode) }
-        val functionType = symbols.lookup(node.name) ?: throw IllegalStateException("Undefined function: ${node.name}")
-        val resultReg = getNextRegister()
+    private fun generateFunctionCall(block: MemoryBlock, node: CallNode): Int {
+        // Todo: workaround
+        if (node.name == "printf") {
+            return generatePrintfCall(block, node)
+        }
+
+        val argRegs = node.arguments.mapIndexed { index, syntaxTreeNode -> getExpressionType(block, syntaxTreeNode) to generateNode(syntaxTreeNode, block) }
+        val functionType = block.figureOutSymbol(node.name) ?: throw IllegalStateException("Undefined function: ${node.name}")
+        val resultReg = block.getNextRegister()
         var initialType: Type = Type.Unknown
         val argTypes = argRegs.joinToString(", ") {
             val (type, argReg) = it
@@ -129,12 +142,12 @@ class LLVMCodeGeneratorProcess(
             }
             "${getLLVMType(type.unwrap())} %$argReg"
         }
-        ir.add("    %$resultReg = call ${getLLVMType(functionType)} @${node.name}(i8* bitcast ([3 x i8]* @${chooseFormat(initialType)} to i8*), $argTypes)")
+        ir.add("    %$resultReg = call ${getLLVMType(functionType)} @${node.name}($argTypes)")
         return resultReg
     }
 
-    private fun generateIf(node: IfNode): Int {
-        val conditionReg = generateNode(node.condition)
+    private fun generateIf(block: MemoryBlock, node: IfNode): Int {
+        val conditionReg = generateNode(node.condition, block)
         val thenLabel = getNextLabel("then")
         val elseLabel = getNextLabel("else")
         val endLabel = getNextLabel("endif")
@@ -143,32 +156,35 @@ class LLVMCodeGeneratorProcess(
         ir.add("    br i1 %cmp, label %$thenLabel, label %$elseLabel")
 
         ir.add("$thenLabel:")
-        generateNode(node.body)
+        generateNode(node.body, block)
         ir.add("    br label %$endLabel")
 
         ir.add("$elseLabel:")
-        node.elseBody?.let { generateNode(it) }
+        node.elseBody?.let { generateNode(it, block) }
         ir.add("    br label %$endLabel")
 
         ir.add("$endLabel:")
         return -1
     }
 
-    private fun generateVariableReference(node: VariableReferenceNode): Int {
-        val allocaReg = symbols.lookup(node.name) ?: throw IllegalStateException("Undefined variable: ${node.name}")
-        val resultReg = getNextRegister()
-        ir.add("    %$resultReg = load i32, i32* %$allocaReg")
-        return resultReg
+    private fun generateVariableReference(block: MemoryBlock, node: VariableReferenceNode): Int {
+        val register = lookup(block, node.name)
+        if (register == null) {
+            val resultReg = block.getNextRegister()
+            ir.add("    %$resultReg = load i32, i32* %$register")
+            return resultReg
+        }
+        return register
     }
 
-    private fun generateNumber(node: NumberNode): Int {
-        val resultReg = getNextRegister()
+    private fun generateNumber(block: MemoryBlock, node: NumberNode): Int {
+        val resultReg = block.getNextRegister()
         ir.add("    %$resultReg = add i32 ${node.value}, 0")
         return resultReg
     }
 
-    private fun generateString(node: StringNode): Int {
-        val pointerReg = getNextRegister()
+    private fun generateString(block: MemoryBlock, node: StringNode): Int {
+        val pointerReg = block.getNextRegister()
         val length = node.value.length+1
 
         // Allocate space for the string
@@ -176,23 +192,21 @@ class LLVMCodeGeneratorProcess(
 
         // Store each character individually
         node.value.forEachIndexed { index, char ->
-            val charReg = getNextRegister()
+            val charReg = block.getNextRegister()
             val ascii = char.code
             ir.add("    %$charReg = getelementptr inbounds [$length x i8], [$length x i8]* %$pointerReg, i64 0, i64 $index")
             ir.add("    store i8 $ascii, i8* %$charReg")
         }
         // null-terminate the string
-        val nullReg = getNextRegister()
+        val nullReg = block.getNextRegister()
         ir.add("    %$nullReg = getelementptr inbounds [$length x i8], [$length x i8]* %$pointerReg, i64 0, i64 ${node.value.length}")
 
         // Return a pointer to the first character of the string
-        val reg = getNextRegister()
+        val reg = block.getNextRegister()
         ir.add("    %$reg = getelementptr inbounds [$length x i8], [$length x i8]* %$pointerReg, i64 0, i64 0")
 
         return reg
     }
-
-    private fun getNextRegister(): Int = registerCounter++
 
     private fun getNextLabel(prefix: String): String = "${prefix}_${labelCounter++}"
 
@@ -206,19 +220,41 @@ class LLVMCodeGeneratorProcess(
         }
     }
 
+    private fun generatePrintfCall(block: MemoryBlock, node: CallNode): Int {
+        val formatTypeResult = node.arguments.firstOrNull()?.let { getExpressionType(block, it) } ?: return -1
+        if (formatTypeResult.isLeft()) {
+            throw IllegalStateException("Unknown type for format")
+        }
+        val formatType = chooseFormat(formatTypeResult.unwrap())
+
+        val argRegs = node.arguments.mapIndexed { index, syntaxTreeNode -> getExpressionType(block, syntaxTreeNode) to generateNode(syntaxTreeNode, block) }
+        val argTypes = argRegs.joinToString(", ") {
+            val (type, argReg) = it
+            if (type.isLeft()) {
+                throw IllegalStateException("Unknown type for argument")
+            }
+            "${getLLVMType(type.unwrap())} %$argReg"
+        }
+
+        val resultReg = block.getNextRegister()
+        ir.add("    %$resultReg = call i32 (i8*, ...) @printf(i8* bitcast ([3 x i8]* @${formatType} to i8*), $argTypes)")
+
+        return resultReg
+    }
+
     fun finish(): String {
         return ir.joinToString("\n")
     }
 
     // TODO: repeated code
-    tailrec fun getExpressionType(node: SyntaxTreeNode): Either<AnalysisError, Type> {
+    tailrec fun getExpressionType(block: MemoryBlock, node: SyntaxTreeNode): Either<AnalysisError, Type> {
         return when (node) {
             is VariableReferenceNode -> {
-                Either.Right(symbols.lookup(node.name) ?: return Either.Left(AnalysisError.UndefinedVariable(node)))
+                Either.Right(block.figureOutSymbol(node.name) ?: return Either.Left(AnalysisError.UndefinedVariable(node, block)))
             }
             is TypedSyntaxTreeNode -> Either.Right(node.type)
-            is BinaryOperatorNode -> getExpressionType(node.left)
-            is CallNode -> Either.Right(inferCallType(node))
+            is BinaryOperatorNode -> getExpressionType(block, node.left)
+            is CallNode -> Either.Right(inferCallType(block, node))
             is EqualsNode -> Either.Right(Type.Boolean)
             else -> error("Unknown node type $node")
         }
@@ -232,8 +268,8 @@ class LLVMCodeGeneratorProcess(
         }
     }
 
-    fun inferCallType(node: CallNode): Type {
-        val function = symbols.lookup(node.name) ?: return Type.Unknown
+    fun inferCallType(block: MemoryBlock, node: CallNode): Type {
+        val function = block.figureOutSymbol(node.name) ?: return Type.Unknown
         return function
     }
 }

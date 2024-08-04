@@ -3,6 +3,7 @@ package me.gabriel.gwydion;
 import com.github.ajalt.mordant.rendering.TextColors
 import me.gabriel.gwydion.analyzer.CumulativeSemanticAnalyzer
 import me.gabriel.gwydion.analyzer.SymbolTable
+import me.gabriel.gwydion.compiler.ProgramMemoryRepository
 import me.gabriel.gwydion.compiler.llvm.LLVMCodeGenerator
 import me.gabriel.gwydion.executor.KotlinCodeExecutor
 import me.gabriel.gwydion.executor.PrintFunction
@@ -19,36 +20,42 @@ import me.gabriel.gwydion.util.trimIndentReturningWidth
 import java.io.File
 import java.time.Instant
 
+const val COMPILE = true
+
 fun main() {
     val logger = MordantLogger()
     logger.log(LogLevel.INFO) { +"Starting the Gwydion compiler..." }
 
-    val example2 = File("src/main/resources/example2.wy").readText()
-    val (tree, table) = compile(example2, logger) ?: return
-    val llvmCodeGenerator = LLVMCodeGenerator()
-    llvmCodeGenerator.registerIntrinsicFunction(
-        PrintFunction()
-    )
-    val generated = llvmCodeGenerator.generate(tree, table)
-    logger.log(LogLevel.INFO) { +"Generated code:" }
-    println(generated)
-    llvmCodeGenerator.generateExecutable(
-        llvmIr = generated,
-        outputDir = "xscales",
-        outputFileName = "output.exe"
-    )
-    val process = ProcessBuilder("xscales/output.exe").start()
-    val output = process.inputStream.bufferedReader().use { it.readText() }
-    logger.log(LogLevel.INFO) { +"The output of the program is: $output" }
-    val exitCode = process.waitFor()
+    if (COMPILE) {
+        val example2 = File("src/main/resources/example2.wy").readText()
+        val memory = ProgramMemoryRepository()
+        val tree = compile(example2, logger, memory) ?: return
+        val llvmCodeGenerator = LLVMCodeGenerator()
+        llvmCodeGenerator.registerIntrinsicFunction(
+            PrintFunction()
+        )
+        val generated = llvmCodeGenerator.generate(tree, memory)
+        logger.log(LogLevel.INFO) { +"Generated code:" }
+        println(generated)
+        llvmCodeGenerator.generateExecutable(
+            llvmIr = generated,
+            outputDir = "xscales",
+            outputFileName = "output.exe"
+        )
+        val process = ProcessBuilder("xscales/output.exe").start()
+        val output = process.inputStream.bufferedReader().use { it.readText() }
+        logger.log(LogLevel.INFO) { +"The output of the program is: $output" }
+        val exitCode = process.waitFor()
 
-    return
+        return
+    }
     val reader = AmbiguousSourceReader(logger)
     val stdlib = reader.read(findStdlib())
-    val (stdlibCompiled, stdlibSymbols) = compile(stdlib, logger) ?: return
+    val memory = ProgramMemoryRepository()
+    val stdlibCompiled = compile(stdlib, logger, memory) ?: return
 
     val example = reader.read(readText())
-    val (compiled, _) = compile(example, logger, stdlibSymbols) ?: return
+    val compiled = compile(example, logger, memory) ?: return
 
     stdlibCompiled.join(compiled)
     val executor = KotlinCodeExecutor(stdlibCompiled)
@@ -57,7 +64,7 @@ fun main() {
     logger.log(LogLevel.INFO) { +"The code was executed with exit code 0" }
 }
 
-fun compile(text: String, logger: GwydionLogger, symbols: SymbolTable = SymbolTable()): Pair<SyntaxTree, SymbolTable>? {
+fun compile(text: String, logger: GwydionLogger, memory: ProgramMemoryRepository): SyntaxTree? {
     val start = Instant.now()
     val lexer = StringLexer(text);
     val result = lexer.tokenize();
@@ -96,7 +103,7 @@ fun compile(text: String, logger: GwydionLogger, symbols: SymbolTable = SymbolTa
         logger.log(LogLevel.DEBUG) { +"The parsing was successful!" }
     }
 
-    val analyzer = CumulativeSemanticAnalyzer(parsingResult.getRight(), symbols)
+    val analyzer = CumulativeSemanticAnalyzer(parsingResult.getRight(), memory)
     val analysis = analyzer.analyzeTree()
     if (analysis.errors.isNotEmpty()) {
         logger.log(LogLevel.ERROR) {
@@ -111,7 +118,7 @@ fun compile(text: String, logger: GwydionLogger, symbols: SymbolTable = SymbolTa
     }
     val end = Instant.now()
     logger.log(LogLevel.INFO) { +"Compilation finished in ${end.toEpochMilli() - start.toEpochMilli()}ms" }
-    return Pair(parsingResult.getRight(), analysis.table)
+    return parsingResult.getRight()
 }
 
 fun readText(): File {

@@ -5,7 +5,7 @@ import me.gabriel.gwydion.executor.IntrinsicFunction
 import me.gabriel.gwydion.parsing.SyntaxTree
 
 interface CodeGenerator {
-    fun generate(tree: SyntaxTree, symbols: SymbolTable): String
+    fun generate(tree: SyntaxTree, memory: ProgramMemoryRepository): String
 
     fun registerIntrinsicFunction(function: IntrinsicFunction)
 }

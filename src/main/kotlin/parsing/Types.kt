@@ -17,6 +17,7 @@ sealed class Type(val name: kotlin.String) {
     data object String : Type("string")
     data object Void : Type("void")
     data object Boolean : Type("bool")
+    data object FormattedString : Type("formatted_string")
     data object Unknown : Type("unknown")
 
     override fun toString(): kotlin.String = name

@@ -1,5 +1,6 @@
 package me.gabriel.gwydion.exception
 
+import me.gabriel.gwydion.compiler.MemoryBlock
 import me.gabriel.gwydion.lexing.TokenKind
 import me.gabriel.gwydion.parsing.SyntaxTreeNode
 import me.gabriel.gwydion.parsing.Type
@@ -16,8 +17,8 @@ sealed class AnalysisError(val message: String, val node: SyntaxTreeNode) {
         node
     )
 
-    class UndefinedVariable(node: VariableReferenceNode) : AnalysisError(
-        "undefined variable: ${node.name}",
+    class UndefinedVariable(node: VariableReferenceNode, block: MemoryBlock) : AnalysisError(
+        "undefined variable: ${node.name} in block ${block.name}",
         node
     )
 

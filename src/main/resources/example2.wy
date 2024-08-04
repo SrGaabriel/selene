@@ -1,3 +1,10 @@
 macro main () {
-    printf("Hello, World!");
+    a := "Hello, World!";
+    b := "Hello, World!";
+    ab := sum(1, 2);
+    printf(b);
+}
+
+macro sum(a: int32, b: int32) int32 {
+    return a + b;
 }
