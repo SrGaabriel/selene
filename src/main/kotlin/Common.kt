@@ -11,6 +11,7 @@ import me.gabriel.gwydion.parsing.SyntaxTree
 import me.gabriel.gwydion.util.findRowOfIndex
 import me.gabriel.gwydion.util.replaceAtIndex
 import me.gabriel.gwydion.util.trimIndentReturningWidth
+import java.io.File
 import java.time.Instant
 
 fun parse(logger: GwydionLogger, text: String, memory: ProgramMemoryRepository): SyntaxTree? {
@@ -68,4 +69,8 @@ fun parse(logger: GwydionLogger, text: String, memory: ProgramMemoryRepository):
     val end = Instant.now()
     logger.log(LogLevel.INFO) { +"Compilation finished in ${end.toEpochMilli() - start.toEpochMilli()}ms" }
     return parsingResult.getRight()
+}
+
+fun findStdlib(): File {
+    return File("stdlib/src/")
 }

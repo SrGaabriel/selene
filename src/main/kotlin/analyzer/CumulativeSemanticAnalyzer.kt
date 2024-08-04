@@ -3,12 +3,14 @@ package me.gabriel.gwydion.analyzer
 import me.gabriel.gwydion.compiler.MemoryBlock
 import me.gabriel.gwydion.compiler.ProgramMemoryRepository
 import me.gabriel.gwydion.exception.AnalysisError
+import me.gabriel.gwydion.executor.IntrinsicFunction
 import me.gabriel.gwydion.parsing.*
 import me.gabriel.gwydion.util.Either
 
 class CumulativeSemanticAnalyzer(
     private val tree: SyntaxTree,
-    private val repository: ProgramMemoryRepository
+    private val repository: ProgramMemoryRepository,
+    private val intrinsics: List<IntrinsicFunction> = emptyList()
 ): SemanticAnalyzer {
     private val errors = mutableListOf<AnalysisError>()
 
@@ -119,6 +121,13 @@ class CumulativeSemanticAnalyzer(
                 val symbol = block.figureOutSymbol(node.name)
                 if (symbol == null) {
                     errors.add(AnalysisError.UndefinedVariable(node, block))
+                }
+                block
+            }
+            is CallNode -> {
+                val function = block.figureOutSymbol(node.name) ?: intrinsics.find { it.name == node.name }
+                if (function == null) {
+                    errors.add(AnalysisError.UndefinedFunction(node, block))
                 }
                 block
             }

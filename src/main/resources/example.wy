@@ -1,15 +1,19 @@
 func main () {
-    reading := readln();
-    println("You typed:");
-    println(reading);
-
-    check_if_typed_banana(reading);
+    check_typed();
 }
 
-func check_if_typed_banana (reading: string) {
-    if reading == "banana" {
-        println("You typed 'banana'!");
+func check_if_typed_apple(reading: string) {
+    variable := "apple";
+    if reading == variable {
+        println("You typed 'apple'!");
     } else {
-        println("You didn't type 'banana'.");
+        println("You didn't type 'apple'.");
+        check_typed();
     }
+}
+
+func check_typed() {
+    println("Type something:");
+    reading := readln();
+    check_if_typed_apple(reading);
 }

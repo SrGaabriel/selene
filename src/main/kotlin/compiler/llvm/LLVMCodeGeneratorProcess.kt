@@ -78,6 +78,7 @@ class LLVMCodeGeneratorProcess(
     }
 
     private fun generateFunction(node: FunctionNode): Int {
+        if (node.modifiers.contains(Modifiers.INTRINSIC)) return -1
         val block = repository.root.surfaceSearchChild(node.name) ?: throw IllegalStateException("Undefined function: ${node.name}")
         val returnType = getLLVMType(node.returnType)
         val paramTypes = node.parameters.joinToString(", ") {

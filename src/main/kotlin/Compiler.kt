@@ -8,6 +8,7 @@ import me.gabriel.gwydion.executor.PrintlnFunction
 import me.gabriel.gwydion.executor.ReadlineFunction
 import me.gabriel.gwydion.log.LogLevel
 import me.gabriel.gwydion.log.MordantLogger
+import me.gabriel.gwydion.reader.AmbiguousSourceReader
 import java.io.File
 import java.time.Instant
 
@@ -15,9 +16,13 @@ fun main() {
     val logger = MordantLogger()
     logger.log(LogLevel.INFO) { +"Starting the Gwydion compiler..." }
 
+    val stdlib = findStdlib()
+    val reader = AmbiguousSourceReader(logger)
+    val memory = ProgramMemoryRepository()
+    val stdlibTree = parse(logger, reader.read(stdlib), memory) ?: return
+
     val memoryStart = Instant.now()
     val example2 = File("src/main/resources/example.wy").readText()
-    val memory = ProgramMemoryRepository()
     val tree = parse(logger, example2, memory) ?: return
     val llvmCodeGenerator = LLVMCodeGenerator()
     llvmCodeGenerator.registerIntrinsicFunction(
@@ -30,6 +35,7 @@ fun main() {
     logger.log(LogLevel.INFO) { +"Memory analysis took ${memoryDelay}ms" }
 
     val generationStart = Instant.now()
+    tree.join(stdlibTree)
     val generated = llvmCodeGenerator.generate(tree, memory)
     val generationEnd = Instant.now()
     val generationDelay = generationEnd.toEpochMilli() - generationStart.toEpochMilli()
@@ -51,8 +57,4 @@ fun main() {
 
 fun readText(): File {
     return File("src/main/resources")
-}
-
-fun findStdlib(): File {
-    return File("stdlib/src/")
 }
