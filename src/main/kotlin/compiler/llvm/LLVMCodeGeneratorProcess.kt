@@ -16,6 +16,7 @@ class LLVMCodeGeneratorProcess(
     private val intrinsics: List<IntrinsicFunction>
 ) {
     private val ir = mutableListOf<String>()
+    private val dependencies = mutableListOf<String>()
     private var labelCounter = 0
     private var registerCounter = 1
 
@@ -28,6 +29,13 @@ class LLVMCodeGeneratorProcess(
     }
 
     fun setup() {
+        dependencies.addAll(intrinsics.flatMap { it.dependencies() })
+        ir.add("declare i32 @strcmp(i8*, i8*)")
+        ir.add("@format_s = private unnamed_addr constant [3 x i8] c\"%s\\00\"")
+        ir.add("@format_n = private unnamed_addr constant [3 x i8] c\"%d\\00\"")
+        dependencies.forEach {
+            ir.add(it)
+        }
         intrinsics.forEach { intrinsic ->
             ir.add(intrinsic.llvmIr())
             val symbols = repository.root.symbols
@@ -36,8 +44,6 @@ class LLVMCodeGeneratorProcess(
                 symbols.declare("param$index", type)
             }
         }
-        ir.add("@format_s = private unnamed_addr constant [3 x i8] c\"%s\\00\"")
-        ir.add("@format_n = private unnamed_addr constant [3 x i8] c\"%d\\00\"")
     }
 
     fun generateNode(node: SyntaxTreeNode, block: MemoryBlock): Int {
@@ -59,6 +65,7 @@ class LLVMCodeGeneratorProcess(
             is BooleanNode -> generateBoolean(block, node)
             is StringNode -> generateString(block, node)
             is VariableReferenceNode -> generateVariableReference(block, node)
+            is EqualsNode -> generateEqualsComparison(block, node)
             is NumberNode -> generateNumber(block, node)
             else -> throw UnsupportedOperationException("Unsupported node type: ${node::class.simpleName}")
         }
@@ -95,7 +102,7 @@ class LLVMCodeGeneratorProcess(
         val valueReg = generateNode(node.expression, block)
         val allocaReg = block.getNextRegister()
         val type = getLLVMType(if (node.type == Type.Unknown) {
-            block.figureOutSymbol(node.name) ?: throw IllegalStateException("Undefined function: ${node.name}")
+            getExpressionType(block, node).getRightOrNull() ?: error("Unknown type")
         } else {
             node.type
         })
@@ -210,8 +217,12 @@ class LLVMCodeGeneratorProcess(
         ir.add("    %$pointerReg = alloca [$length x i8]")
 
         // Store each character individually
+        var firstPointer: Int? = null
         node.value.forEachIndexed { index, char ->
             val charReg = block.getNextRegister()
+            if (firstPointer == null) {
+                firstPointer = charReg
+            }
             val ascii = char.code
             ir.add("    %$charReg = getelementptr inbounds [$length x i8], [$length x i8]* %$pointerReg, i32 0, i32 $index")
             ir.add("    store i8 $ascii, i8* %$charReg")
@@ -219,12 +230,32 @@ class LLVMCodeGeneratorProcess(
         // null-terminate the string
         val nullReg = block.getNextRegister()
         ir.add("    %$nullReg = getelementptr inbounds [$length x i8], [$length x i8]* %$pointerReg, i32 0, i32 ${node.value.length}")
+        ir.add("    store i8 0, i8* %$nullReg")
 
-        // Return a pointer to the first character of the string
-        val reg = block.getNextRegister()
-        ir.add("    %$reg = getelementptr inbounds [$length x i8], [$length x i8]* %$pointerReg, i32 0, i32 0")
+        return firstPointer ?: throw IllegalStateException("No pointer found")
+    }
 
-        return reg
+    fun generateEqualsComparison(block: MemoryBlock, node: EqualsNode): Int {
+        val leftReg = generateNode(node.left, block)
+        val rightReg = generateNode(node.right, block)
+        val typeResult = getExpressionType(block, node.left)
+        if (typeResult.isLeft()) {
+            throw IllegalStateException("Unknown type for comparison")
+        }
+        val type = typeResult.unwrap()
+        val resultReg = if (type != Type.String) {
+            val resultReg = block.getNextRegister()
+            ir.add("    %$resultReg = icmp eq ${getLLVMType(type)} %$leftReg, %$rightReg")
+            resultReg
+        } else {
+            val callReg = block.getNextRegister()
+            ir.add("    %$callReg = call i1 @strcmp(i8* %$leftReg, i8* %$rightReg)")
+            // let's add calls to println for debugging purposes
+            val resultReg = block.getNextRegister()
+            ir.add("    %$resultReg = icmp eq i1 %$callReg, 0")
+            resultReg
+        }
+        return resultReg
     }
 
     private fun getNextLabel(prefix: String): String = "${prefix}_${labelCounter++}"

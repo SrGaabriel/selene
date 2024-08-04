@@ -115,6 +115,13 @@ class CumulativeSemanticAnalyzer(
                 }
                 block
             }
+            is VariableReferenceNode -> {
+                val symbol = block.figureOutSymbol(node.name)
+                if (symbol == null) {
+                    errors.add(AnalysisError.UndefinedVariable(node, block))
+                }
+                block
+            }
             else -> {
                 block
             }

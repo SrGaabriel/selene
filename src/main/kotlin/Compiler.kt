@@ -5,6 +5,7 @@ import me.gabriel.gwydion.compiler.llvm.LLVMCodeGenerator
 import me.gabriel.gwydion.executor.KotlinCodeExecutor
 import me.gabriel.gwydion.executor.PrintFunction
 import me.gabriel.gwydion.executor.PrintlnFunction
+import me.gabriel.gwydion.executor.ReadlineFunction
 import me.gabriel.gwydion.log.LogLevel
 import me.gabriel.gwydion.log.MordantLogger
 import java.io.File
@@ -15,13 +16,14 @@ fun main() {
     logger.log(LogLevel.INFO) { +"Starting the Gwydion compiler..." }
 
     val memoryStart = Instant.now()
-    val example2 = File("src/main/resources/example2.wy").readText()
+    val example2 = File("src/main/resources/example.wy").readText()
     val memory = ProgramMemoryRepository()
     val tree = parse(logger, example2, memory) ?: return
     val llvmCodeGenerator = LLVMCodeGenerator()
     llvmCodeGenerator.registerIntrinsicFunction(
         PrintFunction(),
-        PrintlnFunction()
+        PrintlnFunction(),
+        ReadlineFunction()
     )
     val memoryEnd = Instant.now()
     val memoryDelay = memoryEnd.toEpochMilli() - memoryStart.toEpochMilli()

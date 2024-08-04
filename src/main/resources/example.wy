@@ -1,14 +1,15 @@
 func main () {
     reading := readln();
-    println("You typed: " + reading);
+    println("You typed:");
+    println(reading);
 
     check_if_typed_banana(reading);
 }
 
 func check_if_typed_banana (reading: string) {
     if reading == "banana" {
-        println("You typed banana!");
+        println("You typed 'banana'!");
     } else {
-        println("You didn't type banana.");
+        println("You didn't type 'banana'.");
     }
 }

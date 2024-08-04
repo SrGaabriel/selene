@@ -34,7 +34,7 @@ class LLVMCodeGenerator: CodeGenerator {
         File(inputLlPath).delete()
         File(inputLlPath).writeText(llvmIr)
 
-        val clangProcess = ProcessBuilder("clang", inputLlPath, "", "-o", outputExePath)
+        val clangProcess = ProcessBuilder("clang", inputLlPath, "-v", "-o", outputExePath)
             .redirectError(ProcessBuilder.Redirect.INHERIT)
             .start()
         clangProcess.waitFor()

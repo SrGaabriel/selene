@@ -14,6 +14,15 @@ tailrec fun getExpressionType(block: MemoryBlock, node: SyntaxTreeNode): Either<
         is VariableReferenceNode -> {
             Either.Right(block.figureOutSymbol(node.name) ?: return Either.Left(AnalysisError.UndefinedVariable(node, block)))
         }
+        is AssignmentNode -> {
+            val type = if (node.type == Type.Unknown) {
+                getExpressionType(block, node.expression).getRightOrNull() ?: Type.Unknown
+            } else {
+                node.type
+            }
+            block.symbols.declare(node.name, type)
+            getExpressionType(block, node.expression)
+        }
         is TypedSyntaxTreeNode -> Either.Right(node.type)
         is BinaryOperatorNode -> getExpressionType(block, node.left)
         is CallNode -> Either.Right(inferCallType(block, node))

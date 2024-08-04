@@ -1,9 +1,9 @@
-func main () {
+func main () int32 {
     a := "Hello, World!";
     ab := sum(56782, 42839);
     ab2 := times(ab, 7);
 
-    if false {
+    if 6 == 6 {
         println("If block");
     } else {
         println("Else block");
@@ -11,6 +11,7 @@ func main () {
 
     println(a);
     println(ab2);
+    return 0;
 }
 
 func sum(a: int32, b: int32) int32 {
