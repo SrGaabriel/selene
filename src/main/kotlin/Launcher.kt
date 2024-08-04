@@ -3,7 +3,9 @@ package me.gabriel.gwydion;
 import com.github.ajalt.mordant.rendering.TextColors
 import me.gabriel.gwydion.analyzer.CumulativeSemanticAnalyzer
 import me.gabriel.gwydion.analyzer.SymbolTable
+import me.gabriel.gwydion.compiler.llvm.LLVMCodeGenerator
 import me.gabriel.gwydion.executor.KotlinCodeExecutor
+import me.gabriel.gwydion.executor.PrintFunction
 import me.gabriel.gwydion.lexing.lexers.StringLexer
 import me.gabriel.gwydion.log.GwydionLogger
 import me.gabriel.gwydion.log.LogLevel
@@ -16,12 +18,29 @@ import me.gabriel.gwydion.util.replaceAtIndex
 import me.gabriel.gwydion.util.trimIndentReturningWidth
 import java.io.File
 import java.time.Instant
-import kotlin.system.measureNanoTime
 
 fun main() {
     val logger = MordantLogger()
     logger.log(LogLevel.INFO) { +"Starting the Gwydion compiler..." }
 
+    val example2 = File("src/main/resources/example2.wy").readText()
+    val (tree, table) = compile(example2, logger) ?: return
+    val llvmCodeGenerator = LLVMCodeGenerator()
+    llvmCodeGenerator.registerIntrinsicFunction(
+        PrintFunction()
+    )
+    val generated = llvmCodeGenerator.generate(tree, table)
+    logger.log(LogLevel.INFO) { +"Generated code:" }
+    println(generated)
+    llvmCodeGenerator.generateExecutable(
+        llvmIr = generated,
+        outputDir = "xscales",
+        outputFileName = "output.exe"
+    )
+
+    // Step 2: Compile LLVM IR to object code using llc
+
+    return
     val reader = AmbiguousSourceReader(logger)
     val stdlib = reader.read(findStdlib())
     val (stdlibCompiled, stdlibSymbols) = compile(stdlib, logger) ?: return

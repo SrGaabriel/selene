@@ -1,0 +1,3 @@
+macro main () {
+    printf("Hello, World!");
+}

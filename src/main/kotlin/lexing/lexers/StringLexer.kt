@@ -94,7 +94,7 @@ class StringLexer(private val data: String): Lexer {
 
     fun identifier(value: String): Either<LexingError, Token> {
         val start = position
-        while (position < data.length && data[position].isLetterOrDigit()) {
+        while (position < data.length && (data[position].isLetterOrDigit() || data[position] == '_')) {
             position++
         }
         val value = data.substring(start, position)
