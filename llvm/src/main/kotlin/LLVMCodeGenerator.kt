@@ -10,7 +10,7 @@ class LLVMCodeGenerator: ILLVMCodeGenerator {
     }
 
     override fun heapMemoryAllocation(type: LLVMType, size: Int): String {
-        return "call i8* @malloc($type ${size})"
+        return "call i8* @malloc(${type.llvm} ${size})"
     }
 
     override fun addition(left: Value, right: Value, type: LLVMType): String {
@@ -33,7 +33,7 @@ class LLVMCodeGenerator: ILLVMCodeGenerator {
 
     override fun functionCall(name: String, returnType: LLVMType, arguments: Collection<Value>): String {
         val argsString = arguments.joinToString(", ") { "${it.type} ${it.llvm()}" }
-        return "call $returnType @$name($argsString)"
+        return "call ${returnType.llvm} @$name($argsString)"
     }
 
     override fun memoryCopy(source: LLVMType.Pointer, destination: LLVMType.Pointer, size: Value): String {
@@ -41,8 +41,8 @@ class LLVMCodeGenerator: ILLVMCodeGenerator {
         return "call void @memcpy(${source.llvm} %${source}, ${destination.llvm} %${destination.llvm}, i32 %${size.llvm()})"
     }
 
-    override fun unsafeSubElementAddressReading(type: LLVMType, struct: Value, index: Value): String {
-        return "getelementptr inbounds $type, $type* ${struct.llvm()}, i32 0, i32 %${index.llvm()}"
+    override fun unsafeSubElementAddressReading(struct: Value, index: Value): String {
+        return "getelementptr inbounds ${struct.type.llvm}, ${struct.type.llvm}* ${struct.llvm()}, i32 0, i32 ${index.llvm()}"
     }
 
     override fun returnInstruction(type: LLVMType, value: Value): String {
@@ -64,9 +64,20 @@ class LLVMCodeGenerator: ILLVMCodeGenerator {
         return "$label:"
     }
 
-    override fun declareFunction(name: String, returnType: LLVMType, arguments: List<MemoryUnit>) {
+    override fun functionDeclaration(name: String, returnType: LLVMType, arguments: List<MemoryUnit>): String {
         val argsString = arguments.joinToString(", ") { "${it.type} %${it.register}" }
-        dependencies.add("declare $returnType @$name($argsString)")
+        return """
+            define ${returnType.llvm} @$name($argsString) {
+            entry:
+            """.trimIndent()
+    }
+
+    override fun addNumber(type: LLVMType, left: Value, right: Value): String {
+        return "add ${type.llvm} ${left.llvm()}, ${right.llvm()}"
+    }
+
+    override fun storage(value: Value, address: MemoryUnit): String {
+        return "store ${value.type.llvm} ${value.llvm()}, ${address.type.llvm} ${address.llvm()}"
     }
 
     override fun getGeneratedDependencies(): Set<String> = dependencies

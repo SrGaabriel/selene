@@ -1,6 +1,7 @@
 package me.gabriel.gwydion.compiler
 
 import me.gabriel.gwydion.analyzer.SymbolTable
+import me.gabriel.gwydion.llvm.struct.MemoryUnit
 import me.gabriel.gwydion.parsing.Type
 
 data class MemoryBlock(
@@ -18,7 +19,7 @@ data class MemoryBlock(
         return children.find { it.name == name }
     }
 
-    fun figureOutMemory(name: String): Int? {
+    fun figureOutMemory(name: String): MemoryUnit? {
         val memory = memory.lookup(name)
         return memory ?: parent?.figureOutMemory(name)
     }
@@ -51,15 +52,15 @@ class ProgramMemoryRepository {
 }
 
 class MemoryTable {
-    private val memory = mutableMapOf<String, Int>()
+    private val memory = mutableMapOf<String, MemoryUnit>()
     var registerCounter = 1
 
-    fun allocate(name: String, pointer: Int): Int {
-        memory[name] = pointer
-        return pointer
+    fun allocate(name: String, unit: MemoryUnit): MemoryUnit {
+        memory[name] = unit
+        return unit
     }
 
-    fun lookup(name: String): Int? {
+    fun lookup(name: String): MemoryUnit? {
         return memory[name]
     }
 }

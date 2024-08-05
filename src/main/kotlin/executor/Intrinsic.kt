@@ -76,6 +76,7 @@ class PrintlnFunction: IntrinsicFunction(
             entry:
                 %format = getelementptr [3 x i8], [3 x i8]* @format_n, i32 0, i32 0
                 call i32 (i8*, ...) @printf(i8* %format, i32 %num)
+                call i32 @putchar(i32 10)
                 ret void
             }
         """.trimIndent()
@@ -88,6 +89,10 @@ class PrintlnFunction: IntrinsicFunction(
             Type.Int32 -> "call void @println_i32(${arguments})"
             else -> error("Unknown type $type")
         }
+    }
+
+    override fun dependencies(): List<String> {
+        return listOf("declare i32 @putchar(i32)")
     }
 }
 

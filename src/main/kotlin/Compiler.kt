@@ -21,7 +21,7 @@ fun main() {
     val stdlibTree = parse(logger, reader.read(stdlib), memory) ?: return
 
     val memoryStart = Instant.now()
-    val example2 = File("src/main/resources/example.wy").readText()
+    val example2 = File("src/main/resources/basic.wy").readText()
     val tree = parse(logger, example2, memory) ?: return
     val llvmCodeAdapter = LLVMCodeAdapter()
     llvmCodeAdapter.registerIntrinsicFunction(

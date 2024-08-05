@@ -5,6 +5,7 @@ sealed class LLVMType(
     val defaultAlignment: Int,
     val size: Int
 ) {
+    data object Void : LLVMType("void", 0, 0)
     data object I1 : LLVMType("i1", 1, 1)
     data object I8 : LLVMType("i8", 1, 1)
     data object I32 : LLVMType("i32", 4, 4)

@@ -11,12 +11,13 @@ class LLVMCodeAdapter: CodeGenerator {
 
     override fun generate(tree: SyntaxTree, memory: ProgramMemoryRepository): String {
         val process = LLVMCodeAdaptationProcess(tree, memory, intrinsics)
+        process.acceptNode(memory.root, tree.root)
         process.setup()
-        process.generateNode(tree.root, memory.root)
         return process.finish()
     }
 
     override fun registerIntrinsicFunction(vararg functions: IntrinsicFunction) {
+        println("registered")
         intrinsics.addAll(functions)
     }
 
@@ -33,7 +34,13 @@ class LLVMCodeAdapter: CodeGenerator {
         File(inputLlPath).delete()
         File(inputLlPath).writeText(llvmIr)
 
-        val clangProcess = ProcessBuilder("clang", inputLlPath, "-v", "-o", outputExePath)
+        val clangProcess = ProcessBuilder(
+            "clang",
+            inputLlPath,
+            "-v",
+            "-o",
+            outputExePath
+        )
             .redirectError(ProcessBuilder.Redirect.INHERIT)
             .start()
         clangProcess.waitFor()

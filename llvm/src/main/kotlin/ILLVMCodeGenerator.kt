@@ -19,7 +19,7 @@ interface ILLVMCodeGenerator {
 
     fun memoryCopy(source: LLVMType.Pointer, destination: LLVMType.Pointer, size: Value): String
 
-    fun unsafeSubElementAddressReading(type: LLVMType, struct: Value, index: Value): String
+    fun unsafeSubElementAddressReading(struct: Value, index: Value): String
 
     fun getGeneratedDependencies(): Set<String>
 
@@ -27,9 +27,13 @@ interface ILLVMCodeGenerator {
 
     fun unconditionalBranchTo(label: String): String
 
+    fun addNumber(type: LLVMType, left: Value, right: Value): String
+
+    fun storage(value: Value, address: MemoryUnit): String
+
     fun conditionalBranch(condition: Value, trueLabel: String, falseLabel: String): String
 
-    fun declareFunction(name: String, returnType: LLVMType, arguments: List<MemoryUnit>)
+    fun functionDeclaration(name: String, returnType: LLVMType, arguments: List<MemoryUnit>): String
 
     fun returnInstruction(type: LLVMType, value: Value): String
 }

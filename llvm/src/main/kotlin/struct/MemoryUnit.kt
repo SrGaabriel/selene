@@ -12,7 +12,7 @@ data object LLVMVoid : Value {
     override fun llvm(): String = "void"
 }
 
-class LLVMConstant<T : Any>(val value: T, override val type: LLVMType): Value {
+data class LLVMConstant<T : Any>(val value: T, override val type: LLVMType): Value {
     override fun llvm(): String = value.toString()
 }
 
