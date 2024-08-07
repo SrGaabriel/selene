@@ -52,6 +52,7 @@ class LLVMCodeAdaptationProcess(
         is AssignmentNode -> generateAssignment(block, node)
         is NumberNode -> generateNumber(block, node)
         is VariableReferenceNode -> generateVariableReference(block, node)
+        is BinaryOperatorNode -> generateBinaryOperator(block, node)
         else -> error("Node $node not supported")
     }
 
@@ -167,4 +168,18 @@ class LLVMCodeAdaptationProcess(
 
         return reference
     }
+
+    fun generateBinaryOperator(block: MemoryBlock, node: BinaryOperatorNode): MemoryUnit {
+        val typeResult = getExpressionType(block, node.left)
+        if (typeResult.isLeft()) error("Couldn't figure out binary operation type")
+
+        val type = typeResult.unwrap()
+        if (type == Type.String) {
+            return assembler.concatenateStrings(
+                left = acceptNode(block, node.left) as MemoryUnit.Sized,
+                right = acceptNode(block, node.right) as MemoryUnit.Sized
+            )
+        }
+        return NullMemoryUnit
+     }
 }

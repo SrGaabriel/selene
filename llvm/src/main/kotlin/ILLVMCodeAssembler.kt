@@ -75,7 +75,7 @@ interface ILLVMCodeAssembler {
 
     fun returnValue(type: LLVMType, value: MemoryUnit)
 
-    fun concatenateStrings(left: MemoryUnit, right: MemoryUnit): MemoryUnit
+    fun concatenateStrings(left: MemoryUnit.Sized, right: MemoryUnit.Sized): MemoryUnit
 
     fun calculateStringLength(string: MemoryUnit): MemoryUnit
 

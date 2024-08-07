@@ -17,7 +17,9 @@ interface ILLVMCodeGenerator {
 
     fun signedIntegerComparison(left: Value, right: Value): String
 
-    fun memoryCopy(source: LLVMType.Pointer, destination: LLVMType.Pointer, size: Value): String
+    fun memoryCopy(source: MemoryUnit, destination: MemoryUnit, size: Value): String
+
+    fun stringCopy(source: Value, destination: Value): String
 
     fun unsafeSubElementAddressReading(struct: Value, index: Value): String
 

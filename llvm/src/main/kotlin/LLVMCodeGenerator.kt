@@ -36,13 +36,18 @@ class LLVMCodeGenerator: ILLVMCodeGenerator {
         return "call ${returnType.llvm} @$name($argsString)"
     }
 
-    override fun memoryCopy(source: LLVMType.Pointer, destination: LLVMType.Pointer, size: Value): String {
+    override fun memoryCopy(source: MemoryUnit, destination: MemoryUnit, size: Value): String {
         dependencies.add("declare void @memcpy(i8*, i8*, i32)")
-        return "call void @memcpy(${source.llvm} %${source}, ${destination.llvm} %${destination.llvm}, i32 %${size.llvm()})"
+        return "call void @memcpy(${source.type.llvm} ${source.llvm()}, ${destination.type.llvm} ${destination.llvm()}, i32 ${size.llvm()})"
+    }
+
+    override fun stringCopy(source: Value, destination: Value): String {
+        dependencies.add("declare i8* @strcpy(i8*, i8*)")
+        return "call i8* @strcpy(i8* ${source.llvm()}, i8* ${destination.llvm()})"
     }
 
     override fun unsafeSubElementAddressReading(struct: Value, index: Value): String {
-        return "getelementptr inbounds ${struct.type.llvm}, ${struct.type.llvm}* ${struct.llvm()}, i32 0, i32 ${index.llvm()}"
+        return "getelementptr inbounds ${struct.type.llvm}, ${struct.type.llvm} ${struct.llvm()}, i32 0, i32 ${index.llvm()}"
     }
 
     override fun returnInstruction(type: LLVMType, value: Value): String {

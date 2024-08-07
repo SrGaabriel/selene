@@ -188,23 +188,32 @@ class LLVMCodeAssembler(val generator: ILLVMCodeGenerator): ILLVMCodeAssembler {
         instruct("ret ${value.llvm()}")
     }
 
-    override fun concatenateStrings(left: MemoryUnit, right: MemoryUnit): MemoryUnit {
-        addDependency("declare i8* @strcat(i8*, i8*)")
-        val leftLength = calculateStringLength(left)
-        val rightLength = calculateStringLength(right)
+    override fun concatenateStrings(left: MemoryUnit.Sized, right: MemoryUnit.Sized): MemoryUnit {
+        val totalSize = left.size + right.size - 1 // Subtract 1 to account for overlapping null terminators
 
-        val totalLengthWithoutNull = addNumber(
-            type = LLVMType.I32,
-            left = LLVMConstant(value = leftLength, type = LLVMType.I32),
-            right = LLVMConstant(value = rightLength, type = LLVMType.I32)
+        val alloc = MemoryUnit.Sized(
+            register = nextRegister(),
+            type = LLVMType.Pointer(LLVMType.I8),
+            size = totalSize
         )
-        val totalLength = addNumber(
-            type = LLVMType.I32,
-            left = totalLengthWithoutNull,
-            right = LLVMConstant(value = 1, type = LLVMType.I32)
-        )
-        val totalString = allocateHeapMemory(LLVMType.I32)
+        saveToRegister(alloc.register, "call i8* @malloc(i32 $totalSize)")
 
+        val leftCopy = generator.memoryCopy(
+            source = left,
+            destination = alloc,
+            size = LLVMConstant(left.size - 1, LLVMType.I32) // Don't copy null terminator
+        )
+        instruct(leftCopy)
+
+        val rightDest = getElementFromStructAt(alloc, LLVMType.I8, LLVMConstant(left.size - 1, LLVMType.I32))
+        val rightCopy = generator.memoryCopy(
+            source = right,
+            destination = rightDest,
+            size = LLVMConstant(right.size, LLVMType.I32) // Copy including null terminator
+        )
+        instruct(rightCopy)
+
+        return alloc
     }
 
     override fun calculateStringLength(string: MemoryUnit): MemoryUnit {
