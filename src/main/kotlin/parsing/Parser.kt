@@ -383,22 +383,15 @@ class Parser(private val tokens: TokenStream) {
                     val text = consume().value
                     StringNode.Segment.Text(text)
                 }
-                TokenKind.STRING_VARIABLE_REFERENCE -> {
+                TokenKind.STRING_EXPRESSION_REFERENCE -> {
                     val consumed = consume()
                     StringNode.Segment.Reference(VariableReferenceNode(consumed.value, consumed))
-                }
-                TokenKind.STRING_EXPRESSION_REFERENCE -> {
-                    position++
-                    val expression = parseExpression()
-                    if (expression.isLeft()) {
-                        return Either.Left(expression.getLeft())
-                    }
-                    StringNode.Segment.Expression(expression.getRight())
                 }
                 else -> return Either.Left(ParsingError.UnexpectedToken(peek()))
             }
             segments.add(segment)
         }
+        println(segments)
         consume(TokenKind.STRING_END).ifLeft {
             return Either.Left(it)
         }

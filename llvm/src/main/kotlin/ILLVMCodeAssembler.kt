@@ -21,6 +21,12 @@ interface ILLVMCodeAssembler {
 
     fun conditionalBranch(condition: MemoryUnit, trueLabel: String, falseLabel: String)
 
+    fun compareAndBranch(
+        condition: Value,
+        trueLabel: String,
+        falseLabel: String
+    )
+
     fun unconditionalBranchTo(label: String)
 
     fun dynamicMemoryUnitAllocation(unit: MemoryUnit)
@@ -82,7 +88,19 @@ interface ILLVMCodeAssembler {
 
     fun calculateStringLength(string: MemoryUnit): MemoryUnit
 
+    fun handleComparison(left: MemoryUnit, right: MemoryUnit, type: LLVMType): MemoryUnit
+
+    fun compareStrings(left: MemoryUnit, right: MemoryUnit): MemoryUnit
+
+    fun isTrue(value: Value): MemoryUnit
+
+    fun isNotTrue(value: Value): MemoryUnit
+
+    fun isFalse(value: Value): MemoryUnit
+
     fun nextRegister(): Int
+
+    fun nextLabel(): String
 
     fun finish(): String
 }

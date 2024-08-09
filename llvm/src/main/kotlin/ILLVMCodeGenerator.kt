@@ -15,9 +15,13 @@ interface ILLVMCodeGenerator {
 
     fun strictStringLengthCalculation(argument: Value): String
 
+    fun stringComparison(left: Value, right: Value): String
+
     fun functionCall(name: String, returnType: LLVMType, arguments: Collection<Value>): String
 
     fun signedIntegerComparison(left: Value, right: Value): String
+
+    fun signedIntegerNotEqualComparison(left: Value, right: Value): String
 
     fun memoryCopy(source: MemoryUnit, destination: MemoryUnit, size: Value): String
 

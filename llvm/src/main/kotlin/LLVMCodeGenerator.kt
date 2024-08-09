@@ -24,7 +24,11 @@ class LLVMCodeGenerator: ILLVMCodeGenerator {
     }
 
     override fun signedIntegerComparison(left: Value, right: Value): String {
-        return "icmp slt i1 %${left.llvm()}, %${right.llvm()}"
+        return "icmp eq i32 ${left.llvm()}, ${right.llvm()}"
+    }
+
+    override fun signedIntegerNotEqualComparison(left: Value, right: Value): String {
+        return "icmp ne i32 ${left.llvm()}, ${right.llvm()}"
     }
 
     override fun stringLengthCalculation(value: Value): String {
@@ -38,7 +42,7 @@ class LLVMCodeGenerator: ILLVMCodeGenerator {
     }
 
     override fun functionCall(name: String, returnType: LLVMType, arguments: Collection<Value>): String {
-        val argsString = arguments.joinToString(", ") { "${it.type} ${it.llvm()}" }
+        val argsString = arguments.joinToString(", ") { "${it.type.llvm} ${it.llvm()}" }
         return "call ${returnType.llvm} @$name($argsString)"
     }
 
@@ -79,15 +83,20 @@ class LLVMCodeGenerator: ILLVMCodeGenerator {
         if (value == LLVMVoid) {
             return "ret void"
         }
-        return "ret ${type.llvm} %${value.llvm()}"
+        return "ret ${type.llvm} ${value.llvm()}"
     }
 
     override fun conditionalBranch(condition: Value, trueLabel: String, falseLabel: String): String {
-        return "br i1 %${condition.llvm()}, label %$trueLabel, label %$falseLabel"
+        return "br i1 ${condition.llvm()}, label %$trueLabel, label %$falseLabel"
     }
 
     override fun unconditionalBranchTo(label: String): String {
         return "br label %$label"
+    }
+
+    override fun stringComparison(left: Value, right: Value): String {
+        dependencies.add("declare i32 @strcmp(i8*, i8*)")
+        return "call i32 @strcmp(i8* ${left.llvm()}, i8* ${right.llvm()})"
     }
 
     override fun createBranch(label: String): String {
@@ -95,7 +104,7 @@ class LLVMCodeGenerator: ILLVMCodeGenerator {
     }
 
     override fun functionDeclaration(name: String, returnType: LLVMType, arguments: List<MemoryUnit>): String {
-        val argsString = arguments.joinToString(", ") { "${it.type} %${it.register}" }
+        val argsString = arguments.joinToString(", ") { "${it.type.llvm} %${it.register}" }
         return """
             define ${returnType.llvm} @$name($argsString) {
             entry:

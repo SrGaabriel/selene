@@ -11,6 +11,7 @@ import me.gabriel.gwydion.llvm.struct.LLVMType
 import me.gabriel.gwydion.llvm.struct.MemoryUnit
 import me.gabriel.gwydion.llvm.struct.NullMemoryUnit
 import me.gabriel.gwydion.parsing.*
+import kotlin.math.exp
 
 /*
  * I decided to use exceptions instead of errors because the exceptions should be caught in
@@ -52,6 +53,10 @@ class LLVMCodeAdaptationProcess(
         is NumberNode -> generateNumber(block, node)
         is VariableReferenceNode -> generateVariableReference(block, node)
         is BinaryOperatorNode -> generateBinaryOperator(block, node)
+        is ReturnNode -> generateReturn(block, node)
+        is IfNode -> generateIf(block, node)
+        is BooleanNode -> generateBoolean(block, node)
+        is EqualsNode -> generateEquality(block, node)
         else -> error("Node $node not supported")
     }
 
@@ -67,11 +72,17 @@ class LLVMCodeAdaptationProcess(
 
         val parameters = node.parameters.map {
             val type = it.type.asLLVM()
-            MemoryUnit.Sized(
+            val unit = MemoryUnit.Sized(
                 register = assembler.nextRegister(),
                 type = type,
                 size = type.size
             )
+            block.symbols.declare(
+                name = it.name,
+                type = it.type
+            )
+            block.memory.allocate(it.name, unit)
+            unit
         }
 
         assembler.functionDsl(
@@ -113,12 +124,18 @@ class LLVMCodeAdaptationProcess(
 
         val intrinsic = intrinsics.find { it.name == node.name }
         if (intrinsic != null) {
-            assembler.instruct(intrinsic.handleCall(
+            val call = intrinsic.handleCall(
                 call = node,
                 types = node.arguments.map { getExpressionType(block, it).unwrap() },
                 arguments = arguments.joinToString(", ") { "${it.type.llvm} %${it.register}" }
-            ))
-            return NullMemoryUnit
+            )
+            if (store) {
+                assembler.saveToRegister(assignment.register, call)
+                return assignment
+            } else {
+                assembler.instruct(call)
+                return NullMemoryUnit
+            }
         }
         assembler.callFunction(
             name = node.name,
@@ -131,7 +148,7 @@ class LLVMCodeAdaptationProcess(
     fun generateAssignment(block: MemoryBlock, node: AssignmentNode): MemoryUnit {
         val expression = acceptNode(block, node.expression, true)
 
-        println("Alloca")
+        println("Alloca: ${node.name} ${expression}")
         block.memory.allocate(node.name, expression)
 //        assembler.saveToRegister(unit.register, expression.llvm())
         return expression
@@ -154,8 +171,8 @@ class LLVMCodeAdaptationProcess(
         val space = assembler.allocateHeapMemory(
             size = 64
         ) as MemoryUnit.Sized
-        val first = segmentUnits.first()
         segmentUnits.forEach { segment ->
+            println("Segment: $segment")
             assembler.addSourceToDestinationString(
                 source = segment,
                 destination = space
@@ -176,7 +193,7 @@ class LLVMCodeAdaptationProcess(
 
     fun generateVariableReference(block: MemoryBlock, node: VariableReferenceNode): MemoryUnit {
         val reference = block.figureOutMemory(node.name)
-            ?: error("Reference could not be found")
+            ?: error("Reference ${node.name} could not be found")
 
         return reference
     }
@@ -202,6 +219,48 @@ class LLVMCodeAdaptationProcess(
             )
             return resultString
         }
+        return NullMemoryUnit
+    }
+
+    fun generateIf(block: MemoryBlock, node: IfNode): NullMemoryUnit {
+        val condition = acceptNode(block, node.condition)
+        val trueLabel = assembler.nextLabel()
+        val falseLabel = assembler.nextLabel()
+        val endLabel = assembler.nextLabel()
+
+        assembler.conditionalBranch(condition, trueLabel, falseLabel)
+        assembler.createBranch(trueLabel)
+        acceptNode(block, node.body)
+        assembler.unconditionalBranchTo(endLabel)
+        if (node.elseBody != null) {
+            assembler.createBranch(falseLabel)
+            acceptNode(block, node.elseBody)
+            assembler.unconditionalBranchTo(endLabel)
+        }
+        assembler.createBranch(endLabel)
+
+        return NullMemoryUnit
+    }
+
+    fun generateEquality(block: MemoryBlock, node: EqualsNode): MemoryUnit {
+        val left = acceptNode(block, node.left)
+        val right = acceptNode(block, node.right)
+        val type = getExpressionType(block, node.left).unwrap()
+        return assembler.handleComparison(left, right, type.asLLVM())
+    }
+
+    fun generateBoolean(block: MemoryBlock, node: BooleanNode): MemoryUnit {
+        val type = LLVMType.I1
+        return assembler.addNumber(
+            type = type,
+            left = LLVMConstant(if (node.value) 1 else 0, type),
+            right = LLVMConstant(0, type)
+        )
+    }
+
+    fun generateReturn(block: MemoryBlock, node: ReturnNode): NullMemoryUnit {
+        val expression = acceptNode(block, node.expression)
+        assembler.returnValue(expression.type, expression)
         return NullMemoryUnit
     }
 }

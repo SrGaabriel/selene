@@ -6,6 +6,7 @@ import kotlin.math.min
 class LLVMCodeAssembler(val generator: ILLVMCodeGenerator): ILLVMCodeAssembler {
     private val ir = mutableListOf<String>()
     private var register = 0
+    private var label = 0
 
     override fun addDependency(dependency: String) {
         ir.add(0, dependency)
@@ -51,6 +52,22 @@ class LLVMCodeAssembler(val generator: ILLVMCodeGenerator): ILLVMCodeAssembler {
 
     override fun conditionalBranch(condition: MemoryUnit, trueLabel: String, falseLabel: String) {
         instruct(generator.conditionalBranch(condition, trueLabel, falseLabel))
+    }
+
+    override fun compareAndBranch(condition: Value, trueLabel: String, falseLabel: String) {
+        if (condition.type !== LLVMType.I1) {
+            error("Condition must be of type i1")
+        }
+        val comparison = MemoryUnit.Sized(
+            register = nextRegister(),
+            type = LLVMType.I1,
+            size = 1
+        )
+        saveToRegister(
+            comparison.register,
+            generator.signedIntegerComparison(condition, LLVMConstant(1, LLVMType.I1))
+        )
+        instruct(generator.conditionalBranch(comparison, trueLabel, falseLabel))
     }
 
     override fun unconditionalBranchTo(label: String) {
@@ -209,11 +226,84 @@ class LLVMCodeAssembler(val generator: ILLVMCodeGenerator): ILLVMCodeAssembler {
     }
 
     override fun calculateStringLength(string: MemoryUnit): MemoryUnit {
-        addDependency("declare i64 @strlen(i8*)")
         val register = nextRegister()
         saveToRegister(register, generator.stringLengthCalculation(string))
         return MemoryUnit.Sized(register, LLVMType.I32, 8)
     }
 
-    override fun nextRegister(): Int = register++
+    override fun isTrue(value: Value): MemoryUnit =
+        isBooleanValue(value, expected = true)
+
+    override fun isNotTrue(value: Value): MemoryUnit =
+        isBooleanNotValue(value, expected = false)
+
+    override fun isFalse(value: Value): MemoryUnit =
+        isBooleanValue(value, expected = false)
+
+    fun isBooleanValue(value: Value, expected: Boolean): MemoryUnit {
+        val unit = MemoryUnit.Sized(
+            register = nextRegister(),
+            type = LLVMType.I1,
+            size = 1
+        )
+        saveToRegister(
+            register = unit.register,
+            expression = generator.signedIntegerComparison(value, LLVMConstant(if (expected) 1 else 0, LLVMType.I1))
+        )
+        return unit
+    }
+
+    fun isBooleanNotValue(value: Value, expected: Boolean): MemoryUnit {
+        val unit = MemoryUnit.Sized(
+            register = nextRegister(),
+            type = LLVMType.I1,
+            size = 1
+        )
+        saveToRegister(
+            register = unit.register,
+            expression = generator.signedIntegerNotEqualComparison(value, LLVMConstant(if (expected) 1 else 0, LLVMType.I1))
+        )
+        return unit
+    }
+
+    override fun compareStrings(left: MemoryUnit, right: MemoryUnit): MemoryUnit {
+        val unit = MemoryUnit.Sized(
+            register = nextRegister(),
+            type = LLVMType.I1,
+            size = 1
+        )
+        saveToRegister(
+            register = unit.register,
+            expression = generator.stringComparison(left, right)
+        )
+        return unit
+    }
+
+    override fun handleComparison(left: MemoryUnit, right: MemoryUnit, type: LLVMType): MemoryUnit {
+        when (type) {
+            LLVMType.I1 -> {
+                val comparison = addNumber(
+                    type = type,
+                    left = left,
+                    right = right
+                )
+                return isTrue(comparison)
+            }
+            is LLVMType.Pointer -> {
+                if (type.type == LLVMType.I8) {
+                    val comparison = compareStrings(
+                        left = left,
+                        right = right
+                    )
+                    return isFalse(comparison)
+                }
+                error("Type ${type.type} not supported")
+            }
+            else -> error("Type $type not supported")
+        }
+    }
+
+    override fun nextRegister(): Int = register++ * 2
+
+    override fun nextLabel(): String = "label${label++}"
 }
