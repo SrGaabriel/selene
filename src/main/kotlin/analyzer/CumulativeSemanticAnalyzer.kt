@@ -3,7 +3,7 @@ package me.gabriel.gwydion.analyzer
 import me.gabriel.gwydion.compiler.MemoryBlock
 import me.gabriel.gwydion.compiler.ProgramMemoryRepository
 import me.gabriel.gwydion.exception.AnalysisError
-import me.gabriel.gwydion.executor.IntrinsicFunction
+import me.gabriel.gwydion.compiler.IntrinsicFunction
 import me.gabriel.gwydion.parsing.*
 import me.gabriel.gwydion.util.Either
 

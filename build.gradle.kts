@@ -10,5 +10,6 @@ repositories {
 }
 
 dependencies {
+    implementation(project(":llvm"))
     implementation(libs.mordant)
 }

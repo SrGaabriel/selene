@@ -1,7 +1,5 @@
 package me.gabriel.gwydion.lexing
 
-import me.gabriel.gwydion.lexing.lexers.StringLexer
-
 enum class TokenKind {
     NUMBER,
     PLUS,
@@ -27,7 +25,6 @@ enum class TokenKind {
     STRING_START,
     STRING_TEXT,
     STRING_EXPRESSION_REFERENCE,
-    STRING_VARIABLE_REFERENCE,
     STRING_END,
     IF,
     ELSE,

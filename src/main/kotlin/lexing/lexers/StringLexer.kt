@@ -129,9 +129,9 @@ class StringLexer(private val data: String): Lexer {
                     if (position > startPosition + 1) {
                         tokens.add(Token(TokenKind.STRING_TEXT, data.substring(startPosition + 1, position), startPosition + 1))
                     }
-                    position++ // Skip the $
+                    position++
                     if (data[position] == '{') {
-                        position++ // Skip the {
+                        position++
                         val variableStart = position
                         while (position < data.length && data[position] != '}') {
                             position++
@@ -139,14 +139,14 @@ class StringLexer(private val data: String): Lexer {
                         if (position == data.length) {
                             return LexingError.UnterminatedStringVariableReference(variableStart)
                         }
-                        tokens.add(Token(TokenKind.STRING_VARIABLE_REFERENCE, data.substring(variableStart, position), variableStart))
+                        tokens.add(Token(TokenKind.STRING_EXPRESSION_REFERENCE, data.substring(variableStart, position), variableStart))
                         position++ // Skip the }
                     } else {
                         val variableStart = position
                         while (position < data.length && (data[position].isLetterOrDigit() || data[position] == '_')) {
                             position++
                         }
-                        tokens.add(Token(TokenKind.STRING_VARIABLE_REFERENCE, data.substring(variableStart, position), variableStart))
+                        tokens.add(Token(TokenKind.STRING_EXPRESSION_REFERENCE, data.substring(variableStart, position), variableStart))
                     }
                     startPosition = position - 1
                 }

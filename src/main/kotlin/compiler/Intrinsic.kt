@@ -1,13 +1,14 @@
-package me.gabriel.gwydion.executor
+package me.gabriel.gwydion.compiler
 
 import me.gabriel.gwydion.lexing.TokenKind
+import me.gabriel.gwydion.llvm.struct.LLVMType
 import me.gabriel.gwydion.parsing.CallNode
 import me.gabriel.gwydion.parsing.Type
 
 abstract class IntrinsicFunction(
     val name: String,
-    val params: List<Type>,
-    val returnType: Type,
+    val params: List<LLVMType>,
+    val returnType: LLVMType,
     val modifiers: MutableList<TokenKind>
 ) {
    abstract fun execute(parameters: List<Any>): Any
@@ -21,8 +22,8 @@ abstract class IntrinsicFunction(
 
 class PrintFunction: IntrinsicFunction(
     "printf",
-    listOf(Type.Any),
-    Type.Int32,
+    listOf(LLVMType.Pointer(LLVMType.I8)),
+    LLVMType.I32,
     mutableListOf()
 ) {
     override fun execute(parameters: List<Any>): Any {
@@ -49,8 +50,8 @@ class PrintFunction: IntrinsicFunction(
 
 class PrintlnFunction: IntrinsicFunction(
     "println",
-    listOf(Type.Any),
-    Type.Void,
+    listOf(LLVMType.Pointer(LLVMType.I8)),
+    LLVMType.Void,
     mutableListOf()
 ) {
     override fun execute(parameters: List<Any>): Any {
@@ -76,6 +77,7 @@ class PrintlnFunction: IntrinsicFunction(
             entry:
                 %format = getelementptr [3 x i8], [3 x i8]* @format_n, i32 0, i32 0
                 call i32 (i8*, ...) @printf(i8* %format, i32 %num)
+                call i32 @putchar(i32 10)
                 ret void
             }
         """.trimIndent()
@@ -89,12 +91,16 @@ class PrintlnFunction: IntrinsicFunction(
             else -> error("Unknown type $type")
         }
     }
+
+    override fun dependencies(): List<String> {
+        return listOf("declare i32 @putchar(i32)")
+    }
 }
 
 class ReadlineFunction: IntrinsicFunction(
     "readln",
     listOf(),
-    Type.String,
+    LLVMType.Pointer(LLVMType.I8),
     mutableListOf()
 ) {
     override fun execute(parameters: List<Any>): Any {

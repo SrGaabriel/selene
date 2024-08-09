@@ -1,23 +1,23 @@
 package me.gabriel.gwydion.compiler.llvm
 
-import me.gabriel.gwydion.analyzer.SymbolTable
 import me.gabriel.gwydion.compiler.CodeGenerator
 import me.gabriel.gwydion.compiler.ProgramMemoryRepository
-import me.gabriel.gwydion.executor.IntrinsicFunction
+import me.gabriel.gwydion.compiler.IntrinsicFunction
 import me.gabriel.gwydion.parsing.SyntaxTree
 import java.io.File
 
-class LLVMCodeGenerator: CodeGenerator {
+class LLVMCodeAdapter: CodeGenerator {
     private val intrinsics = mutableListOf<IntrinsicFunction>()
 
     override fun generate(tree: SyntaxTree, memory: ProgramMemoryRepository): String {
-        val process = LLVMCodeGeneratorProcess(tree, memory, intrinsics)
+        val process = LLVMCodeAdaptationProcess(tree, memory, intrinsics)
+        process.acceptNode(memory.root, tree.root)
         process.setup()
-        process.generateNode(tree.root, memory.root)
         return process.finish()
     }
 
     override fun registerIntrinsicFunction(vararg functions: IntrinsicFunction) {
+        println("registered")
         intrinsics.addAll(functions)
     }
 
@@ -34,7 +34,13 @@ class LLVMCodeGenerator: CodeGenerator {
         File(inputLlPath).delete()
         File(inputLlPath).writeText(llvmIr)
 
-        val clangProcess = ProcessBuilder("clang", inputLlPath, "-v", "-o", outputExePath)
+        val clangProcess = ProcessBuilder(
+            "clang",
+            inputLlPath,
+            "-v",
+            "-o",
+            outputExePath
+        )
             .redirectError(ProcessBuilder.Redirect.INHERIT)
             .start()
         clangProcess.waitFor()
