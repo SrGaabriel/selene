@@ -13,7 +13,7 @@ interface ILLVMCodeAssembler {
 
     fun allocateStackMemory(type: LLVMType, alignment: Int): MemoryUnit
 
-    fun allocateHeapMemory(type: LLVMType): MemoryUnit
+    fun allocateHeapMemory(size: Int): MemoryUnit
 
     fun declareFunction(name: String, returnType: LLVMType, arguments: List<MemoryUnit>)
 
@@ -76,7 +76,9 @@ interface ILLVMCodeAssembler {
 
     fun returnValue(type: LLVMType, value: MemoryUnit)
 
-    fun addSourceToDestinationString(left: MemoryUnit.Sized, right: MemoryUnit.Sized)
+    fun copySourceToDestinationString(source: MemoryUnit, destination: MemoryUnit)
+
+    fun addSourceToDestinationString(source: MemoryUnit, destination: MemoryUnit)
 
     fun calculateStringLength(string: MemoryUnit): MemoryUnit
 

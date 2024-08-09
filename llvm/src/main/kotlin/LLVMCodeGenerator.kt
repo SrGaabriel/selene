@@ -11,7 +11,7 @@ class LLVMCodeGenerator: ILLVMCodeGenerator {
 
     override fun heapMemoryAllocation(type: LLVMType, size: Int): String {
         dependencies.add("declare i8* @malloc(i32)")
-        return "call i8* @malloc(${type.llvm} ${size})"
+        return "call i8* @malloc(i32 ${size})"
     }
 
     override fun addition(left: Value, right: Value, type: LLVMType): String {
@@ -47,7 +47,7 @@ class LLVMCodeGenerator: ILLVMCodeGenerator {
 
     override fun stringCopy(source: Value, destination: Value): String {
         dependencies.add("declare i8* @strcpy(i8*, i8*)")
-        return "call i8* @strcpy(i8* ${source.llvm()}, i8* ${destination.llvm()})"
+        return "call i8* @strcpy(i8* ${destination.llvm()}, i8* ${source.llvm()})"
     }
 
     override fun unsafeSubElementAddressTotalReading(struct: Value, index: Value): String {
@@ -99,7 +99,7 @@ class LLVMCodeGenerator: ILLVMCodeGenerator {
 
     override fun concatenateStrings(left: Value, right: Value): String {
         dependencies.add("declare i8* @strcat(i8*, i8*)")
-        return "call i8* @strcat(i8* ${left.llvm()}, i8* ${right.llvm()})"
+        return "call i8* @strcat(i8* ${right.llvm()}, i8* ${left.llvm()})"
     }
 
     override fun addNumber(type: LLVMType, left: Value, right: Value): String {

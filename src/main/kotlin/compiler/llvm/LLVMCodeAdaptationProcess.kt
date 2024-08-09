@@ -11,7 +11,6 @@ import me.gabriel.gwydion.llvm.struct.LLVMType
 import me.gabriel.gwydion.llvm.struct.MemoryUnit
 import me.gabriel.gwydion.llvm.struct.NullMemoryUnit
 import me.gabriel.gwydion.parsing.*
-import kotlin.math.exp
 
 /*
  * I decided to use exceptions instead of errors because the exceptions should be caught in
@@ -174,13 +173,21 @@ class LLVMCodeAdaptationProcess(
         if (typeResult.isLeft()) error("Couldn't figure out binary operation type")
 
         val type = typeResult.unwrap()
-        val left = acceptNode(block, node.left) as MemoryUnit.Sized
         if (type == Type.String) {
-            assembler.addSourceToDestinationString(
-                left = left,
-                right = acceptNode(block, node.right) as MemoryUnit.Sized
+            val left = acceptNode(block, node.left) as MemoryUnit.Sized
+            val right = acceptNode(block, node.right) as MemoryUnit.Sized
+            val resultString = assembler.allocateHeapMemory(
+                size = 64
+            ) as MemoryUnit.Sized
+            assembler.copySourceToDestinationString(
+                source = left,
+                destination = resultString
             )
-            return left
+            assembler.addSourceToDestinationString(
+                source = right,
+                destination = resultString
+            )
+            return resultString
         }
         return NullMemoryUnit
     }
