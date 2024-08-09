@@ -7,6 +7,8 @@ interface ILLVMCodeGenerator {
 
     fun heapMemoryAllocation(type: LLVMType, size: Int): String
 
+    fun heapMemoryDefinition(size: Int, value: Value): String
+
     fun addition(left: Value, right: Value, type: LLVMType): String
 
     fun stringLengthCalculation(value: Value): String

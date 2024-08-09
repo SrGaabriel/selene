@@ -14,6 +14,11 @@ class LLVMCodeGenerator: ILLVMCodeGenerator {
         return "call i8* @malloc(i32 ${size})"
     }
 
+    override fun heapMemoryDefinition(size: Int, value: Value): String {
+        dependencies.add("declare void @memset(i8*, i32, i32)")
+        return "call void @memset(i8* ${value.llvm()}, i32 0, i32 ${size})"
+    }
+
     override fun addition(left: Value, right: Value, type: LLVMType): String {
         return "add $type %${left.llvm()}, %${right.llvm()}"
     }

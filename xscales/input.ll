@@ -1,7 +1,7 @@
 @format_n = private unnamed_addr constant [3 x i8] c"%d\00"
 @format_s = private unnamed_addr constant [3 x i8] c"%s\00"
 declare i8* @malloc(i32)
-declare i8* @strcpy(i8*, i8*)
+declare void @memset(i8*, i32, i32)
 declare i8* @strcat(i8*, i8*)
 declare i32 @getchar()
 @buffer = global [256 x i8] zeroinitializer
@@ -82,18 +82,24 @@ store i8 100, i8* %12
 store i8 33, i8* %13
 %14 = getelementptr inbounds [14 x i8], [14 x i8]* %0, i32 0, i32 13
 store i8 0, i8* %14
-%15 = alloca [4 x i8], align 1
-%16 = getelementptr inbounds [4 x i8], [4 x i8]* %15, i32 0, i32 0
-store i8 33, i8* %16
-%17 = getelementptr inbounds [4 x i8], [4 x i8]* %15, i32 0, i32 1
-store i8 33, i8* %17
-%18 = getelementptr inbounds [4 x i8], [4 x i8]* %15, i32 0, i32 2
-store i8 64, i8* %18
-%19 = getelementptr inbounds [4 x i8], [4 x i8]* %15, i32 0, i32 3
-store i8 0, i8* %19
-%20 = call i8* @malloc(i32 64)
-call i8* @strcpy(i8* %20, i8* %1)
-call i8* @strcat(i8* %20, i8* %16)
-call void @println_str(i8* %20)
+%15 = call i8* @malloc(i32 64)
+call void @memset(i8* %15, i32 0, i32 64)
+call i8* @strcat(i8* %15, i8* %1)
+%17 = alloca [5 x i8], align 1
+%18 = getelementptr inbounds [5 x i8], [5 x i8]* %17, i32 0, i32 0
+store i8 32, i8* %18
+%19 = getelementptr inbounds [5 x i8], [5 x i8]* %17, i32 0, i32 1
+store i8 33, i8* %19
+%20 = getelementptr inbounds [5 x i8], [5 x i8]* %17, i32 0, i32 2
+store i8 33, i8* %20
+%21 = getelementptr inbounds [5 x i8], [5 x i8]* %17, i32 0, i32 3
+store i8 64, i8* %21
+%22 = getelementptr inbounds [5 x i8], [5 x i8]* %17, i32 0, i32 4
+store i8 0, i8* %22
+%23 = call i8* @malloc(i32 64)
+call void @memset(i8* %23, i32 0, i32 64)
+call i8* @strcat(i8* %23, i8* %15)
+call i8* @strcat(i8* %23, i8* %18)
+call void @println_str(i8* %23)
 ret void
 }

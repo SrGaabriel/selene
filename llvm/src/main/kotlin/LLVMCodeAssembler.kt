@@ -36,7 +36,9 @@ class LLVMCodeAssembler(val generator: ILLVMCodeGenerator): ILLVMCodeAssembler {
     override fun allocateHeapMemory(size: Int): MemoryUnit {
         val register = nextRegister()
         saveToRegister(register, generator.heapMemoryAllocation(LLVMType.I8, size))
-        return MemoryUnit.Sized(register, LLVMType.Pointer(LLVMType.I8), size)
+        val value = MemoryUnit.Sized(register, LLVMType.Pointer(LLVMType.I8), size)
+        instruct(generator.heapMemoryDefinition(size, value))
+        return value
     }
 
     override fun declareFunction(name: String, returnType: LLVMType, arguments: List<MemoryUnit>) {
@@ -202,6 +204,7 @@ class LLVMCodeAssembler(val generator: ILLVMCodeGenerator): ILLVMCodeAssembler {
     }
 
     override fun addSourceToDestinationString(source: MemoryUnit, destination: MemoryUnit) {
+        nextRegister()
         instruct(generator.concatenateStrings(source, destination))
     }
 

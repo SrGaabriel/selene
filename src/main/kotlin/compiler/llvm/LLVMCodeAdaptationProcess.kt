@@ -144,11 +144,24 @@ class LLVMCodeAdaptationProcess(
                 is StringNode.Segment.Text -> {
                     segmentUnits.add(assembler.buildString(segment.text))
                 }
-
+                is StringNode.Segment.Reference -> {
+                    val reference = generateVariableReference(block, segment.node)
+                    segmentUnits.add(reference)
+                }
                 else -> error("Segment not supported")
             }
         }
-        return segmentUnits.first()
+        val space = assembler.allocateHeapMemory(
+            size = 64
+        ) as MemoryUnit.Sized
+        val first = segmentUnits.first()
+        segmentUnits.forEach { segment ->
+            assembler.addSourceToDestinationString(
+                source = segment,
+                destination = space
+            )
+        }
+        return space
     }
 
     fun generateNumber(block: MemoryBlock, node: NumberNode): MemoryUnit {
