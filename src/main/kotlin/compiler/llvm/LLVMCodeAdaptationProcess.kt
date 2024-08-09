@@ -3,7 +3,7 @@ package me.gabriel.gwydion.compiler.llvm
 import me.gabriel.gwydion.analyzer.getExpressionType
 import me.gabriel.gwydion.compiler.MemoryBlock
 import me.gabriel.gwydion.compiler.ProgramMemoryRepository
-import me.gabriel.gwydion.executor.IntrinsicFunction
+import me.gabriel.gwydion.compiler.IntrinsicFunction
 import me.gabriel.gwydion.llvm.LLVMCodeAssembler
 import me.gabriel.gwydion.llvm.LLVMCodeGenerator
 import me.gabriel.gwydion.llvm.struct.LLVMConstant
@@ -11,7 +11,6 @@ import me.gabriel.gwydion.llvm.struct.LLVMType
 import me.gabriel.gwydion.llvm.struct.MemoryUnit
 import me.gabriel.gwydion.llvm.struct.NullMemoryUnit
 import me.gabriel.gwydion.parsing.*
-import kotlin.math.exp
 
 /*
  * I decided to use exceptions instead of errors because the exceptions should be caught in
@@ -109,7 +108,7 @@ class LLVMCodeAdaptationProcess(
         ) ?: error("Function ${node.name} not found in block ${block.name}")
 
         val arguments = node.arguments.map {
-            acceptNode(block, it)
+            acceptNode(block, it, true)
         }
 
         val type = functionSymbol.asLLVM()

@@ -1,4 +1,4 @@
-package me.gabriel.gwydion.executor
+package me.gabriel.gwydion.compiler
 
 import me.gabriel.gwydion.lexing.TokenKind
 import me.gabriel.gwydion.llvm.struct.LLVMType

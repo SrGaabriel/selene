@@ -2,7 +2,7 @@ package me.gabriel.gwydion.compiler.llvm
 
 import me.gabriel.gwydion.compiler.CodeGenerator
 import me.gabriel.gwydion.compiler.ProgramMemoryRepository
-import me.gabriel.gwydion.executor.IntrinsicFunction
+import me.gabriel.gwydion.compiler.IntrinsicFunction
 import me.gabriel.gwydion.parsing.SyntaxTree
 import java.io.File
 
