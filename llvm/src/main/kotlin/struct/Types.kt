@@ -17,3 +17,9 @@ sealed class LLVMType(
 
     override fun toString(): String = llvm
 }
+
+fun LLVMType.extractPrimitiveType() = when (this) {
+    is LLVMType.Array -> this.type
+    is LLVMType.Pointer -> this.type
+    else -> this
+}

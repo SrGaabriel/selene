@@ -25,10 +25,11 @@ interface ILLVMCodeAssembler {
 
     fun dynamicMemoryUnitAllocation(unit: MemoryUnit)
 
-    fun getElementFromStructAt(
+    fun getElementFromStructure(
         struct: Value,
         type: LLVMType,
-        index: Value
+        index: Value,
+        total: Boolean = true
     ): MemoryUnit
 
     fun setStructElementTo(
@@ -75,7 +76,7 @@ interface ILLVMCodeAssembler {
 
     fun returnValue(type: LLVMType, value: MemoryUnit)
 
-    fun concatenateStrings(left: MemoryUnit.Sized, right: MemoryUnit.Sized): MemoryUnit
+    fun addSourceToDestinationString(left: MemoryUnit.Sized, right: MemoryUnit.Sized)
 
     fun calculateStringLength(string: MemoryUnit): MemoryUnit
 

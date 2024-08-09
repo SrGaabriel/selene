@@ -10,6 +10,7 @@ class LLVMCodeGenerator: ILLVMCodeGenerator {
     }
 
     override fun heapMemoryAllocation(type: LLVMType, size: Int): String {
+        dependencies.add("declare i8* @malloc(i32)")
         return "call i8* @malloc(${type.llvm} ${size})"
     }
 
@@ -37,8 +38,11 @@ class LLVMCodeGenerator: ILLVMCodeGenerator {
     }
 
     override fun memoryCopy(source: MemoryUnit, destination: MemoryUnit, size: Value): String {
+        val sourceType = source.type.extractPrimitiveType()
+        val destinationType = destination.type.extractPrimitiveType()
+
         dependencies.add("declare void @memcpy(i8*, i8*, i32)")
-        return "call void @memcpy(${source.type.llvm} ${source.llvm()}, ${destination.type.llvm} ${destination.llvm()}, i32 ${size.llvm()})"
+        return "call void @memcpy(${LLVMType.Pointer(sourceType).llvm} ${source.llvm()}, ${LLVMType.Pointer(destinationType).llvm} ${destination.llvm()}, i32 ${size.llvm()})"
     }
 
     override fun stringCopy(source: Value, destination: Value): String {
@@ -46,8 +50,24 @@ class LLVMCodeGenerator: ILLVMCodeGenerator {
         return "call i8* @strcpy(i8* ${source.llvm()}, i8* ${destination.llvm()})"
     }
 
-    override fun unsafeSubElementAddressReading(struct: Value, index: Value): String {
-        return "getelementptr inbounds ${struct.type.llvm}, ${struct.type.llvm} ${struct.llvm()}, i32 0, i32 ${index.llvm()}"
+    override fun unsafeSubElementAddressTotalReading(struct: Value, index: Value): String {
+        val originalType = if (struct.type !is LLVMType.Pointer) {
+            struct.type
+        } else {
+            (struct.type as LLVMType.Pointer).type
+        }
+        val pointerType = LLVMType.Pointer(originalType)
+        return "getelementptr inbounds ${originalType.llvm}, ${pointerType.llvm} ${struct.llvm()}, i32 0, i32 ${index.llvm()}"
+    }
+
+    override fun unsafeSubElementAddressDirectReading(struct: Value, index: Value): String {
+        val originalType = if (struct.type !is LLVMType.Pointer) {
+            struct.type
+        } else {
+            (struct.type as LLVMType.Pointer).type
+        }
+        val pointerType = LLVMType.Pointer(originalType)
+        return "getelementptr inbounds ${originalType.llvm}, ${pointerType.llvm} ${struct.llvm()}, i32 ${index.llvm()}"
     }
 
     override fun returnInstruction(type: LLVMType, value: Value): String {
@@ -75,6 +95,11 @@ class LLVMCodeGenerator: ILLVMCodeGenerator {
             define ${returnType.llvm} @$name($argsString) {
             entry:
             """.trimIndent()
+    }
+
+    override fun concatenateStrings(left: Value, right: Value): String {
+        dependencies.add("declare i8* @strcat(i8*, i8*)")
+        return "call i8* @strcat(i8* ${left.llvm()}, i8* ${right.llvm()})"
     }
 
     override fun addNumber(type: LLVMType, left: Value, right: Value): String {

@@ -105,15 +105,23 @@ class LLVMCodeAssembler(val generator: ILLVMCodeGenerator): ILLVMCodeAssembler {
         }
     }
 
-    override fun getElementFromStructAt(
+    override fun getElementFromStructure(
         struct: Value,
         type: LLVMType,
-        index: Value
+        index: Value,
+        total: Boolean
     ): MemoryUnit {
-        val reading = generator.unsafeSubElementAddressReading(
-            struct = struct,
-            index = index
-        )
+        val reading = if (total) {
+            generator.unsafeSubElementAddressTotalReading(
+                struct = struct,
+                index = index
+            )
+        } else {
+            generator.unsafeSubElementAddressDirectReading(
+                struct = struct,
+                index = index
+            )
+        }
         val unit = MemoryUnit.Sized(
             register = nextRegister(),
             type = LLVMType.Pointer(type),
@@ -132,7 +140,7 @@ class LLVMCodeAssembler(val generator: ILLVMCodeGenerator): ILLVMCodeAssembler {
         type: LLVMType,
         index: Value
     ): MemoryUnit {
-        val reference = getElementFromStructAt(
+        val reference = getElementFromStructure(
             struct, type, index
         )
         instruct(generator.storage(value, reference))
@@ -188,32 +196,8 @@ class LLVMCodeAssembler(val generator: ILLVMCodeGenerator): ILLVMCodeAssembler {
         instruct("ret ${value.llvm()}")
     }
 
-    override fun concatenateStrings(left: MemoryUnit.Sized, right: MemoryUnit.Sized): MemoryUnit {
-        val totalSize = left.size + right.size - 1 // Subtract 1 to account for overlapping null terminators
-
-        val alloc = MemoryUnit.Sized(
-            register = nextRegister(),
-            type = LLVMType.Pointer(LLVMType.I8),
-            size = totalSize
-        )
-        saveToRegister(alloc.register, "call i8* @malloc(i32 $totalSize)")
-
-        val leftCopy = generator.memoryCopy(
-            source = left,
-            destination = alloc,
-            size = LLVMConstant(left.size - 1, LLVMType.I32) // Don't copy null terminator
-        )
-        instruct(leftCopy)
-
-        val rightDest = getElementFromStructAt(alloc, LLVMType.I8, LLVMConstant(left.size - 1, LLVMType.I32))
-        val rightCopy = generator.memoryCopy(
-            source = right,
-            destination = rightDest,
-            size = LLVMConstant(right.size, LLVMType.I32) // Copy including null terminator
-        )
-        instruct(rightCopy)
-
-        return alloc
+    override fun addSourceToDestinationString(left: MemoryUnit.Sized, right: MemoryUnit.Sized) {
+        instruct(generator.concatenateStrings(left, right))
     }
 
     override fun calculateStringLength(string: MemoryUnit): MemoryUnit {

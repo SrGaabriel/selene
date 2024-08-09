@@ -96,8 +96,7 @@ class LLVMCodeAdaptationProcess(
     ): MemoryUnit {
         val functionSymbol = block.figureOutSymbol(
             node.name
-        ) ?:
-            error("Function ${node.name} not found in block ${block.name}")
+        ) ?: error("Function ${node.name} not found in block ${block.name}")
 
         val arguments = node.arguments.map {
             acceptNode(block, it)
@@ -146,6 +145,7 @@ class LLVMCodeAdaptationProcess(
                 is StringNode.Segment.Text -> {
                     segmentUnits.add(assembler.buildString(segment.text))
                 }
+
                 else -> error("Segment not supported")
             }
         }
@@ -174,12 +174,14 @@ class LLVMCodeAdaptationProcess(
         if (typeResult.isLeft()) error("Couldn't figure out binary operation type")
 
         val type = typeResult.unwrap()
+        val left = acceptNode(block, node.left) as MemoryUnit.Sized
         if (type == Type.String) {
-            return assembler.concatenateStrings(
-                left = acceptNode(block, node.left) as MemoryUnit.Sized,
+            assembler.addSourceToDestinationString(
+                left = left,
                 right = acceptNode(block, node.right) as MemoryUnit.Sized
             )
+            return left
         }
         return NullMemoryUnit
-     }
+    }
 }

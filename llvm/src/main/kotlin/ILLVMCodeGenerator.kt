@@ -21,9 +21,13 @@ interface ILLVMCodeGenerator {
 
     fun stringCopy(source: Value, destination: Value): String
 
-    fun unsafeSubElementAddressReading(struct: Value, index: Value): String
+    fun unsafeSubElementAddressTotalReading(struct: Value, index: Value): String
+
+    fun unsafeSubElementAddressDirectReading(struct: Value, index: Value): String
 
     fun getGeneratedDependencies(): Set<String>
+
+    fun concatenateStrings(left: Value, right: Value): String
 
     fun createBranch(label: String): String
 

@@ -1,5 +1,4 @@
 func main() {
-    a := "Hello, World!" + "s";
-    b := 5;
+    a := "Hello, World!" + "!!";
     println(a);
 }
