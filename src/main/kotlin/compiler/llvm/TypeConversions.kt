@@ -9,6 +9,7 @@ fun Type.asLLVM(): LLVMType = when (this) {
     Type.Void -> LLVMType.Void
     Type.Any -> LLVMType.I32
     Type.Int32 -> LLVMType.I32
+    Type.Boolean -> LLVMType.I1
     is Type.FixedArray -> LLVMType.Array(
         type = this.type.asLLVM(),
         length = this.length

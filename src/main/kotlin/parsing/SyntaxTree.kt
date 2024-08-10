@@ -48,7 +48,7 @@ data class RootNode(private val children: MutableList<SyntaxTreeNode>) : SyntaxT
 
 class FunctionNode(
     val name: String,
-    val returnType: Type,
+    var returnType: Type,
     val parameters: List<ParameterNode>,
     val body: BlockNode,
     val modifiers: MutableList<Modifiers>,

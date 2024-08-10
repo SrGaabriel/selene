@@ -17,7 +17,6 @@ class LLVMCodeAdapter: CodeGenerator {
     }
 
     override fun registerIntrinsicFunction(vararg functions: IntrinsicFunction) {
-        println("registered")
         intrinsics.addAll(functions)
     }
 
@@ -37,12 +36,19 @@ class LLVMCodeAdapter: CodeGenerator {
         val clangProcess = ProcessBuilder(
             "clang",
             inputLlPath,
-            "-v",
             "-o",
             outputExePath
         )
             .redirectError(ProcessBuilder.Redirect.INHERIT)
             .start()
         clangProcess.waitFor()
+    }
+
+    companion object {
+        val VACUUM = File(
+            if (System.getProperty("os.name").startsWith("Windows"))
+                "NUL"
+            else
+                "/dev/null")
     }
 }

@@ -34,13 +34,20 @@ class CumulativeSemanticAnalyzer(
                 }
             }
             is DataStructureNode -> {
-                println("Declaring struct ${node.name}")
                 block.symbols.declare(node.name, Type.Struct(node.name, node.fields.associate { it.name to it.type }))
             }
             is BlockNode -> {
                 node.getChildren().forEach { findSymbols(it, block) }
             }
             is FunctionNode -> {
+                if (node.returnType is Type.UnknownReference) {
+                    val returnType = block.figureOutSymbol((node.returnType as Type.UnknownReference).reference)
+                    if (returnType == null) {
+                        errors.add(AnalysisError.UnknownType(node, node.returnType))
+                        return null
+                    }
+                    node.returnType = returnType
+                }
                 block.symbols.declare(node.name, node.returnType)
                 return repository.createBlock(node.name, block)
             }

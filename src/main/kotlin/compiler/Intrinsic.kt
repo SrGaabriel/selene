@@ -80,6 +80,15 @@ class PrintlnFunction: IntrinsicFunction(
                 call i32 @putchar(i32 10)
                 ret void
             }
+
+            define void @println_bool(i1 %bool) {
+            entry:
+                %format = getelementptr [3 x i8], [3 x i8]* @format_b, i32 0, i32 0
+                %num = zext i1 %bool to i32
+                call i32 (i8*, ...) @printf(i8* %format, i32 %num)
+                call i32 @putchar(i32 10)
+                ret void
+            }
         """.trimIndent()
     }
 
@@ -88,6 +97,7 @@ class PrintlnFunction: IntrinsicFunction(
         return when (type) {
             Type.String -> "call void @println_str(${arguments})"
             Type.Int32 -> "call void @println_i32(${arguments})"
+            Type.Boolean -> "call void @println_bool(${arguments})"
             else -> error("Unsupported type for intrinsic $type")
         }
     }

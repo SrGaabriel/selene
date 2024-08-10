@@ -46,6 +46,8 @@ interface ILLVMCodeAssembler {
 
     fun loadPointer(value: MemoryUnit): MemoryUnit
 
+    fun unsafelyLoadPointer(value: MemoryUnit, pointer: LLVMType.Pointer): MemoryUnit
+
     fun setStructElementTo(
         value: Value,
         struct: Value,
@@ -79,6 +81,7 @@ interface ILLVMCodeAssembler {
     )
 
     fun declareStruct(
+        name: String,
         fields: Map<String, LLVMType>
     ): MemoryUnit
 

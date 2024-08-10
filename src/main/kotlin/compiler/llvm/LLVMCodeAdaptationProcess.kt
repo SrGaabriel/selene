@@ -32,6 +32,7 @@ class LLVMCodeAdaptationProcess(
         assembler.addDependencies()
         assembler.addDependency("@format_s = private unnamed_addr constant [3 x i8] c\"%s\\00\"")
         assembler.addDependency("@format_n = private unnamed_addr constant [3 x i8] c\"%d\\00\"")
+        assembler.addDependency("@format_b = private unnamed_addr constant [3 x i8] c\"%d\\00\"")
     }
 
     fun finish(): String = assembler.finish()
@@ -85,11 +86,12 @@ class LLVMCodeAdaptationProcess(
             block.memory.allocate(it.name, unit)
             unit
         }
+        val properReturnType = getProperReturnType(node.returnType)
 
         assembler.functionDsl(
             name = node.name,
             arguments = parameters,
-            returnType = node.returnType.asLLVM()
+            returnType = properReturnType
         ) {
             acceptNode(block, node.body)
             if (node.returnType == Type.Void) {
@@ -113,7 +115,7 @@ class LLVMCodeAdaptationProcess(
             acceptNode(block, it, true)
         }
 
-        val type = functionSymbol.asLLVM()
+        val type = getProperReturnType(functionSymbol)
         val assignment = if (store) {
             // Todo: review
             MemoryUnit.Sized(
@@ -149,7 +151,6 @@ class LLVMCodeAdaptationProcess(
     fun generateAssignment(block: MemoryBlock, node: AssignmentNode): MemoryUnit {
         val expression = acceptNode(block, node.expression, true)
 
-        println("Alloca: ${node.name} ${expression}")
         block.memory.allocate(node.name, expression)
         block.symbols.declare(
             name = node.name,
@@ -179,7 +180,6 @@ class LLVMCodeAdaptationProcess(
             size = 64
         ) as MemoryUnit.Sized
         segmentUnits.forEach { segment ->
-            println("Segment: $segment")
             assembler.addSourceToDestinationString(
                 source = segment,
                 destination = space
@@ -273,9 +273,7 @@ class LLVMCodeAdaptationProcess(
 
     fun generateArray(block: MemoryBlock, node: ArrayNode): MemoryUnit {
         val arrayType = getExpressionType(block, node).unwrap().asLLVM()
-        if (arrayType !is LLVMType.Array) error("Array type not found")
-        val type = arrayType.type
-        println("Array type: $type")
+        val type = arrayType.descendOneLevel()
         return assembler.createArray(
             type = type,
             size = if (!node.dynamic) node.elements.size else null,
@@ -289,7 +287,7 @@ class LLVMCodeAdaptationProcess(
 
         val pointer = assembler.getElementFromStructure(
             struct = arrayMemory,
-            type = (arrayMemory.type as LLVMType.Pointer).type,
+            type = arrayMemory.type.descendOneLevel(),
             index = index,
             total = false
         )
@@ -301,17 +299,18 @@ class LLVMCodeAdaptationProcess(
         if (structType !is LLVMType.Struct) error("Struct type not found")
 
         val struct = assembler.declareStruct(
+            name = node.name,
             fields = node.fields.associate { it.name to it.type.asLLVM() }
         )
         block.memory.allocate(node.name, struct)
-        return struct
+        return NullMemoryUnit
     }
 
     fun generateInstantiation(block: MemoryBlock, node: InstantiationNode): MemoryUnit {
         val memory = block.figureOutMemory(node.name) ?: error("Data structure ${node.name} not found")
         val allocation = assembler.allocateStackMemory(
             type = memory.type,
-            alignment = 1
+            alignment = node.arguments.minOf { getExpressionType(block, it).getRightOrNull()?.asLLVM()?.defaultAlignment ?: 1 }
         )
 
         node.arguments.forEachIndexed { index, argument ->
@@ -319,7 +318,7 @@ class LLVMCodeAdaptationProcess(
             assembler.setStructElementTo(
                 value = value,
                 struct = allocation,
-                type = allocation.type,
+                type = value.type,
                 index = LLVMConstant(index, LLVMType.I32)
             )
         }
@@ -328,15 +327,23 @@ class LLVMCodeAdaptationProcess(
 
     fun generateStructAccess(block: MemoryBlock, node: StructAccessNode): MemoryUnit {
         val struct = block.figureOutMemory(node.struct) ?: error("Struct ${node.struct} not found")
-        val structType = struct.type as LLVMType.Struct
+        val pointerType = struct.type as LLVMType.Pointer
+        val structType = pointerType.type as LLVMType.Struct
         val index = structType.fields.keys.indexOf(node.field)
         val type = structType.fields[node.field] ?: error("Field ${node.field} not found in struct ${node.struct}")
-        println("Index: $index Type: ${structType.fields[node.field]}")
         val pointer = assembler.getElementFromStructure(
             struct = struct,
             type = type,
             index = LLVMConstant(index, LLVMType.I32),
         )
         return assembler.loadPointer(pointer)
+    }
+
+    fun getProperReturnType(returnType: Type): LLVMType {
+        return when (val type = returnType.asLLVM()) {
+            is LLVMType.Struct -> LLVMType.Pointer(type)
+            is LLVMType.Array -> LLVMType.Pointer(type.type)
+            else -> type
+        }
     }
 }

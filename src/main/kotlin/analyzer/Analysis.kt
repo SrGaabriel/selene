@@ -29,7 +29,8 @@ tailrec fun getExpressionType(block: MemoryBlock, node: SyntaxTreeNode): Either<
         is EqualsNode -> Either.Right(Type.Boolean)
         is ArrayNode -> getExpressionType(block, node.elements.first()).let {
             it.mapRight {
-                Type.FixedArray(it, node.elements.size)
+                if (!node.dynamic) Type.FixedArray(it, node.elements.size)
+                else Type.DynamicArray(it)
             }
         }
         is ArrayAccessNode -> {

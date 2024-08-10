@@ -13,7 +13,7 @@ sealed class LLVMType(
 
     data class Array(val type: LLVMType, val length: Int) : LLVMType("[$length x ${type.llvm}]", type.defaultAlignment, type.size * length)
 
-    data class Pointer(val type: LLVMType) : LLVMType("${type.llvm}*", 8, 8)
+    data class Pointer(val type: LLVMType) : LLVMType(if (type == Void) type.llvm else "${type.llvm}*", 8, 8)
 
     data class Struct(
         val name: String,
@@ -27,4 +27,10 @@ fun LLVMType.extractPrimitiveType() = when (this) {
     is LLVMType.Array -> this.type
     is LLVMType.Pointer -> this.type
     else -> this
+}
+
+fun LLVMType.descendOneLevel(): LLVMType = when (this) {
+    is LLVMType.Array -> this.type
+    is LLVMType.Pointer -> this.type
+    else -> error("Cannot descend one level on non-array or non-pointer type")
 }

@@ -48,7 +48,6 @@ fun main() {
     val generationEnd = Instant.now()
     val generationDelay = generationEnd.toEpochMilli() - generationStart.toEpochMilli()
     logger.log(LogLevel.INFO) { +"Code generation took ${generationDelay}ms" }
-    println(generated)
     val compilingStart = Instant.now()
     llvmCodeAdapter.generateExecutable(
         llvmIr = generated,

@@ -1,5 +1,6 @@
 package me.gabriel.gwydion.parsing
 
+import me.gabriel.gwydion.lexing.Token
 import me.gabriel.gwydion.lexing.TokenKind
 
 sealed class Type(val name: kotlin.String) {
@@ -18,6 +19,7 @@ sealed class Type(val name: kotlin.String) {
     data object Void : Type("void")
     data object Boolean : Type("bool")
     data object Unknown : Type("unknown")
+    data class UnknownReference(val reference: kotlin.String): Type("unknown")
     data class DynamicArray(
         val type: Type,
     ): Type("fixed array")
@@ -34,7 +36,7 @@ sealed class Type(val name: kotlin.String) {
     override fun toString(): kotlin.String = name
 }
 
-fun tokenKindToType(kind: TokenKind) = when (kind) {
+fun tokenKindToType(token: Token) = when (token.kind) {
     TokenKind.ANY_TYPE -> Type.Any
     TokenKind.INT8_TYPE -> Type.Int8
     TokenKind.INT16_TYPE -> Type.Int16
@@ -48,7 +50,7 @@ fun tokenKindToType(kind: TokenKind) = when (kind) {
     TokenKind.FLOAT64_TYPE -> Type.Float64
     TokenKind.STRING_TYPE -> Type.String
     TokenKind.BOOL_TYPE -> Type.Boolean
-    TokenKind.IDENTIFIER -> Type.Unknown
-    else -> error("Unknown token kind $kind")
+    TokenKind.IDENTIFIER -> Type.UnknownReference(token.value)
+    else -> error("Unknown token kind ${token.kind}")
 }
 

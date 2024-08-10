@@ -1,6 +1,10 @@
 func main (count: int32, args: string[*]) {
-    props := *["apple", "banana", "cherry"];
+    props := create_array();
     a := props[2];
 
     println(a);
+}
+
+func create_array() :: string[3] {
+    return ["apple", "banana", "cherry"];
 }

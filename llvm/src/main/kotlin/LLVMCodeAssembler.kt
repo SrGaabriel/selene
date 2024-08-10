@@ -31,7 +31,7 @@ class LLVMCodeAssembler(val generator: ILLVMCodeGenerator): ILLVMCodeAssembler {
     override fun allocateStackMemory(type: LLVMType, alignment: Int): MemoryUnit {
         val register = nextRegister()
         saveToRegister(register, generator.stackMemoryAllocation(type, alignment))
-        return MemoryUnit.Sized(register, type, type.size)
+        return MemoryUnit.Sized(register, LLVMType.Pointer(type), type.size)
     }
 
     override fun allocateHeapMemory(size: Int): MemoryUnit {
@@ -43,7 +43,7 @@ class LLVMCodeAssembler(val generator: ILLVMCodeGenerator): ILLVMCodeAssembler {
     }
 
     override fun declareFunction(name: String, returnType: LLVMType, arguments: List<MemoryUnit>) {
-        instruct(generator.functionDeclaration(name, returnType, arguments))
+        instruct(generator.functionDeclaration(name, LLVMType.Pointer(returnType), arguments))
     }
 
     override fun createBranch(label: String) {
@@ -124,17 +124,13 @@ class LLVMCodeAssembler(val generator: ILLVMCodeGenerator): ILLVMCodeAssembler {
         }
     }
 
-    override fun declareStruct(fields: Map<String, LLVMType>): MemoryUnit {
-        val register = nextRegister()
+    override fun declareStruct(name: String, fields: Map<String, LLVMType>): MemoryUnit {
         val unit = MemoryUnit.Sized(
-            register = register,
-            type = LLVMType.Struct(register.toString(), fields),
+            register = nextRegister(),
+            type = LLVMType.Struct(name, fields),
             size = fields.values.sumOf { it.size }
         )
-        saveToRegister(
-            register = register,
-            expression = generator.structDeclaration(fields.values)
-        )
+        instruct("%$name = ${generator.structDeclaration(fields.values)}")
         return unit
     }
 
@@ -204,15 +200,18 @@ class LLVMCodeAssembler(val generator: ILLVMCodeGenerator): ILLVMCodeAssembler {
             error("Expected pointer type, got ${value.type}")
         }
         val pointerType = value.type as LLVMType.Pointer
+        return unsafelyLoadPointer(value, pointerType)
+    }
+
+    override fun unsafelyLoadPointer(value: MemoryUnit, pointer: LLVMType.Pointer): MemoryUnit {
         val unit = MemoryUnit.Sized(
             register = nextRegister(),
-            type = pointerType.type,
-            size = pointerType.size
+            type = pointer.type,
+            size = pointer.size
         )
-        println("Ué ${value.type} ${pointerType.type}")
         saveToRegister(
             register = unit.register,
-            expression = generator.loadPointer(pointerType.type, value)
+            expression = generator.loadPointer(pointer.type, value)
         )
         return unit
     }
@@ -224,7 +223,7 @@ class LLVMCodeAssembler(val generator: ILLVMCodeGenerator): ILLVMCodeAssembler {
         index: Value
     ): MemoryUnit {
         val reference = getElementFromStructure(
-            struct, type, index, struct.type !is LLVMType.Pointer
+            struct, type, index, (struct.type as? LLVMType.Pointer)?.type !is LLVMType.Pointer
         )
         instruct(generator.storage(value, reference))
         return reference

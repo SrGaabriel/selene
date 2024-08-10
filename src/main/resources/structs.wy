@@ -1,12 +1,17 @@
 data Point(
     x: int32,
-    y: int32,
+    y: bool,
     z: int32
 )
 
 func main () {
-    p := @Point(69, 50, 40);
+    p := new_point();
     println(p.x);
     println(p.y);
     println(p.z);
 }
+
+func new_point() :: Point {
+    return @Point(50, true, 25);
+}
+

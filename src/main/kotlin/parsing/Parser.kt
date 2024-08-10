@@ -372,9 +372,8 @@ class Parser(private val tokens: TokenStream) {
     }
 
     fun parseTypeOrNull(): Type? {
-        val next = peek().kind
-        println("Parsing type: $next")
-        val base = if (next in TYPE_TOKENS) {
+        val next = peek()
+        val base = if (next.kind in TYPE_TOKENS) {
             position++
             tokenKindToType(next)
         } else {
