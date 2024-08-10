@@ -210,11 +210,24 @@ class Parser(private val tokens: TokenStream) {
 
     fun parseTypeOrNull(): Type? {
         val next = peek().kind
-        if (next !in TYPE_TOKENS) {
+        println("Parsing type: $next")
+        val base = if (next in TYPE_TOKENS) {
+            position++
+            tokenKindToType(next)
+        } else {
             return null
         }
-        position++
-        return tokenKindToType(next)
+        if (peek().kind == TokenKind.OPENING_BRACKETS) {
+            position++
+            val length = consume(TokenKind.NUMBER).ifLeft {
+                return null
+            }.unwrap().value.toInt()
+            consume(TokenKind.CLOSING_BRACKETS).ifLeft {
+                return null
+            }
+            return Type.Array(base, length)
+        }
+        return base
     }
 
     fun parseCompoundAssignment(token: Token): Either<ParsingError, SyntaxTreeNode> {
@@ -310,7 +323,11 @@ class Parser(private val tokens: TokenStream) {
                 position++
                 Either.Right(BooleanNode(token.value.toBoolean(), token))
             }
+            TokenKind.OPENING_BRACKETS -> {
+                parseArray()
+            }
             TokenKind.IDENTIFIER -> {
+                println(peekNext().kind)
                 if (peekNext().kind == TokenKind.OPENING_PARENTHESES) {
                     position++
                     val parameters = parseCallParameters()
@@ -321,6 +338,8 @@ class Parser(private val tokens: TokenStream) {
                         name = token.value,
                         arguments = parameters.unwrap()
                     ))
+                } else if (peekNext().kind == TokenKind.OPENING_BRACKETS) {
+                    parseArrayAccess()
                 } else {
                     parseNumericExpression()
                 }
@@ -379,7 +398,6 @@ class Parser(private val tokens: TokenStream) {
         while (position < tokens.count() && peek().kind != TokenKind.STRING_END) {
             val segment = when (peek().kind) {
                 TokenKind.STRING_TEXT -> {
-                    println("Consuming text")
                     val text = consume().value
                     StringNode.Segment.Text(text)
                 }
@@ -399,10 +417,7 @@ class Parser(private val tokens: TokenStream) {
             value = "",
             segments = segments,
             start = start.unwrap()
-        ).also {
-            println("String node: $it")
-            println("Segments: ${it.segments}")
-        })
+        ))
     }
 
     fun parseCallParameters(): Either<ParsingError, List<SyntaxTreeNode>> {
@@ -484,6 +499,54 @@ class Parser(private val tokens: TokenStream) {
             TokenKind.IDENTIFIER -> consume().let { Either.Right(VariableReferenceNode(it.value, it)) }
             else -> Either.Left(ParsingError.UnexpectedToken(tokens[position]))
         }
+    }
+
+    fun parseArray(): Either<ParsingError, SyntaxTreeNode> {
+        val openingToken = consume(TokenKind.OPENING_BRACKETS).ifLeft {
+            return Either.Left(it)
+        }.unwrap()
+        val elements = mutableListOf<SyntaxTreeNode>()
+        while (peek().kind != TokenKind.CLOSING_BRACKETS) {
+            val element = parseExpression()
+            if (element.isLeft()) {
+                return Either.Left(element.getLeft())
+            }
+            elements.add(element.getRight())
+            if (peek().kind == TokenKind.COMMA) {
+                position++
+            }
+        }
+        val closingToken = consume(TokenKind.CLOSING_BRACKETS).ifLeft {
+            return Either.Left(it)
+        }.unwrap()
+        return Either.Right(ArrayNode(
+            elements = elements,
+            start = openingToken,
+            end = closingToken
+        ))
+    }
+
+    fun parseArrayAccess(): Either<ParsingError, SyntaxTreeNode> {
+        val identifier = parseIdentifier()
+        if (identifier.isLeft()) {
+            return Either.Left(identifier.getLeft())
+        }
+        val openingToken = consume(TokenKind.OPENING_BRACKETS).ifLeft {
+            return Either.Left(it)
+        }.unwrap()
+        val index = parseExpression()
+        if (index.isLeft()) {
+            return Either.Left(index.getLeft())
+        }
+        val closingToken = consume(TokenKind.CLOSING_BRACKETS).ifLeft {
+            return Either.Left(it)
+        }.unwrap()
+        return Either.Right(ArrayAccessNode(
+            identifier = identifier.unwrap(),
+            index = index.unwrap(),
+            start = openingToken,
+            end = closingToken
+        ))
     }
 
     private fun peek(): Token = if (position < tokens.count()) tokens[position] else tokens.last()

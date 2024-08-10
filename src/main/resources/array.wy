@@ -1,0 +1,7 @@
+func main () {
+
+    props := ["apple", "banana", "cherry"];
+    a := props[2];
+
+    println(a);
+}

@@ -37,4 +37,14 @@ sealed class AnalysisError(val message: String, val node: SyntaxTreeNode) {
         "invalid condition: condition must be a boolean expression, got $type",
         node
     )
+
+    class UndefinedArray(node: SyntaxTreeNode, name: String) : AnalysisError(
+        "undefined array: $name",
+        node
+    )
+
+    class NotAnArray(node: SyntaxTreeNode, type: Type) : AnalysisError(
+        "not an array: $type",
+        node
+    )
 }

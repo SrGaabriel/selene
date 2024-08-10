@@ -24,6 +24,11 @@ sealed class MemoryUnit(
 
     class Unsized(register: Int, type: LLVMType) : MemoryUnit(register, type)
 
+    class Structure(
+        val pointer: Sized,
+        val allocation: Sized
+    ) : MemoryUnit(pointer.register, pointer.type)
+
     override fun llvm(): String = "%$register"
 }
 

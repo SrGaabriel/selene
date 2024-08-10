@@ -6,10 +6,7 @@ import me.gabriel.gwydion.compiler.ProgramMemoryRepository
 import me.gabriel.gwydion.compiler.IntrinsicFunction
 import me.gabriel.gwydion.llvm.LLVMCodeAssembler
 import me.gabriel.gwydion.llvm.LLVMCodeGenerator
-import me.gabriel.gwydion.llvm.struct.LLVMConstant
-import me.gabriel.gwydion.llvm.struct.LLVMType
-import me.gabriel.gwydion.llvm.struct.MemoryUnit
-import me.gabriel.gwydion.llvm.struct.NullMemoryUnit
+import me.gabriel.gwydion.llvm.struct.*
 import me.gabriel.gwydion.parsing.*
 
 /*
@@ -56,6 +53,8 @@ class LLVMCodeAdaptationProcess(
         is IfNode -> generateIf(block, node)
         is BooleanNode -> generateBoolean(block, node)
         is EqualsNode -> generateEquality(block, node)
+        is ArrayNode -> generateArray(block, node)
+        is ArrayAccessNode -> generateArrayAccess(block, node)
         else -> error("Node $node not supported")
     }
 
@@ -149,6 +148,10 @@ class LLVMCodeAdaptationProcess(
 
         println("Alloca: ${node.name} ${expression}")
         block.memory.allocate(node.name, expression)
+        block.symbols.declare(
+            name = node.name,
+            type = getExpressionType(block, node.expression).unwrap()
+        )
 //        assembler.saveToRegister(unit.register, expression.llvm())
         return expression
     }
@@ -160,10 +163,12 @@ class LLVMCodeAdaptationProcess(
                 is StringNode.Segment.Text -> {
                     segmentUnits.add(assembler.buildString(segment.text))
                 }
+
                 is StringNode.Segment.Reference -> {
                     val reference = generateVariableReference(block, segment.node)
                     segmentUnits.add(reference)
                 }
+
                 else -> error("Segment not supported")
             }
         }
@@ -261,5 +266,28 @@ class LLVMCodeAdaptationProcess(
         val expression = acceptNode(block, node.expression)
         assembler.returnValue(expression.type, expression)
         return NullMemoryUnit
+    }
+
+    fun generateArray(block: MemoryBlock, node: ArrayNode): MemoryUnit {
+        val arrayType = getExpressionType(block, node).unwrap().asLLVM()
+        if (arrayType !is LLVMType.Array) error("Array type not found")
+        val type = arrayType.type
+        println("Array type: $type")
+        return assembler.createArray(
+            type = type,
+            size = node.elements.size,
+            elements = node.elements.map { acceptNode(block, it) }
+        )
+    }
+
+    fun generateArrayAccess(block: MemoryBlock, node: ArrayAccessNode): MemoryUnit {
+        val arrayMemory = block.figureOutMemory(node.identifier) ?: error("Array ${node.identifier} not found")
+        val index = acceptNode(block, node.index)
+
+        val pointer = assembler.smartGetElementFromStructure(
+            struct = arrayMemory as? MemoryUnit.Structure ?: error("Array not found"),
+            index = index
+        )
+        return assembler.loadPointer(pointer)
     }
 }

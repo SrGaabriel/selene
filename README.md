@@ -27,7 +27,7 @@ func check_if_typed_apple(reading: string) {
 
 func check_typed() {
     println("");
-    printf("Type something: ");
+    println("Type something: ");
 
     reading := readln();
     println("You typed $reading");

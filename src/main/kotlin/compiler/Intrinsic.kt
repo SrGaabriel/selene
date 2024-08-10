@@ -88,7 +88,7 @@ class PrintlnFunction: IntrinsicFunction(
         return when (type) {
             Type.String -> "call void @println_str(${arguments})"
             Type.Int32 -> "call void @println_i32(${arguments})"
-            else -> error("Unknown type $type")
+            else -> error("Unsupported type for intrinsic $type")
         }
     }
 

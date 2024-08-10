@@ -106,6 +106,10 @@ class LLVMCodeAssembler(val generator: ILLVMCodeGenerator): ILLVMCodeAssembler {
                     alignment = unit.type.defaultAlignment
                 ))
             }
+            is MemoryUnit.Structure -> saveToRegister(unit.register, generator.heapMemoryAllocation(
+                size = min(unit.allocation.size, 64),
+                type = unit.allocation.type
+            ))
             NullMemoryUnit -> error("Tried to store null memory unit")
         }
     }
@@ -122,6 +126,37 @@ class LLVMCodeAssembler(val generator: ILLVMCodeGenerator): ILLVMCodeAssembler {
             is MemoryUnit -> saveToRegister(assignment.register, call)
             else -> instruct(call)
         }
+    }
+
+    override fun createArray(type: LLVMType, size: Int, elements: List<Value>): MemoryUnit {
+        val unit = MemoryUnit.Sized(
+            register = nextRegister(),
+            type = LLVMType.Array(type, size),
+            size = size
+        )
+        dynamicMemoryUnitAllocation(unit)
+
+        var firstPointer: MemoryUnit? = null
+        elements.forEachIndexed { index, element ->
+            val reference = setStructElementTo(
+                value = element,
+                struct = unit,
+                type = type,
+                index = LLVMConstant(value = index, type = LLVMType.I32)
+            )
+            if (firstPointer == null) {
+                firstPointer = reference
+            }
+        }
+        println("firstPointer: ${firstPointer?.type} ${firstPointer?.register}")
+        if (firstPointer == null) {
+            return unit
+        }
+
+        return MemoryUnit.Structure(
+            pointer = firstPointer!! as MemoryUnit.Sized,
+            allocation = unit
+        )
     }
 
     override fun getElementFromStructure(
@@ -145,6 +180,48 @@ class LLVMCodeAssembler(val generator: ILLVMCodeGenerator): ILLVMCodeAssembler {
             register = nextRegister(),
             type = LLVMType.Pointer(type),
             size = type.size
+        )
+        saveToRegister(
+            register = unit.register,
+            expression = reading
+        )
+        return unit
+    }
+
+    //  load i8*, i8** X
+    override fun loadPointer(value: MemoryUnit): MemoryUnit {
+        if (value.type !is LLVMType.Pointer) {
+            error("Expected pointer type, got ${value.type}")
+        }
+        val pointerType = value.type as LLVMType.Pointer
+        val unit = MemoryUnit.Sized(
+            register = nextRegister(),
+            type = pointerType.type,
+            size = pointerType.size
+        )
+        saveToRegister(
+            register = unit.register,
+            expression = generator.loadPointer(value)
+        )
+        return unit
+    }
+
+    override fun smartGetElementFromStructure(struct: MemoryUnit.Structure, index: Value, total: Boolean): MemoryUnit {
+        val reading = if (total) {
+            generator.unsafeSubElementAddressTotalReading(
+                struct = struct.allocation,
+                index = index
+            )
+        } else {
+            generator.unsafeSubElementAddressDirectReading(
+                struct = struct.allocation,
+                index = index
+            )
+        }
+        val unit = MemoryUnit.Sized(
+            register = nextRegister(),
+            type = struct.pointer.type,
+            size = struct.allocation.size
         )
         saveToRegister(
             register = unit.register,
@@ -303,7 +380,7 @@ class LLVMCodeAssembler(val generator: ILLVMCodeGenerator): ILLVMCodeAssembler {
         }
     }
 
-    override fun nextRegister(): Int = register++ * 2
+    override fun nextRegister(): Int = (register++ * 2)
 
     override fun nextLabel(): String = "label${label++}"
 }

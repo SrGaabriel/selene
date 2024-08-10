@@ -31,12 +31,26 @@ interface ILLVMCodeAssembler {
 
     fun dynamicMemoryUnitAllocation(unit: MemoryUnit)
 
+    fun createArray(
+        type: LLVMType,
+        size: Int,
+        elements: List<Value>
+    ): MemoryUnit
+
     fun getElementFromStructure(
         struct: Value,
         type: LLVMType,
         index: Value,
         total: Boolean = true
     ): MemoryUnit
+
+    fun smartGetElementFromStructure(
+        struct: MemoryUnit.Structure,
+        index: Value,
+        total: Boolean = true
+    ): MemoryUnit
+
+    fun loadPointer(value: MemoryUnit): MemoryUnit
 
     fun setStructElementTo(
         value: Value,

@@ -167,3 +167,20 @@ class IfNode(
 ) : SyntaxTreeNode(start, body.end) {
     override fun getChildren(): List<SyntaxTreeNode> = listOfNotNull(condition, body, elseBody)
 }
+
+class ArrayNode(
+    val elements: List<SyntaxTreeNode>,
+    start: Token,
+    end: Token
+) : SyntaxTreeNode(start, end) {
+    override fun getChildren(): List<SyntaxTreeNode> = elements
+}
+
+class ArrayAccessNode(
+    val identifier: String,
+    val index: SyntaxTreeNode,
+    start: Token,
+    end: Token
+) : SyntaxTreeNode(start, end) {
+    override fun getChildren(): List<SyntaxTreeNode> = listOf(index)
+}

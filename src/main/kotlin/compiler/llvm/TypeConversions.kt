@@ -8,5 +8,9 @@ fun Type.asLLVM(): LLVMType = when (this) {
     Type.Void -> LLVMType.Void
     Type.Any -> LLVMType.I32
     Type.Int32 -> LLVMType.I32
+    is Type.Array -> LLVMType.Array(
+        type = this.type.asLLVM(),
+        length = this.length
+    )
     else -> error("Unsupported LLVM type $this")
 }
