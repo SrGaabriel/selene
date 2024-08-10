@@ -124,8 +124,8 @@ class LLVMCodeGenerator: ILLVMCodeGenerator {
         return "store ${value.type.llvm} ${value.llvm()}, ${address.type.llvm} ${address.llvm()}"
     }
 
-    override fun loadPointer(value: MemoryUnit): String {
-        return "load ${value.type.llvm}, ${LLVMType.Pointer(value.type).llvm} ${value.llvm()}"
+    override fun loadPointer(type: LLVMType, value: MemoryUnit): String {
+        return "load ${type.llvm}, ${type.llvm}* ${value.llvm()}"
     }
 
     override fun getGeneratedDependencies(): Set<String> = dependencies

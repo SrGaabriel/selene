@@ -219,13 +219,24 @@ class Parser(private val tokens: TokenStream) {
         }
         if (peek().kind == TokenKind.OPENING_BRACKETS) {
             position++
-            val length = consume(TokenKind.NUMBER).ifLeft {
-                return null
-            }.unwrap().value.toInt()
+            val type = when (peek().kind) {
+                TokenKind.NUMBER -> {
+                    val number = consume().value.toInt()
+                    if (number < 0) {
+                        return null
+                    }
+                    Type.FixedArray(base, number)
+                }
+                TokenKind.PLUS -> {
+                    position++
+                    Type.DynamicArray(base)
+                }
+                else -> return null
+            }
             consume(TokenKind.CLOSING_BRACKETS).ifLeft {
                 return null
             }
-            return Type.Array(base, length)
+            return type
         }
         return base
     }
@@ -519,8 +530,13 @@ class Parser(private val tokens: TokenStream) {
         val closingToken = consume(TokenKind.CLOSING_BRACKETS).ifLeft {
             return Either.Left(it)
         }.unwrap()
+        val dynamic = peek().kind == TokenKind.PLUS
+        if (dynamic) {
+            position++
+        }
         return Either.Right(ArrayNode(
             elements = elements,
+            dynamic = dynamic,
             start = openingToken,
             end = closingToken
         ))

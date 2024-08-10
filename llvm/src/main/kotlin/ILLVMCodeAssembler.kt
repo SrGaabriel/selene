@@ -33,19 +33,13 @@ interface ILLVMCodeAssembler {
 
     fun createArray(
         type: LLVMType,
-        size: Int,
+        size: Int?,
         elements: List<Value>
     ): MemoryUnit
 
     fun getElementFromStructure(
         struct: Value,
         type: LLVMType,
-        index: Value,
-        total: Boolean = true
-    ): MemoryUnit
-
-    fun smartGetElementFromStructure(
-        struct: MemoryUnit.Structure,
         index: Value,
         total: Boolean = true
     ): MemoryUnit

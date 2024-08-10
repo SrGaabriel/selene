@@ -124,7 +124,7 @@ class LLVMCodeAdaptationProcess(
         if (intrinsic != null) {
             val call = intrinsic.handleCall(
                 call = node,
-                types = node.arguments.map { getExpressionType(block, it).unwrap() },
+                types = node.arguments.map { getExpressionType(block, it).let { it.getRightOrNull() ?: error(it.getLeft().message) } },
                 arguments = arguments.joinToString(", ") { "${it.type.llvm} %${it.register}" }
             )
             if (store) {
@@ -275,7 +275,7 @@ class LLVMCodeAdaptationProcess(
         println("Array type: $type")
         return assembler.createArray(
             type = type,
-            size = node.elements.size,
+            size = if (!node.dynamic) node.elements.size else null,
             elements = node.elements.map { acceptNode(block, it) }
         )
     }
@@ -284,9 +284,11 @@ class LLVMCodeAdaptationProcess(
         val arrayMemory = block.figureOutMemory(node.identifier) ?: error("Array ${node.identifier} not found")
         val index = acceptNode(block, node.index)
 
-        val pointer = assembler.smartGetElementFromStructure(
-            struct = arrayMemory as? MemoryUnit.Structure ?: error("Array not found"),
-            index = index
+        val pointer = assembler.getElementFromStructure(
+            struct = arrayMemory,
+            type = (arrayMemory.type as LLVMType.Pointer).type,
+            index = index,
+            total = false
         )
         return assembler.loadPointer(pointer)
     }

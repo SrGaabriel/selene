@@ -20,6 +20,7 @@ class StringLexer(private val data: String): Lexer {
                 '(' -> tokens.add(Token(TokenKind.OPENING_PARENTHESES, "(", position)).also { position++ }
                 ')' -> tokens.add(Token(TokenKind.CLOSING_PARENTHESES, ")", position)).also { position++ }
                 ',' -> tokens.add(Token(TokenKind.COMMA, ",", position)).also { position++ }
+                '.' -> tokens.add(Token(TokenKind.DOT, ".", position)).also { position++ }
                 '[' -> tokens.add(Token(TokenKind.OPENING_BRACKETS, "[", position)).also { position++ }
                 ']' -> tokens.add(Token(TokenKind.CLOSING_BRACKETS, "]", position)).also { position++ }
                 '"' -> return Either.left(lexString(tokens) ?: continue)

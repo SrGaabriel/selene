@@ -45,7 +45,7 @@ interface ILLVMCodeGenerator {
 
     fun conditionalBranch(condition: Value, trueLabel: String, falseLabel: String): String
 
-    fun loadPointer(value: MemoryUnit): String
+    fun loadPointer(type: LLVMType, value: MemoryUnit): String
 
     fun functionDeclaration(name: String, returnType: LLVMType, arguments: List<MemoryUnit>): String
 

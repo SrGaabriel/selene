@@ -18,10 +18,13 @@ sealed class Type(val name: kotlin.String) {
     data object Void : Type("void")
     data object Boolean : Type("bool")
     data object Unknown : Type("unknown")
-    data class Array(
+    data class DynamicArray(
+        val type: Type,
+    ): Type("fixed array")
+    data class FixedArray(
         val type: Type,
         val length: Int
-    ): Type("array")
+    ): Type("fixed array")
 
     override fun toString(): kotlin.String = name
 }

@@ -15,6 +15,7 @@ enum class TokenKind {
     SEMICOLON,
     ASSIGN,
     COMMA,
+    DOT,
     OPENING_BRACKETS,
     CLOSING_BRACKETS,
     OPENING_PARENTHESES,

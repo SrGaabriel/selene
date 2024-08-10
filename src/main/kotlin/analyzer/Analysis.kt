@@ -29,15 +29,16 @@ tailrec fun getExpressionType(block: MemoryBlock, node: SyntaxTreeNode): Either<
         is EqualsNode -> Either.Right(Type.Boolean)
         is ArrayNode -> getExpressionType(block, node.elements.first()).let {
             it.mapRight {
-                Type.Array(it, node.elements.size)
+                Type.FixedArray(it, node.elements.size)
             }
         }
         is ArrayAccessNode -> {
             val arrayType = block.figureOutSymbol(node.identifier) ?: return Either.Left(AnalysisError.UndefinedArray(node, node.identifier))
-            if (arrayType !is Type.Array) {
-                return Either.Left(AnalysisError.NotAnArray(node, arrayType))
+            when (arrayType) {
+                is Type.FixedArray -> Either.Right(arrayType.type)
+                is Type.DynamicArray -> Either.Right(arrayType.type)
+                else -> Either.Left(AnalysisError.NotAnArray(node, arrayType))
             }
-            Either.Right(arrayType.type)
         }
         else -> error("Unknown node type $node")
     }

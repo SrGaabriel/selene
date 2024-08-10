@@ -51,106 +51,106 @@ entry:
     ret void
 }
 declare i32 @printf(i8*, ...)
-define void @main() {
+define void @main(i32 %0, i8** %2) {
 entry:
-%0 = alloca [6 x i8], align 1
-%2 = getelementptr inbounds [6 x i8], [6 x i8]* %0, i32 0, i32 0
-store i8 97, i8* %2
-%4 = getelementptr inbounds [6 x i8], [6 x i8]* %0, i32 0, i32 1
-store i8 112, i8* %4
-%6 = getelementptr inbounds [6 x i8], [6 x i8]* %0, i32 0, i32 2
-store i8 112, i8* %6
-%8 = getelementptr inbounds [6 x i8], [6 x i8]* %0, i32 0, i32 3
-store i8 108, i8* %8
-%10 = getelementptr inbounds [6 x i8], [6 x i8]* %0, i32 0, i32 4
-store i8 101, i8* %10
-%12 = getelementptr inbounds [6 x i8], [6 x i8]* %0, i32 0, i32 5
-store i8 0, i8* %12
-%14 = call i8* @malloc(i32 64)
-call void @memset(i8* %14, i32 0, i32 64)
-call i8* @strcat(i8* %14, i8* %2)
-%18 = alloca [7 x i8], align 1
-%20 = getelementptr inbounds [7 x i8], [7 x i8]* %18, i32 0, i32 0
-store i8 98, i8* %20
-%22 = getelementptr inbounds [7 x i8], [7 x i8]* %18, i32 0, i32 1
-store i8 97, i8* %22
-%24 = getelementptr inbounds [7 x i8], [7 x i8]* %18, i32 0, i32 2
-store i8 110, i8* %24
-%26 = getelementptr inbounds [7 x i8], [7 x i8]* %18, i32 0, i32 3
+%4 = alloca [6 x i8], align 1
+%6 = getelementptr inbounds [6 x i8], [6 x i8]* %4, i32 0, i32 0
+store i8 97, i8* %6
+%8 = getelementptr inbounds [6 x i8], [6 x i8]* %4, i32 0, i32 1
+store i8 112, i8* %8
+%10 = getelementptr inbounds [6 x i8], [6 x i8]* %4, i32 0, i32 2
+store i8 112, i8* %10
+%12 = getelementptr inbounds [6 x i8], [6 x i8]* %4, i32 0, i32 3
+store i8 108, i8* %12
+%14 = getelementptr inbounds [6 x i8], [6 x i8]* %4, i32 0, i32 4
+store i8 101, i8* %14
+%16 = getelementptr inbounds [6 x i8], [6 x i8]* %4, i32 0, i32 5
+store i8 0, i8* %16
+%18 = call i8* @malloc(i32 64)
+call void @memset(i8* %18, i32 0, i32 64)
+call i8* @strcat(i8* %18, i8* %6)
+%22 = alloca [7 x i8], align 1
+%24 = getelementptr inbounds [7 x i8], [7 x i8]* %22, i32 0, i32 0
+store i8 98, i8* %24
+%26 = getelementptr inbounds [7 x i8], [7 x i8]* %22, i32 0, i32 1
 store i8 97, i8* %26
-%28 = getelementptr inbounds [7 x i8], [7 x i8]* %18, i32 0, i32 4
+%28 = getelementptr inbounds [7 x i8], [7 x i8]* %22, i32 0, i32 2
 store i8 110, i8* %28
-%30 = getelementptr inbounds [7 x i8], [7 x i8]* %18, i32 0, i32 5
+%30 = getelementptr inbounds [7 x i8], [7 x i8]* %22, i32 0, i32 3
 store i8 97, i8* %30
-%32 = getelementptr inbounds [7 x i8], [7 x i8]* %18, i32 0, i32 6
-store i8 0, i8* %32
-%34 = call i8* @malloc(i32 64)
-call void @memset(i8* %34, i32 0, i32 64)
-call i8* @strcat(i8* %34, i8* %20)
-%38 = alloca [7 x i8], align 1
-%40 = getelementptr inbounds [7 x i8], [7 x i8]* %38, i32 0, i32 0
-store i8 99, i8* %40
-%42 = getelementptr inbounds [7 x i8], [7 x i8]* %38, i32 0, i32 1
-store i8 104, i8* %42
-%44 = getelementptr inbounds [7 x i8], [7 x i8]* %38, i32 0, i32 2
-store i8 101, i8* %44
-%46 = getelementptr inbounds [7 x i8], [7 x i8]* %38, i32 0, i32 3
-store i8 114, i8* %46
-%48 = getelementptr inbounds [7 x i8], [7 x i8]* %38, i32 0, i32 4
-store i8 114, i8* %48
-%50 = getelementptr inbounds [7 x i8], [7 x i8]* %38, i32 0, i32 5
-store i8 121, i8* %50
-%52 = getelementptr inbounds [7 x i8], [7 x i8]* %38, i32 0, i32 6
-store i8 0, i8* %52
-%54 = call i8* @malloc(i32 64)
-call void @memset(i8* %54, i32 0, i32 64)
-call i8* @strcat(i8* %54, i8* %40)
-%58 = alloca [3 x i8*], align 8
-%60 = getelementptr inbounds [3 x i8*], [3 x i8*]* %58, i32 0, i32 0
-store i8* %14, i8** %60
-%62 = getelementptr inbounds [3 x i8*], [3 x i8*]* %58, i32 0, i32 1
-store i8* %34, i8** %62
-%64 = getelementptr inbounds [3 x i8*], [3 x i8*]* %58, i32 0, i32 2
-store i8* %54, i8** %64
-%66 = add i32 2, 0
-%68 = getelementptr inbounds [3 x i8*], [3 x i8*]* %58, i32 0, i32 %66
-%70 = load i8**, i8*** %68
-call void @println_str(i8* %70)
+%32 = getelementptr inbounds [7 x i8], [7 x i8]* %22, i32 0, i32 4
+store i8 110, i8* %32
+%34 = getelementptr inbounds [7 x i8], [7 x i8]* %22, i32 0, i32 5
+store i8 97, i8* %34
+%36 = getelementptr inbounds [7 x i8], [7 x i8]* %22, i32 0, i32 6
+store i8 0, i8* %36
+%38 = call i8* @malloc(i32 64)
+call void @memset(i8* %38, i32 0, i32 64)
+call i8* @strcat(i8* %38, i8* %24)
+%42 = alloca [7 x i8], align 1
+%44 = getelementptr inbounds [7 x i8], [7 x i8]* %42, i32 0, i32 0
+store i8 99, i8* %44
+%46 = getelementptr inbounds [7 x i8], [7 x i8]* %42, i32 0, i32 1
+store i8 104, i8* %46
+%48 = getelementptr inbounds [7 x i8], [7 x i8]* %42, i32 0, i32 2
+store i8 101, i8* %48
+%50 = getelementptr inbounds [7 x i8], [7 x i8]* %42, i32 0, i32 3
+store i8 114, i8* %50
+%52 = getelementptr inbounds [7 x i8], [7 x i8]* %42, i32 0, i32 4
+store i8 114, i8* %52
+%54 = getelementptr inbounds [7 x i8], [7 x i8]* %42, i32 0, i32 5
+store i8 121, i8* %54
+%56 = getelementptr inbounds [7 x i8], [7 x i8]* %42, i32 0, i32 6
+store i8 0, i8* %56
+%58 = call i8* @malloc(i32 64)
+call void @memset(i8* %58, i32 0, i32 64)
+call i8* @strcat(i8* %58, i8* %44)
+%62 = call i8* @malloc(i32 8)
+%64 = getelementptr inbounds i8*, i8** %62, i32 0
+store i8* %18, i8** %64
+%66 = getelementptr inbounds i8*, i8** %62, i32 1
+store i8* %38, i8** %66
+%68 = getelementptr inbounds i8*, i8** %62, i32 2
+store i8* %58, i8** %68
+%70 = add i32 3, 0
+%72 = getelementptr inbounds i8*, i8** %64, i32 %70
+%74 = load i8*, i8** %72
+call void @println_str(i8* %74)
 ret void
 }
 define i8* @test() {
 entry:
-%72 = alloca [14 x i8], align 1
-%74 = getelementptr inbounds [14 x i8], [14 x i8]* %72, i32 0, i32 0
-store i8 72, i8* %74
-%76 = getelementptr inbounds [14 x i8], [14 x i8]* %72, i32 0, i32 1
-store i8 101, i8* %76
-%78 = getelementptr inbounds [14 x i8], [14 x i8]* %72, i32 0, i32 2
-store i8 108, i8* %78
-%80 = getelementptr inbounds [14 x i8], [14 x i8]* %72, i32 0, i32 3
-store i8 108, i8* %80
-%82 = getelementptr inbounds [14 x i8], [14 x i8]* %72, i32 0, i32 4
-store i8 111, i8* %82
-%84 = getelementptr inbounds [14 x i8], [14 x i8]* %72, i32 0, i32 5
-store i8 44, i8* %84
-%86 = getelementptr inbounds [14 x i8], [14 x i8]* %72, i32 0, i32 6
-store i8 32, i8* %86
-%88 = getelementptr inbounds [14 x i8], [14 x i8]* %72, i32 0, i32 7
-store i8 87, i8* %88
-%90 = getelementptr inbounds [14 x i8], [14 x i8]* %72, i32 0, i32 8
-store i8 111, i8* %90
-%92 = getelementptr inbounds [14 x i8], [14 x i8]* %72, i32 0, i32 9
-store i8 114, i8* %92
-%94 = getelementptr inbounds [14 x i8], [14 x i8]* %72, i32 0, i32 10
-store i8 108, i8* %94
-%96 = getelementptr inbounds [14 x i8], [14 x i8]* %72, i32 0, i32 11
-store i8 100, i8* %96
-%98 = getelementptr inbounds [14 x i8], [14 x i8]* %72, i32 0, i32 12
-store i8 33, i8* %98
-%100 = getelementptr inbounds [14 x i8], [14 x i8]* %72, i32 0, i32 13
-store i8 0, i8* %100
-%102 = call i8* @malloc(i32 64)
-call void @memset(i8* %102, i32 0, i32 64)
-call i8* @strcat(i8* %102, i8* %74)
-ret i8* %102
+%76 = alloca [14 x i8], align 1
+%78 = getelementptr inbounds [14 x i8], [14 x i8]* %76, i32 0, i32 0
+store i8 72, i8* %78
+%80 = getelementptr inbounds [14 x i8], [14 x i8]* %76, i32 0, i32 1
+store i8 101, i8* %80
+%82 = getelementptr inbounds [14 x i8], [14 x i8]* %76, i32 0, i32 2
+store i8 108, i8* %82
+%84 = getelementptr inbounds [14 x i8], [14 x i8]* %76, i32 0, i32 3
+store i8 108, i8* %84
+%86 = getelementptr inbounds [14 x i8], [14 x i8]* %76, i32 0, i32 4
+store i8 111, i8* %86
+%88 = getelementptr inbounds [14 x i8], [14 x i8]* %76, i32 0, i32 5
+store i8 44, i8* %88
+%90 = getelementptr inbounds [14 x i8], [14 x i8]* %76, i32 0, i32 6
+store i8 32, i8* %90
+%92 = getelementptr inbounds [14 x i8], [14 x i8]* %76, i32 0, i32 7
+store i8 87, i8* %92
+%94 = getelementptr inbounds [14 x i8], [14 x i8]* %76, i32 0, i32 8
+store i8 111, i8* %94
+%96 = getelementptr inbounds [14 x i8], [14 x i8]* %76, i32 0, i32 9
+store i8 114, i8* %96
+%98 = getelementptr inbounds [14 x i8], [14 x i8]* %76, i32 0, i32 10
+store i8 108, i8* %98
+%100 = getelementptr inbounds [14 x i8], [14 x i8]* %76, i32 0, i32 11
+store i8 100, i8* %100
+%102 = getelementptr inbounds [14 x i8], [14 x i8]* %76, i32 0, i32 12
+store i8 33, i8* %102
+%104 = getelementptr inbounds [14 x i8], [14 x i8]* %76, i32 0, i32 13
+store i8 0, i8* %104
+%106 = call i8* @malloc(i32 64)
+call void @memset(i8* %106, i32 0, i32 64)
+call i8* @strcat(i8* %106, i8* %78)
+ret i8* %106
 }

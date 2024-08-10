@@ -170,6 +170,7 @@ class IfNode(
 
 class ArrayNode(
     val elements: List<SyntaxTreeNode>,
+    val dynamic: Boolean,
     start: Token,
     end: Token
 ) : SyntaxTreeNode(start, end) {
