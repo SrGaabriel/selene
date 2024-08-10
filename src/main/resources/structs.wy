@@ -6,12 +6,19 @@ data Point(
 
 func main () {
     p := new_point();
+    print_point(p);
+}
+
+func new_point() :: Point {
+    point := @Point(50, true, 25);
+    println(point.x);
+    println(point.y);
+    println(point.z);
+    return point;
+}
+
+func print_point(p: Point) {
     println(p.x);
     println(p.y);
     println(p.z);
 }
-
-func new_point() :: Point {
-    return @Point(50, true, 25);
-}
-

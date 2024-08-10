@@ -52,6 +52,14 @@ class CumulativeSemanticAnalyzer(
                 return repository.createBlock(node.name, block)
             }
             is ParameterNode -> {
+                if (node.type is Type.UnknownReference) {
+                    val type = block.figureOutSymbol((node.type as Type.UnknownReference).reference)
+                    if (type == null) {
+                        errors.add(AnalysisError.UnknownType(node, node.type))
+                        return null
+                    }
+                    node.type = type
+                }
                 if (node.type == Type.Unknown) {
                     errors.add(AnalysisError.UnknownType(node, node.type))
                     return null

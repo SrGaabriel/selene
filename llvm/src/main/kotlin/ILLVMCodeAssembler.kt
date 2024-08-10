@@ -15,6 +15,11 @@ interface ILLVMCodeAssembler {
 
     fun allocateHeapMemory(size: Int): MemoryUnit
 
+    fun allocateHeapMemoryAndCast(
+        size: Int,
+        type: LLVMType
+    ): MemoryUnit
+
     fun declareFunction(name: String, returnType: LLVMType, arguments: List<MemoryUnit>)
 
     fun createBranch(label: String)

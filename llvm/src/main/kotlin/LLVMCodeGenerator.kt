@@ -23,6 +23,10 @@ class LLVMCodeGenerator: ILLVMCodeGenerator {
         return "add $type %${left.llvm()}, %${right.llvm()}"
     }
 
+    override fun cast(value: Value, type: LLVMType): String {
+        return "bitcast ${value.type.llvm} ${value.llvm()} to ${type.llvm}"
+    }
+
     override fun signedIntegerComparison(left: Value, right: Value): String {
         return "icmp eq i32 ${left.llvm()}, ${right.llvm()}"
     }

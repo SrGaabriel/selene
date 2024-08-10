@@ -23,7 +23,7 @@ sealed class SyntaxTreeNode(
 sealed class TypedSyntaxTreeNode(
     start: Token?,
     end: Token?,
-    val type: Type
+    var type: Type
 ) : SyntaxTreeNode(start, end)
 
 sealed class SizedSyntaxTreeNode(

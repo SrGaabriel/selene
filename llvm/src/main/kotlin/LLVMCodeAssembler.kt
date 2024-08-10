@@ -42,6 +42,17 @@ class LLVMCodeAssembler(val generator: ILLVMCodeGenerator): ILLVMCodeAssembler {
         return value
     }
 
+    override fun allocateHeapMemoryAndCast(size: Int, type: LLVMType): MemoryUnit {
+        val value = allocateHeapMemory(size)
+        val cast = MemoryUnit.Sized(
+            register = nextRegister(),
+            type = type,
+            size = type.size
+        )
+        saveToRegister(cast.register, generator.cast(value, type))
+        return cast
+    }
+
     override fun declareFunction(name: String, returnType: LLVMType, arguments: List<MemoryUnit>) {
         instruct(generator.functionDeclaration(name, LLVMType.Pointer(returnType), arguments))
     }

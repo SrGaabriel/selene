@@ -73,7 +73,7 @@ class LLVMCodeAdaptationProcess(
             ?: error("Function ${node.name} not found in the memory repository")
 
         val parameters = node.parameters.map {
-            val type = it.type.asLLVM()
+            val type = getProperReturnType(it.type)
             val unit = MemoryUnit.Sized(
                 register = assembler.nextRegister(),
                 type = type,
@@ -308,9 +308,9 @@ class LLVMCodeAdaptationProcess(
 
     fun generateInstantiation(block: MemoryBlock, node: InstantiationNode): MemoryUnit {
         val memory = block.figureOutMemory(node.name) ?: error("Data structure ${node.name} not found")
-        val allocation = assembler.allocateStackMemory(
-            type = memory.type,
-            alignment = node.arguments.minOf { getExpressionType(block, it).getRightOrNull()?.asLLVM()?.defaultAlignment ?: 1 }
+        val allocation = assembler.allocateHeapMemoryAndCast(
+            size = node.arguments.sumOf { getExpressionType(block, it).getRightOrNull()?.asLLVM()?.size ?: 0 },
+            type = LLVMType.Pointer(memory.type)
         )
 
         node.arguments.forEachIndexed { index, argument ->

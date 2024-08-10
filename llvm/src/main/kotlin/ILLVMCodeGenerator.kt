@@ -11,6 +11,8 @@ interface ILLVMCodeGenerator {
 
     fun addition(left: Value, right: Value, type: LLVMType): String
 
+    fun cast(value: Value, type: LLVMType): String
+
     fun stringLengthCalculation(value: Value): String
 
     fun strictStringLengthCalculation(argument: Value): String
