@@ -49,5 +49,7 @@ interface ILLVMCodeGenerator {
 
     fun functionDeclaration(name: String, returnType: LLVMType, arguments: List<MemoryUnit>): String
 
+    fun structDeclaration(fields: Collection<LLVMType>): String
+
     fun returnInstruction(type: LLVMType, value: Value): String
 }

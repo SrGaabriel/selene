@@ -78,6 +78,10 @@ interface ILLVMCodeAssembler {
         assignment: Value
     )
 
+    fun declareStruct(
+        fields: Map<String, LLVMType>
+    ): MemoryUnit
+
     fun addNumber(
         type: LLVMType,
         left: Value,

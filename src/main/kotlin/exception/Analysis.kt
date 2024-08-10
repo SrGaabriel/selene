@@ -47,4 +47,29 @@ sealed class AnalysisError(val message: String, val node: SyntaxTreeNode) {
         "not an array: $type",
         node
     )
+
+    class UndefinedDataStructure(node: SyntaxTreeNode, name: String) : AnalysisError(
+        "undefined data structure: $name",
+        node
+    )
+
+    class MissingArgumentsForInstantiation(node: SyntaxTreeNode, name: String) : AnalysisError(
+        "missing arguments for instantiation of $name",
+        node
+    )
+
+    class WrongArgumentTypeForInstantiation(node: SyntaxTreeNode, expected: Type, actual: Type) : AnalysisError(
+        "wrong argument type for instantiation: expected $expected, got $actual",
+        node
+    )
+
+    class UndefinedField(node: SyntaxTreeNode, field: String) : AnalysisError(
+        "undefined field: $field",
+        node
+    )
+
+    class NotADataStructure(node: SyntaxTreeNode, type: Type) : AnalysisError(
+        "not a data structure: $type",
+        node
+    )
 }

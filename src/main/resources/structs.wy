@@ -1,0 +1,12 @@
+data Point(
+    x: int32,
+    y: int32,
+    z: int32
+)
+
+func main () {
+    p := @Point(69, 50, 40);
+    println(p.x);
+    println(p.y);
+    println(p.z);
+}

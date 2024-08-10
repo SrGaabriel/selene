@@ -106,6 +106,15 @@ class Parser(private val tokens: TokenStream) {
                     start = token
                 ))
             }
+            TokenKind.DATA -> {
+                parseDataStructure().mapRight { it }
+            }
+            TokenKind.TRAIT -> {
+                parseTrait().mapRight { it }
+            }
+            TokenKind.MAKE -> {
+                parseTraitImplementation().mapRight { it }
+            }
             TokenKind.CLOSING_BRACES -> {
                 // We are probably reading the parent's closing braces
                 // Don't know if this is the right way to handle this
@@ -208,6 +217,160 @@ class Parser(private val tokens: TokenStream) {
         return Either.Right(function)
     }
 
+    fun parseDataStructure(): Either<ParsingError, DataStructureNode> {
+        val token = consume(TokenKind.DATA).unwrap()
+        val identifier = parseIdentifier()
+        if (identifier.isLeft()) {
+            return Either.Left(identifier.getLeft())
+        }
+        val fields = parseDataFields()
+        if (fields.isLeft()) {
+            return Either.Left(fields.getLeft())
+        }
+        return Either.Right(DataStructureNode(
+            name = identifier.unwrap(),
+            fields = fields.unwrap(),
+            start = token,
+            end = token
+        ))
+    }
+
+    fun parseDataFields(): Either<ParsingError, List<DataFieldNode>> {
+        consume(TokenKind.OPENING_PARENTHESES).ifLeft {
+            return Either.Left(it)
+        }
+        val fields = mutableListOf<DataFieldNode>()
+        while (peek().kind != TokenKind.CLOSING_PARENTHESES) {
+            val field = parseDataField()
+            if (field.isLeft()) {
+                return Either.Left(field.getLeft())
+            }
+            fields.add(field.getRight())
+            if (peek().kind == TokenKind.COMMA) {
+                position++
+            }
+        }
+        consume(TokenKind.CLOSING_PARENTHESES).ifLeft {
+            return Either.Left(it)
+        }
+        return Either.Right(fields)
+    }
+
+    fun parseDataField(): Either<ParsingError, DataFieldNode> {
+        val identifier = parseIdentifier()
+        if (identifier.isLeft()) {
+            return Either.Left(identifier.getLeft())
+        }
+        val typeDeclaration = consume(TokenKind.TYPE_DECLARATION).ifLeft {
+            return Either.Left(it)
+        }
+        val type = parseTypeOrNull() ?: return Either.Left(ParsingError.UnexpectedToken(peek()))
+        return Either.Right(DataFieldNode(
+            name = identifier.unwrap(),
+            type = type,
+            start = typeDeclaration.unwrap(),
+            end = typeDeclaration.unwrap()
+        ))
+    }
+
+    fun parseTrait(): Either<ParsingError, TraitNode> {
+        val token = consume(TokenKind.TRAIT).unwrap()
+        val identifier = parseIdentifier()
+        if (identifier.isLeft()) {
+            return Either.Left(identifier.getLeft())
+        }
+        val functions = parseTraitFunctions()
+        if (functions.isLeft()) {
+            return Either.Left(functions.getLeft())
+        }
+        return Either.Right(TraitNode(
+            name = identifier.unwrap(),
+            functions = functions.unwrap(),
+            start = token,
+            end = token
+        ))
+    }
+
+    fun parseTraitFunctions(): Either<ParsingError, List<TraitFunctionNode>> {
+        consume(TokenKind.OPENING_PARENTHESES).ifLeft {
+            return Either.Left(it)
+        }
+        val functions = mutableListOf<TraitFunctionNode>()
+        while (peek().kind != TokenKind.CLOSING_PARENTHESES) {
+            val function = parseTraitFunction()
+            if (function.isLeft()) {
+                return Either.Left(function.getLeft())
+            }
+            functions.add(function.getRight())
+            if (peek().kind == TokenKind.SEMICOLON) {
+                position++
+            }
+        }
+        consume(TokenKind.CLOSING_PARENTHESES).ifLeft {
+            return Either.Left(it)
+        }
+        return Either.Right(functions)
+    }
+
+    fun parseTraitFunction(): Either<ParsingError, TraitFunctionNode> {
+        val identifier = parseIdentifier()
+        if (identifier.isLeft()) {
+            return Either.Left(identifier.getLeft())
+        }
+        val parameters = parseParameters()
+        if (parameters.isLeft()) {
+            return Either.Left(parameters.getLeft())
+        }
+        val returnType = if (peek().kind != TokenKind.OPENING_BRACES) {
+            consume(TokenKind.RETURN_TYPE_DECLARATION).ifLeft {
+                return Either.Left(it)
+            }
+            parseTypeOrNull() ?: return Either.Left(ParsingError.UnexpectedToken(peek()))
+        } else {
+            Type.Void
+        }
+        return Either.Right(TraitFunctionNode(
+            name = identifier.unwrap(),
+            parameters = parameters.unwrap(),
+            returnType = returnType,
+        ))
+    }
+
+    fun parseTraitImplementation(): Either<ParsingError, TraitImplNode> {
+        val token = consume(TokenKind.MAKE).unwrap()
+        val obj = parseIdentifier()
+        if (obj.isLeft()) {
+            return Either.Left(obj.getLeft())
+        }
+        consume(TokenKind.INTO).ifLeft {
+            return Either.Left(it)
+        }
+        val trait = parseIdentifier()
+        if (trait.isLeft()) {
+            return Either.Left(trait.getLeft())
+        }
+        val functions = mutableListOf<FunctionNode>()
+        consume(TokenKind.OPENING_BRACES).ifLeft {
+            return Either.Left(it)
+        }
+        while (peek().kind != TokenKind.CLOSING_BRACES) {
+            val function = parseWholeFunction(listOf())
+            if (function.isLeft()) {
+                return Either.Left(function.getLeft())
+            }
+            functions.add(function.getRight())
+        }
+        consume(TokenKind.CLOSING_BRACES).ifLeft {
+            return Either.Left(it)
+        }
+
+        return Either.Right(TraitImplNode(
+            `object` = obj.unwrap(),
+            trait = trait.unwrap(),
+            functions = functions
+        ))
+    }
+
     fun parseTypeOrNull(): Type? {
         val next = peek().kind
         println("Parsing type: $next")
@@ -227,7 +390,7 @@ class Parser(private val tokens: TokenStream) {
                     }
                     Type.FixedArray(base, number)
                 }
-                TokenKind.PLUS -> {
+                TokenKind.TIMES -> {
                     position++
                     Type.DynamicArray(base)
                 }
@@ -337,22 +500,60 @@ class Parser(private val tokens: TokenStream) {
             TokenKind.OPENING_BRACKETS -> {
                 parseArray()
             }
-            TokenKind.IDENTIFIER -> {
-                println(peekNext().kind)
-                if (peekNext().kind == TokenKind.OPENING_PARENTHESES) {
-                    position++
-                    val parameters = parseCallParameters()
-                    if (parameters.isLeft()) {
-                        return Either.Left(parameters.getLeft())
-                    }
-                    Either.Right(CallNode(
-                        name = token.value,
-                        arguments = parameters.unwrap()
-                    ))
-                } else if (peekNext().kind == TokenKind.OPENING_BRACKETS) {
-                    parseArrayAccess()
+            TokenKind.TIMES -> {
+                if (peekNext().kind == TokenKind.OPENING_BRACKETS) {
+                    parseArray()
                 } else {
-                    parseNumericExpression()
+                    return Either.Left(ParsingError.UnexpectedToken(token))
+                }
+            }
+            TokenKind.INSTANTIATION -> {
+                position++
+                val identifier = parseIdentifier()
+                if (identifier.isLeft()) {
+                    return Either.Left(identifier.getLeft())
+                }
+                val arguments = parseCallParameters()
+                if (arguments.isLeft()) {
+                    return Either.Left(arguments.getLeft())
+                }
+                Either.Right(InstantiationNode(
+                    name = identifier.unwrap(),
+                    arguments = arguments.unwrap()
+                ))
+            }
+            TokenKind.IDENTIFIER -> {
+                when (peekNext().kind) {
+                    TokenKind.OPENING_PARENTHESES -> {
+                        position++
+                        val parameters = parseCallParameters()
+                        if (parameters.isLeft()) {
+                            return Either.Left(parameters.getLeft())
+                        }
+                        Either.Right(
+                            CallNode(
+                                name = token.value,
+                                arguments = parameters.unwrap()
+                            )
+                        )
+                    }
+                    TokenKind.OPENING_BRACKETS -> {
+                        parseArrayAccess()
+                    }
+                    TokenKind.DOT -> {
+                        position += 2
+                        val field = parseIdentifier()
+                        if (field.isLeft()) {
+                            return Either.Left(field.getLeft())
+                        }
+                        Either.Right(StructAccessNode(
+                            struct = token.value,
+                            field = field.unwrap(),
+                        ))
+                    }
+                    else -> {
+                        parseNumericExpression()
+                    }
                 }
             }
             else -> Either.Left(ParsingError.UnexpectedToken(token))
@@ -513,6 +714,10 @@ class Parser(private val tokens: TokenStream) {
     }
 
     fun parseArray(): Either<ParsingError, SyntaxTreeNode> {
+        val dynamic = peek().kind == TokenKind.TIMES
+        if (dynamic) {
+            position++
+        }
         val openingToken = consume(TokenKind.OPENING_BRACKETS).ifLeft {
             return Either.Left(it)
         }.unwrap()
@@ -530,10 +735,6 @@ class Parser(private val tokens: TokenStream) {
         val closingToken = consume(TokenKind.CLOSING_BRACKETS).ifLeft {
             return Either.Left(it)
         }.unwrap()
-        val dynamic = peek().kind == TokenKind.PLUS
-        if (dynamic) {
-            position++
-        }
         return Either.Right(ArrayNode(
             elements = elements,
             dynamic = dynamic,

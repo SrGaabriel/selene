@@ -15,6 +15,11 @@ sealed class LLVMType(
 
     data class Pointer(val type: LLVMType) : LLVMType("${type.llvm}*", 8, 8)
 
+    data class Struct(
+        val name: String,
+        val fields: Map<String, LLVMType>
+    ) : LLVMType("%$name", 8, fields.values.sumOf { it.size })
+
     override fun toString(): String = llvm
 }
 

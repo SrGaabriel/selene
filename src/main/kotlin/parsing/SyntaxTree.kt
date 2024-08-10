@@ -185,3 +185,60 @@ class ArrayAccessNode(
 ) : SyntaxTreeNode(start, end) {
     override fun getChildren(): List<SyntaxTreeNode> = listOf(index)
 }
+
+class DataStructureNode(
+    val name: String,
+    val fields: List<DataFieldNode>,
+    start: Token,
+    end: Token
+) : SyntaxTreeNode(start, end) {
+    override fun getChildren(): List<SyntaxTreeNode> = fields
+}
+
+class DataFieldNode(
+    val name: String,
+    val type: Type,
+    start: Token,
+    end: Token
+) : SyntaxTreeNode(start, end) {
+    override fun getChildren(): List<SyntaxTreeNode> = listOf()
+}
+
+class TraitNode(
+    val name: String,
+    val functions: List<TraitFunctionNode>,
+    start: Token,
+    end: Token
+) : SyntaxTreeNode(start, end) {
+    override fun getChildren(): List<SyntaxTreeNode> = functions
+}
+
+class TraitFunctionNode(
+    val name: String,
+    val returnType: Type,
+    val parameters: List<ParameterNode>,
+) : SyntaxTreeNode(null, null) {
+    override fun getChildren(): List<SyntaxTreeNode> = parameters
+}
+
+class TraitImplNode(
+    val `object`: String,
+    val trait: String,
+    val functions: List<FunctionNode>
+) : SyntaxTreeNode(null, null) {
+    override fun getChildren(): List<SyntaxTreeNode> = functions
+}
+
+class InstantiationNode(
+    val name: String,
+    val arguments: List<SyntaxTreeNode>,
+) : SyntaxTreeNode(null, null) {
+    override fun getChildren(): List<SyntaxTreeNode> = arguments
+}
+
+class StructAccessNode(
+    val struct: String,
+    val field: String,
+) : SyntaxTreeNode(null, null) {
+    override fun getChildren(): List<SyntaxTreeNode> = listOf()
+}

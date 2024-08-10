@@ -20,6 +20,7 @@ enum class TokenKind {
     CLOSING_BRACKETS,
     OPENING_PARENTHESES,
     CLOSING_PARENTHESES,
+    INSTANTIATION,
     FUNCTION,
     IDENTIFIER,
     OPENING_BRACES,
@@ -45,7 +46,11 @@ enum class TokenKind {
     FLOAT32_TYPE,
     FLOAT64_TYPE,
     STRING_TYPE,
-    BOOL_TYPE
+    BOOL_TYPE,
+    DATA,
+    TRAIT,
+    MAKE,
+    INTO
 }
 
 val TYPE_TOKENS = listOf(

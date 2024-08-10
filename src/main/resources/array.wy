@@ -1,6 +1,6 @@
-func main (count: int32, args: string[+]) {
-    props := ["apple", "banana", "cherry"]+;
-    a := props[3];
+func main (count: int32, args: string[*]) {
+    props := *["apple", "banana", "cherry"];
+    a := props[2];
 
     println(a);
 }

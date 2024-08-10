@@ -23,9 +23,10 @@ class StringLexer(private val data: String): Lexer {
                 '.' -> tokens.add(Token(TokenKind.DOT, ".", position)).also { position++ }
                 '[' -> tokens.add(Token(TokenKind.OPENING_BRACKETS, "[", position)).also { position++ }
                 ']' -> tokens.add(Token(TokenKind.CLOSING_BRACKETS, "]", position)).also { position++ }
+                '@' -> tokens.add(Token(TokenKind.INSTANTIATION, "@", position)).also { position++ }
                 '"' -> return Either.left(lexString(tokens) ?: continue)
                 in '0'..'9' -> tokens.add(number())
-                in 'a'..'z' -> {
+                in 'a'..'z', in 'A'..'Z', '_' -> {
                     val identifier = identifier(token.toString())
                     if (identifier.isLeft()) {
                         return Either.Left(identifier.getLeft())
@@ -35,6 +36,8 @@ class StringLexer(private val data: String): Lexer {
                 ':' -> {
                     if (data[position + 1] == '=') {
                         tokens.add(Token(TokenKind.ASSIGN, ":=", position)).also { position += 2 }
+                    } else if (data[position + 1] == ':') {
+                        tokens.add(Token(TokenKind.RETURN_TYPE_DECLARATION, "->", position)).also { position += 2 }
                     } else {
                         tokens.add(Token(TokenKind.TYPE_DECLARATION, ":", position)).also { position++ }
                     }
@@ -49,8 +52,6 @@ class StringLexer(private val data: String): Lexer {
                 '-' -> {
                     if (data[position + 1] == '=') {
                         tokens.add(Token(TokenKind.MINUS_ASSIGN, "--", position)).also { position += 2 }
-                    } else if (data[position + 1] == '>') {
-                        tokens.add(Token(TokenKind.RETURN_TYPE_DECLARATION, "->", position)).also { position += 2 }
                     } else {
                         tokens.add(Token(TokenKind.MINUS, "-", position)).also { position++ }
                     }
@@ -116,6 +117,10 @@ class StringLexer(private val data: String): Lexer {
             "float32" -> Either.Right(Token(TokenKind.FLOAT32_TYPE, value, start))
             "float64" -> Either.Right(Token(TokenKind.FLOAT64_TYPE, value, start))
             "intrinsic" -> Either.Right(Token(TokenKind.INTRINSIC, value, start))
+            "data" -> Either.Right(Token(TokenKind.DATA, value, start))
+            "trait" -> Either.Right(Token(TokenKind.TRAIT, value, start))
+            "make" -> Either.Right(Token(TokenKind.MAKE, value, start))
+            "into" -> Either.Right(Token(TokenKind.INTO, value, start))
             else -> Either.Right(Token(TokenKind.IDENTIFIER, value, start))
         }
     }

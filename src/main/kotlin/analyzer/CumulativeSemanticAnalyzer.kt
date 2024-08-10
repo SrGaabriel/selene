@@ -33,6 +33,10 @@ class CumulativeSemanticAnalyzer(
                     parent.getChildren().forEach { findSymbols(it, parentBlock ?: block) }
                 }
             }
+            is DataStructureNode -> {
+                println("Declaring struct ${node.name}")
+                block.symbols.declare(node.name, Type.Struct(node.name, node.fields.associate { it.name to it.type }))
+            }
             is BlockNode -> {
                 node.getChildren().forEach { findSymbols(it, block) }
             }
@@ -89,7 +93,7 @@ class CumulativeSemanticAnalyzer(
                 }
 
                 val returnNode = node.body.getChildren().find { it is ReturnNode }
-                var returnType = if (returnNode != null) {
+                val returnType = if (returnNode != null) {
                     val result = getExpressionType(functionBlock, (returnNode as ReturnNode).expression)
                     if (result is Either.Left) {
                         errors.add(result.value)
@@ -128,6 +132,22 @@ class CumulativeSemanticAnalyzer(
                 val function = block.figureOutSymbol(node.name) ?: intrinsics.find { it.name == node.name }
                 if (function == null) {
                     errors.add(AnalysisError.UndefinedFunction(node, block))
+                }
+                block
+            }
+            is InstantiationNode -> {
+                val struct = block.figureOutSymbol(node.name)
+                if (struct == null) {
+                    errors.add(AnalysisError.UndefinedDataStructure(node, node.name))
+                    return
+                }
+                // Check if passed types match the struct
+                if (struct is Type.Struct) {
+                    if (struct.fields.size != node.arguments.size) {
+                        errors.add(AnalysisError.MissingArgumentsForInstantiation(node, node.name))
+                        return
+                    }
+                    // TODO: Check if the types match
                 }
                 block
             }

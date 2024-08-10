@@ -128,5 +128,10 @@ class LLVMCodeGenerator: ILLVMCodeGenerator {
         return "load ${type.llvm}, ${type.llvm}* ${value.llvm()}"
     }
 
+    override fun structDeclaration(fields: Collection<LLVMType>): String {
+        val fieldsString = fields.joinToString(", ") { it.llvm }
+        return "type { $fieldsString }"
+    }
+
     override fun getGeneratedDependencies(): Set<String> = dependencies
 }

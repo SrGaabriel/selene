@@ -1,6 +1,7 @@
 package me.gabriel.gwydion.compiler.llvm
 
 import me.gabriel.gwydion.llvm.struct.LLVMType
+import me.gabriel.gwydion.llvm.struct.extractPrimitiveType
 import me.gabriel.gwydion.parsing.Type
 
 fun Type.asLLVM(): LLVMType = when (this) {
@@ -13,5 +14,9 @@ fun Type.asLLVM(): LLVMType = when (this) {
         length = this.length
     )
     is Type.DynamicArray -> LLVMType.Pointer(this.type.asLLVM())
+    is Type.Struct -> LLVMType.Struct(
+        name = this.identifier,
+        fields = this.fields.mapValues { it.value.asLLVM() }
+    )
     else -> error("Unsupported LLVM type $this")
 }

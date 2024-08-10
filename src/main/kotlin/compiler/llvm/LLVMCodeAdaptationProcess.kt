@@ -55,6 +55,9 @@ class LLVMCodeAdaptationProcess(
         is EqualsNode -> generateEquality(block, node)
         is ArrayNode -> generateArray(block, node)
         is ArrayAccessNode -> generateArrayAccess(block, node)
+        is DataStructureNode -> generateDataStruct(block, node)
+        is InstantiationNode -> generateInstantiation(block, node)
+        is StructAccessNode -> generateStructAccess(block, node)
         else -> error("Node $node not supported")
     }
 
@@ -289,6 +292,50 @@ class LLVMCodeAdaptationProcess(
             type = (arrayMemory.type as LLVMType.Pointer).type,
             index = index,
             total = false
+        )
+        return assembler.loadPointer(pointer)
+    }
+
+    fun generateDataStruct(block: MemoryBlock, node: DataStructureNode): MemoryUnit {
+        val structType = getExpressionType(block, node).unwrap().asLLVM()
+        if (structType !is LLVMType.Struct) error("Struct type not found")
+
+        val struct = assembler.declareStruct(
+            fields = node.fields.associate { it.name to it.type.asLLVM() }
+        )
+        block.memory.allocate(node.name, struct)
+        return struct
+    }
+
+    fun generateInstantiation(block: MemoryBlock, node: InstantiationNode): MemoryUnit {
+        val memory = block.figureOutMemory(node.name) ?: error("Data structure ${node.name} not found")
+        val allocation = assembler.allocateStackMemory(
+            type = memory.type,
+            alignment = 1
+        )
+
+        node.arguments.forEachIndexed { index, argument ->
+            val value = acceptNode(block, argument)
+            assembler.setStructElementTo(
+                value = value,
+                struct = allocation,
+                type = allocation.type,
+                index = LLVMConstant(index, LLVMType.I32)
+            )
+        }
+        return allocation
+    }
+
+    fun generateStructAccess(block: MemoryBlock, node: StructAccessNode): MemoryUnit {
+        val struct = block.figureOutMemory(node.struct) ?: error("Struct ${node.struct} not found")
+        val structType = struct.type as LLVMType.Struct
+        val index = structType.fields.keys.indexOf(node.field)
+        val type = structType.fields[node.field] ?: error("Field ${node.field} not found in struct ${node.struct}")
+        println("Index: $index Type: ${structType.fields[node.field]}")
+        val pointer = assembler.getElementFromStructure(
+            struct = struct,
+            type = type,
+            index = LLVMConstant(index, LLVMType.I32),
         )
         return assembler.loadPointer(pointer)
     }

@@ -40,6 +40,21 @@ tailrec fun getExpressionType(block: MemoryBlock, node: SyntaxTreeNode): Either<
                 else -> Either.Left(AnalysisError.NotAnArray(node, arrayType))
             }
         }
+        is InstantiationNode -> {
+            val struct = block.figureOutSymbol(node.name) ?: return Either.Left(AnalysisError.UndefinedDataStructure(node, node.name))
+            Either.Right(struct)
+        }
+        is DataStructureNode -> Either.Right(Type.Struct(node.name, node.fields.associate { it.name to it.type }))
+        is StructAccessNode -> {
+            val struct = block.figureOutSymbol(node.struct) ?: return Either.Left(AnalysisError.UndefinedDataStructure(node, node.struct))
+            when (struct) {
+                is Type.Struct -> {
+                    val field = struct.fields[node.field] ?: return Either.Left(AnalysisError.UndefinedField(node, node.field))
+                    Either.Right(field)
+                }
+                else -> Either.Left(AnalysisError.NotADataStructure(node, struct))
+            }
+        }
         else -> error("Unknown node type $node")
     }
 }

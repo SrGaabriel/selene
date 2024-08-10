@@ -26,6 +26,11 @@ sealed class Type(val name: kotlin.String) {
         val length: Int
     ): Type("fixed array")
 
+    data class Struct(
+        val identifier: kotlin.String,
+        val fields: Map<kotlin.String, Type>
+    ): Type("struct")
+
     override fun toString(): kotlin.String = name
 }
 

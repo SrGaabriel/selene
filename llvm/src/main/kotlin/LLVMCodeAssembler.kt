@@ -124,6 +124,20 @@ class LLVMCodeAssembler(val generator: ILLVMCodeGenerator): ILLVMCodeAssembler {
         }
     }
 
+    override fun declareStruct(fields: Map<String, LLVMType>): MemoryUnit {
+        val register = nextRegister()
+        val unit = MemoryUnit.Sized(
+            register = register,
+            type = LLVMType.Struct(register.toString(), fields),
+            size = fields.values.sumOf { it.size }
+        )
+        saveToRegister(
+            register = register,
+            expression = generator.structDeclaration(fields.values)
+        )
+        return unit
+    }
+
     override fun createArray(type: LLVMType, size: Int?, elements: List<Value>): MemoryUnit {
         val unit = if (size != null) MemoryUnit.Sized(
             register = nextRegister(),
