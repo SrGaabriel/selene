@@ -18,8 +18,8 @@ sealed class AnalysisError(val message: String, val node: SyntaxTreeNode) {
         node
     )
 
-    class UndefinedVariable(node: VariableReferenceNode, block: MemoryBlock) : AnalysisError(
-        "undefined variable: ${node.name} in block ${block.name}",
+    class UndefinedVariable(node: SyntaxTreeNode, name: String, block: MemoryBlock) : AnalysisError(
+        "undefined variable: $name in block ${block.name}",
         node
     )
 
@@ -90,6 +90,11 @@ sealed class AnalysisError(val message: String, val node: SyntaxTreeNode) {
 
     class TypeCannotBeMutable(node: SyntaxTreeNode, type: Type) : AnalysisError(
         "type cannot be mutable: $type",
+        node
+    )
+
+    class ImmutableVariableMutation(node: SyntaxTreeNode, name: String) : AnalysisError(
+        "immutable variable mutation: $name",
         node
     )
 }

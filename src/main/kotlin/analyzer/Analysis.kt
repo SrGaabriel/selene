@@ -12,7 +12,7 @@ class AnalysisResult(
 tailrec fun getExpressionType(block: MemoryBlock, node: SyntaxTreeNode): Either<AnalysisError, out Type> {
     return when (node) {
         is VariableReferenceNode -> {
-            Either.Right(block.figureOutSymbol(node.name) ?: return Either.Left(AnalysisError.UndefinedVariable(node, block)))
+            Either.Right(block.figureOutSymbol(node.name) ?: return Either.Left(AnalysisError.UndefinedVariable(node, node.name, block)))
         }
         is AssignmentNode -> {
             if (node.type == Type.Unknown) {

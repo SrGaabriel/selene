@@ -147,10 +147,21 @@ class CumulativeSemanticAnalyzer(
                 }
                 block
             }
+            is MutationNode -> {
+                val variable = block.figureOutSymbol(node.struct)
+                if (variable == null) {
+                    errors.add(AnalysisError.UndefinedVariable(node, node.struct, block))
+                    return
+                }
+                if (variable is Type.Struct && !variable.mutable) {
+                    errors.add(AnalysisError.ImmutableVariableMutation(node, variable.name))
+                }
+                block
+            }
             is VariableReferenceNode -> {
                 val symbol = block.figureOutSymbol(node.name)
                 if (symbol == null) {
-                    errors.add(AnalysisError.UndefinedVariable(node, block))
+                    errors.add(AnalysisError.UndefinedVariable(node, node.name, block))
                 }
                 block
             }
