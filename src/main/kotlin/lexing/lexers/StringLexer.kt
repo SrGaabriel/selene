@@ -35,7 +35,7 @@ class StringLexer(private val data: String): Lexer {
                 }
                 ':' -> {
                     if (data[position + 1] == '=') {
-                        tokens.add(Token(TokenKind.ASSIGN, ":=", position)).also { position += 2 }
+                        tokens.add(Token(TokenKind.DECLARATION, ":=", position)).also { position += 2 }
                     } else if (data[position + 1] == ':') {
                         tokens.add(Token(TokenKind.RETURN_TYPE_DECLARATION, "->", position)).also { position += 2 }
                     } else {
@@ -121,6 +121,7 @@ class StringLexer(private val data: String): Lexer {
             "trait" -> Either.Right(Token(TokenKind.TRAIT, value, start))
             "make" -> Either.Right(Token(TokenKind.MAKE, value, start))
             "into" -> Either.Right(Token(TokenKind.INTO, value, start))
+            "mut" -> Either.Right(Token(TokenKind.MUT, value, start))
             else -> Either.Right(Token(TokenKind.IDENTIFIER, value, start))
         }
     }

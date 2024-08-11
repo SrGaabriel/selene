@@ -9,8 +9,7 @@ import me.gabriel.gwydion.util.Either
 
 class CumulativeSemanticAnalyzer(
     private val tree: SyntaxTree,
-    private val repository: ProgramMemoryRepository,
-    private val intrinsics: List<IntrinsicFunction> = emptyList()
+    private val repository: ProgramMemoryRepository
 ): SemanticAnalyzer {
     private val errors = mutableListOf<AnalysisError>()
 
@@ -34,7 +33,7 @@ class CumulativeSemanticAnalyzer(
                 }
             }
             is DataStructureNode -> {
-                block.symbols.declare(node.name, Type.Struct(node.name, node.fields.associate { it.name to it.type }))
+                block.symbols.declare(node.name, Type.Struct(node.name, node.fields.associate { it.name to it.type }, false))
             }
             is BlockNode -> {
                 node.getChildren().forEach { findSymbols(it, block) }
@@ -42,23 +41,28 @@ class CumulativeSemanticAnalyzer(
             is FunctionNode -> {
                 if (node.returnType is Type.UnknownReference) {
                     val returnType = block.figureOutSymbol((node.returnType as Type.UnknownReference).reference)
-                    if (returnType == null) {
+                    if (returnType == null || returnType !is Type.Struct) {
                         errors.add(AnalysisError.UnknownType(node, node.returnType))
                         return null
                     }
-                    node.returnType = returnType
+                    node.returnType = returnType.copy(
+                        mutable = (node.returnType as Type.UnknownReference).mutable
+                    )
                 }
                 block.symbols.declare(node.name, node.returnType)
+                block.symbols.define(node.name, node)
                 return repository.createBlock(node.name, block)
             }
             is ParameterNode -> {
                 if (node.type is Type.UnknownReference) {
                     val type = block.figureOutSymbol((node.type as Type.UnknownReference).reference)
-                    if (type == null) {
+                    if (type == null || type !is Type.Struct) {
                         errors.add(AnalysisError.UnknownType(node, node.type))
                         return null
                     }
-                    node.type = type
+                    node.type = type.copy(
+                        mutable = (node.type as Type.UnknownReference).mutable
+                    )
                 }
                 if (node.type == Type.Unknown) {
                     errors.add(AnalysisError.UnknownType(node, node.type))
@@ -73,7 +77,14 @@ class CumulativeSemanticAnalyzer(
                 } else {
                     node.type
                 }
-                block.symbols.declare(node.name, type)
+                if (node.mutable && type !is Type.Struct) {
+                    errors.add(AnalysisError.TypeCannotBeMutable(node, type))
+                } else if (node.mutable && type is Type.Struct) {
+                    block.symbols.declare(node.name, type.copy(mutable = true))
+                } else {
+                    block.symbols.declare(node.name, type)
+                }
+                block.symbols.define(node.name, node)
                 node.getChildren().forEach { findSymbols(it, block) }
             }
             else -> {}
@@ -144,9 +155,31 @@ class CumulativeSemanticAnalyzer(
                 block
             }
             is CallNode -> {
-                val function = block.figureOutSymbol(node.name) ?: intrinsics.find { it.name == node.name }
-                if (function == null) {
+                val function: Type? = block.figureOutSymbol(node.name)
+                val definition = block.figureOutDefinition(node.name) as FunctionNode?
+                if (function == null || definition == null) {
                     errors.add(AnalysisError.UndefinedFunction(node, block))
+                    return
+                }
+                if (function != definition.returnType) {
+                    errors.add(AnalysisError.ReturnTypeMismatch(node, definition.returnType, function))
+                    return
+                }
+
+                if (node.arguments.size != definition.parameters.size) {
+                    errors.add(AnalysisError.MissingArgumentsForFunctionCall(node, definition.parameters.size, node.arguments.size))
+                    return
+                }
+
+                definition.parameters.forEachIndexed { index, parameter ->
+                    val argumentType = getExpressionType(block, node.arguments[index])
+                    if (argumentType is Either.Left) {
+                        errors.add(argumentType.value)
+                        return
+                    }
+                    if (!doTypesMatch(parameter.type, argumentType.unwrap())) {
+                        errors.add(AnalysisError.WrongArgumentTypeForFunctionCall(node, parameter.type, argumentType.unwrap()))
+                    }
                 }
                 block
             }
@@ -166,10 +199,37 @@ class CumulativeSemanticAnalyzer(
                 }
                 block
             }
+            is StructAccessNode -> {
+                val struct = block.figureOutSymbol(node.struct)
+                if (struct == null) {
+                    errors.add(AnalysisError.UndefinedDataStructure(node, node.struct))
+                    return
+                }
+                if (struct !is Type.Struct) {
+                    errors.add(AnalysisError.InvalidStructAccess(node, struct))
+                    return
+                }
+                val field = struct.fields[node.field]
+                if (field == null) {
+                    errors.add(AnalysisError.UndefinedField(node, node.field))
+                    return
+                }
+                block
+            }
             else -> {
                 block
             }
         }
         node.getChildren().forEach { analyzeNode(it, deeperBlock) }
+    }
+
+    fun doTypesMatch(required: Type, provided: Type): Boolean {
+        if (required == Type.Any) {
+            return true
+        }
+        if (required is Type.Struct && provided is Type.Struct) {
+            return required.name == provided.name && !(required.mutable && !provided.mutable) && required.fields == provided.fields
+        }
+        return required == provided
     }
 }

@@ -2,6 +2,7 @@ package me.gabriel.gwydion.compiler
 
 import me.gabriel.gwydion.analyzer.SymbolTable
 import me.gabriel.gwydion.llvm.struct.MemoryUnit
+import me.gabriel.gwydion.parsing.SyntaxTreeNode
 import me.gabriel.gwydion.parsing.Type
 
 data class MemoryBlock(
@@ -27,6 +28,11 @@ data class MemoryBlock(
     fun figureOutSymbol(name: String): Type? {
         val symbol = symbols.lookup(name)
         return symbol ?: parent?.figureOutSymbol(name)
+    }
+
+    fun figureOutDefinition(name: String): SyntaxTreeNode? {
+        val definition = symbols.lookupDefinition(name)
+        return definition ?: parent?.figureOutDefinition(name)
     }
 }
 

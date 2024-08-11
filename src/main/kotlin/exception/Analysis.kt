@@ -72,4 +72,24 @@ sealed class AnalysisError(val message: String, val node: SyntaxTreeNode) {
         "not a data structure: $type",
         node
     )
+
+    class InvalidStructAccess(node: SyntaxTreeNode, struct: Type) : AnalysisError(
+        "invalid struct access: $struct",
+        node
+    )
+
+    class MissingArgumentsForFunctionCall(node: CallNode, expected: Int, actual: Int) : AnalysisError(
+        "missing arguments for function call: expected $expected, got $actual",
+        node
+    )
+
+    class WrongArgumentTypeForFunctionCall(node: CallNode, expected: Type, actual: Type) : AnalysisError(
+        "wrong argument type for function call: expected $expected, got $actual",
+        node
+    )
+
+    class TypeCannotBeMutable(node: SyntaxTreeNode, type: Type) : AnalysisError(
+        "type cannot be mutable: $type",
+        node
+    )
 }

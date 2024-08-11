@@ -13,7 +13,7 @@ enum class TokenKind {
     DIVIDE_ASSIGN,
     RETURN,
     SEMICOLON,
-    ASSIGN,
+    DECLARATION,
     COMMA,
     DOT,
     OPENING_BRACKETS,
@@ -50,7 +50,8 @@ enum class TokenKind {
     DATA,
     TRAIT,
     MAKE,
-    INTO
+    INTO,
+    MUT
 }
 
 val TYPE_TOKENS = listOf(

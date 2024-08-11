@@ -128,10 +128,32 @@ class Parser(private val tokens: TokenStream) {
                 }
                 Either.Right(function.getRight())
             }
+            TokenKind.MUT -> {
+                position++
+                if (peek().kind != TokenKind.IDENTIFIER) {
+                    return Either.Left(ParsingError.UnexpectedToken(peek()))
+                }
+                val identifier = parseIdentifier()
+                if (identifier.isLeft()) {
+                    return Either.Left(identifier.getLeft())
+                }
+                if (peek().kind != TokenKind.DECLARATION) {
+                    return Either.Left(ParsingError.UnexpectedToken(peek()))
+                }
+                position++
+                val expression = parseExpression()
+                if (expression.isLeft()) {
+                    return Either.Left(expression.getLeft())
+                }
+                consume(TokenKind.SEMICOLON).ifLeft {
+                    return Either.Left(it)
+                }
+                Either.Right(AssignmentNode(identifier.unwrap(), expression.getRight(), true, Type.Unknown, token))
+            }
             TokenKind.IDENTIFIER -> {
                 position++;
                 val peek = peek()
-                if (peek.kind == TokenKind.ASSIGN) {
+                if (peek.kind == TokenKind.DECLARATION) {
                     position++
                     val expression = parseExpression()
                     if (expression.isLeft()) {
@@ -140,7 +162,8 @@ class Parser(private val tokens: TokenStream) {
                     consume(TokenKind.SEMICOLON).ifLeft {
                         return Either.Left(it)
                     }
-                    Either.Right(AssignmentNode(token.value, expression.getRight(), Type.Unknown, token))
+                    println("AssignmentNode(${token.value}, ${expression.unwrap()}, false, Type.Unknown, token)")
+                    Either.Right(AssignmentNode(token.value, expression.getRight(), false, Type.Unknown, token))
                 } else if (peek.kind == TokenKind.PLUS_ASSIGN || peek.kind == TokenKind.MINUS_ASSIGN || peek.kind == TokenKind.TIMES_ASSIGN || peek.kind == TokenKind.DIVIDE_ASSIGN) {
                     val compoundAssignment = parseCompoundAssignment(token)
                     if (compoundAssignment.isLeft()) {
@@ -226,6 +249,9 @@ class Parser(private val tokens: TokenStream) {
         val fields = parseDataFields()
         if (fields.isLeft()) {
             return Either.Left(fields.getLeft())
+        }
+        if (peek().kind == TokenKind.SEMICOLON) {
+            position++
         }
         return Either.Right(DataStructureNode(
             name = identifier.unwrap(),
@@ -372,11 +398,16 @@ class Parser(private val tokens: TokenStream) {
     }
 
     fun parseTypeOrNull(): Type? {
+        val mutable = peek().kind == TokenKind.MUT
+        if (mutable) position++
         val next = peek()
         val base = if (next.kind in TYPE_TOKENS) {
             position++
-            tokenKindToType(next)
+            tokenKindToType(next, mutable)
         } else {
+            return null
+        }
+        if (base !is Type.UnknownReference && mutable) {
             return null
         }
         if (peek().kind == TokenKind.OPENING_BRACKETS) {
@@ -620,7 +651,6 @@ class Parser(private val tokens: TokenStream) {
             }
             segments.add(segment)
         }
-        println(segments)
         consume(TokenKind.STRING_END).ifLeft {
             return Either.Left(it)
         }

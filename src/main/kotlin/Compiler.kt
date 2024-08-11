@@ -132,7 +132,7 @@ fun parse(logger: GwydionLogger, text: String, memory: ProgramMemoryRepository):
         logger.log(LogLevel.ERROR) {
             +"There were ${analysis.errors.size} error(s) during the semantic analysis:"
         }
-        analysis.errors.forEachIndexed { index, error ->
+        analysis.errors.forEachIndexed { _, error ->
             logger.log(LogLevel.ERROR) {
                 + "${bold("[semantic]")} ${error.message}"
             }

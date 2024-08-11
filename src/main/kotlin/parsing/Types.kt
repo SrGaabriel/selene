@@ -19,7 +19,7 @@ sealed class Type(val name: kotlin.String) {
     data object Void : Type("void")
     data object Boolean : Type("bool")
     data object Unknown : Type("unknown")
-    data class UnknownReference(val reference: kotlin.String): Type("unknown")
+    data class UnknownReference(val reference: kotlin.String, val mutable: kotlin.Boolean): Type("unknown")
     data class DynamicArray(
         val type: Type,
     ): Type("fixed array")
@@ -30,13 +30,14 @@ sealed class Type(val name: kotlin.String) {
 
     data class Struct(
         val identifier: kotlin.String,
-        val fields: Map<kotlin.String, Type>
+        val fields: Map<kotlin.String, Type>,
+        val mutable: kotlin.Boolean
     ): Type("struct")
 
     override fun toString(): kotlin.String = name
 }
 
-fun tokenKindToType(token: Token) = when (token.kind) {
+fun tokenKindToType(token: Token, mutable: Boolean) = when (token.kind) {
     TokenKind.ANY_TYPE -> Type.Any
     TokenKind.INT8_TYPE -> Type.Int8
     TokenKind.INT16_TYPE -> Type.Int16
@@ -50,7 +51,7 @@ fun tokenKindToType(token: Token) = when (token.kind) {
     TokenKind.FLOAT64_TYPE -> Type.Float64
     TokenKind.STRING_TYPE -> Type.String
     TokenKind.BOOL_TYPE -> Type.Boolean
-    TokenKind.IDENTIFIER -> Type.UnknownReference(token.value)
+    TokenKind.IDENTIFIER -> Type.UnknownReference(token.value, mutable)
     else -> error("Unknown token kind ${token.kind}")
 }
 

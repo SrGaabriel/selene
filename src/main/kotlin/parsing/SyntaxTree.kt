@@ -76,6 +76,7 @@ class ParameterNode(
 class AssignmentNode(
     val name: String,
     val expression: SyntaxTreeNode,
+    val mutable: Boolean,
     type: Type,
     start: Token
 ) : TypedSyntaxTreeNode(start, expression.end, type) {

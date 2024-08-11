@@ -9,6 +9,7 @@ abstract class IntrinsicFunction(
     val name: String,
     val params: List<LLVMType>,
     val returnType: LLVMType,
+    val semanticReturnType: Type,
     val modifiers: MutableList<TokenKind>
 ) {
     abstract fun llvmIr(): String
@@ -25,6 +26,7 @@ class PrintlnFunction: IntrinsicFunction(
     "println",
     listOf(LLVMType.Pointer(LLVMType.I8)),
     LLVMType.Void,
+    Type.Void,
     mutableListOf()
 ) {
     override fun llvmIr(): String {
@@ -90,6 +92,7 @@ class ReadlineFunction: IntrinsicFunction(
     "readln",
     listOf(),
     LLVMType.Pointer(LLVMType.I8),
+    Type.String,
     mutableListOf()
 ) {
     override fun dependencies(): List<String> {

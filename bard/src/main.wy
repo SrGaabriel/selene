@@ -1,21 +1,24 @@
 data Point(
-    x: int32,
-    y: bool,
-    z: int32
-)
+    xixa: int32,
+    yoyo: int32,
+    signed: bool
+);
 
-func main () {
-    p := new_point();
-    print_point(p);
+func main() {
+    mut point := new_point();
+    print_point(point);
 }
 
 func new_point() :: Point {
-    point := @Point(100, true, 50);
-    return point;
+    return @Point(100, 400, true);
 }
 
-func print_point(p: Point) {
-    println(p.x);
-    println(p.y);
-    println(p.z);
+func change_point(point: Point) {
+
+}
+
+func print_point(point: Point) {
+    println(point.xixa);
+    println(point.yoyo);
+    println(point.signed);
 }
