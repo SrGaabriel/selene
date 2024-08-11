@@ -1,13 +1,13 @@
-package me.gabriel.gwydion;
+package me.gabriel.gwydion
 
 import com.github.ajalt.mordant.rendering.TextColors
 import me.gabriel.gwydion.analyzer.CumulativeSemanticAnalyzer
 import me.gabriel.gwydion.compiler.ProgramMemoryRepository
 import me.gabriel.gwydion.compiler.llvm.LLVMCodeAdapter
-import me.gabriel.gwydion.compiler.PrintFunction
 import me.gabriel.gwydion.compiler.PrintlnFunction
 import me.gabriel.gwydion.compiler.ReadlineFunction
 import me.gabriel.gwydion.lexing.lexers.StringLexer
+import me.gabriel.gwydion.link.StdlibLinker
 import me.gabriel.gwydion.log.GwydionLogger
 import me.gabriel.gwydion.log.LogLevel
 import me.gabriel.gwydion.log.MordantLogger
@@ -20,39 +20,64 @@ import me.gabriel.gwydion.util.trimIndentReturningWidth
 import java.io.File
 import java.time.Instant
 
-fun main() {
+fun main(args: Array<String>) {
+    val isStdlib = args.contains("--internal-compile-stdlib")
+    val toolchain = File(System.getProperty("user.home"), ".gwydion")
+    if (args.isEmpty()) {
+        println("The argument should be the path to the file to compile")
+        return
+    }
+    val filePath = args[0]
+    val file = File(filePath)
+    if (!file.exists()) {
+        println("The file $filePath does not exist")
+        return
+    }
+
+    val currentFolder = File("").absolutePath
     val logger = MordantLogger()
     logger.log(LogLevel.INFO) { +"Starting the Gwydion compiler..." }
-
-    val stdlib = findStdlib()
-    val reader = AmbiguousSourceReader(logger)
     val memory = ProgramMemoryRepository()
-    val stdlibTree = parse(logger, reader.read(stdlib), memory) ?: return
 
+    val sourceReader = AmbiguousSourceReader(logger)
     val memoryStart = Instant.now()
-    val example2 = File("src/main/resources/structs.wy").readText()
-    val tree = parse(logger, example2, memory) ?: return
     val llvmCodeAdapter = LLVMCodeAdapter()
     llvmCodeAdapter.registerIntrinsicFunction(
-        PrintFunction(),
         PrintlnFunction(),
         ReadlineFunction()
     )
+    if (!isStdlib) {
+        logger.log(LogLevel.INFO) { +"Linking the stdlib symbols..." }
+
+        val stdlib = File(toolchain, "stdlib/src")
+        if (!stdlib.exists()) {
+            logger.log(LogLevel.ERROR) { +"The stdlib folder does not exist" }
+            return
+        }
+        val stdlibText = sourceReader.read(stdlib)
+        val stdlibMemory = ProgramMemoryRepository()
+        val stdlibTree = parse(logger, stdlibText, stdlibMemory) ?: return
+        memory.root.symbols.merge(stdlibMemory.root.symbols)
+        StdlibLinker.link(
+            stdlibTree,
+            llvmCodeAdapter
+        )
+    }
+    val tree = parse(logger, file.readText(), memory) ?: return
     val memoryEnd = Instant.now()
     val memoryDelay = memoryEnd.toEpochMilli() - memoryStart.toEpochMilli()
     logger.log(LogLevel.INFO) { +"Memory analysis took ${memoryDelay}ms" }
 
     val generationStart = Instant.now()
-    tree.join(stdlibTree)
-    val generated = llvmCodeAdapter.generate(tree, memory)
+    val generated = llvmCodeAdapter.generate(tree, memory, isStdlib)
     val generationEnd = Instant.now()
     val generationDelay = generationEnd.toEpochMilli() - generationStart.toEpochMilli()
     logger.log(LogLevel.INFO) { +"Code generation took ${generationDelay}ms" }
     val compilingStart = Instant.now()
     llvmCodeAdapter.generateExecutable(
         llvmIr = generated,
-        outputDir = "output",
-        outputFileName = "output.exe"
+        outputDir = currentFolder,
+        outputFileName = file.nameWithoutExtension
     )
     val executionEnd = Instant.now()
     val executionDelay = executionEnd.toEpochMilli() - compilingStart.toEpochMilli()
@@ -62,18 +87,10 @@ fun main() {
     return
 }
 
-fun readText(): File {
-    return File("src/main/resources")
-}
-
-fun findStdlib(): File {
-    return File("stdlib/src/")
-}
-
 fun parse(logger: GwydionLogger, text: String, memory: ProgramMemoryRepository): SyntaxTree? {
     val start = Instant.now()
-    val lexer = StringLexer(text);
-    val result = lexer.tokenize();
+    val lexer = StringLexer(text)
+    val result = lexer.tokenize()
     if (result.isLeft()) {
         val error = result.getLeft()
         val rowInfo =  findRowOfIndex(text.split("\n"), error.position) ?: error("Error while finding the line of the error")
@@ -88,7 +105,7 @@ fun parse(logger: GwydionLogger, text: String, memory: ProgramMemoryRepository):
         }
         return null
     }
-    val tokenStream = result.getRight();
+    val tokenStream = result.getRight()
     logger.log(LogLevel.DEBUG) { +"The lexing was successful with ${tokenStream.count()} tokens!" }
     val parser = Parser(tokenStream)
     val parsingResult = parser.parse()

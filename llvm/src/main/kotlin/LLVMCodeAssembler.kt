@@ -12,12 +12,6 @@ class LLVMCodeAssembler(val generator: ILLVMCodeGenerator): ILLVMCodeAssembler {
         ir.add(0, dependency)
     }
 
-    override fun addDependencies() {
-        generator.getGeneratedDependencies().reversed().forEach {
-            addDependency(it)
-        }
-    }
-
     override fun finish(): String = ir.joinToString("\n")
 
     override fun instruct(instruction: String) {

@@ -3,7 +3,3 @@ intrinsic func printf (message: any) {}
 intrinsic func println (message: any) {}
 
 intrinsic func readln () :: string {}
-
-func test() :: string {
-    return "Hello, World!";
-}

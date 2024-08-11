@@ -17,22 +17,36 @@ import me.gabriel.gwydion.parsing.*
 class LLVMCodeAdaptationProcess(
     private val tree: SyntaxTree,
     private val repository: ProgramMemoryRepository,
-    private val intrinsics: List<IntrinsicFunction>
+    private val intrinsics: List<IntrinsicFunction>,
+    private val stdlibDependencies: List<String>,
+    private val compileIntrinsics: Boolean
 ) {
     private val llvmGenerator = LLVMCodeGenerator()
     private val assembler = LLVMCodeAssembler(llvmGenerator)
 
     fun setup() {
+        val dependencies = mutableSetOf<String>()
+        stdlibDependencies.forEach {
+            dependencies.add(it)
+        }
         intrinsics.forEach {
-            assembler.addDependency(it.llvmIr())
-            it.dependencies().forEach { dependency ->
-                assembler.addDependency(dependency)
+            if (compileIntrinsics) {
+                it.dependencies().forEach { dependencies.add(it) }
+                dependencies.add(it.llvmIr())
+            } else {
+                it.declarations().forEach { dependencies.add(it) }
             }
         }
-        assembler.addDependencies()
-        assembler.addDependency("@format_s = private unnamed_addr constant [3 x i8] c\"%s\\00\"")
-        assembler.addDependency("@format_n = private unnamed_addr constant [3 x i8] c\"%d\\00\"")
-        assembler.addDependency("@format_b = private unnamed_addr constant [3 x i8] c\"%d\\00\"")
+        if (!compileIntrinsics) {
+            dependencies.add("declare i32 @printf(i8*, ...)")
+        }
+        dependencies.add("@format_s = private unnamed_addr constant [3 x i8] c\"%s\\00\"")
+        dependencies.add("@format_n = private unnamed_addr constant [3 x i8] c\"%d\\00\"")
+        dependencies.add("@format_b = private unnamed_addr constant [3 x i8] c\"%d\\00\"")
+
+        (assembler.generator.getGeneratedDependencies() + dependencies).forEach {
+            assembler.addDependency(it)
+        }
     }
 
     fun finish(): String = assembler.finish()

@@ -1,3 +1,21 @@
-func main(argument_count: int32, arguments: string[+]) {
+data Point(
+    x: int32,
+    y: bool,
+    z: int32
+)
 
+func main () {
+    p := new_point();
+    print_point(p);
+}
+
+func new_point() :: Point {
+    point := @Point(100, true, 50);
+    return point;
+}
+
+func print_point(p: Point) {
+    println(p.x);
+    println(p.y);
+    println(p.z);
 }

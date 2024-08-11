@@ -8,12 +8,21 @@ import java.io.File
 
 class LLVMCodeAdapter: CodeGenerator {
     private val intrinsics = mutableListOf<IntrinsicFunction>()
+    private val stdlibDependencies = mutableListOf<String>()
 
-    override fun generate(tree: SyntaxTree, memory: ProgramMemoryRepository): String {
-        val process = LLVMCodeAdaptationProcess(tree, memory, intrinsics)
+    override fun generate(
+        tree: SyntaxTree,
+        memory: ProgramMemoryRepository,
+        compileIntrinsics: Boolean
+    ): String {
+        val process = LLVMCodeAdaptationProcess(tree, memory, intrinsics, stdlibDependencies, compileIntrinsics)
         process.acceptNode(memory.root, tree.root)
         process.setup()
         return process.finish()
+    }
+
+    override fun addStdlibDependency(dependency: String) {
+        stdlibDependencies.add(dependency)
     }
 
     override fun registerIntrinsicFunction(vararg functions: IntrinsicFunction) {
@@ -26,22 +35,23 @@ class LLVMCodeAdapter: CodeGenerator {
             outputDirectory.mkdirs()
         }
 
-        val inputLlPath = "$outputDir/input.ll"
-        val outputExePath = "$outputDir/$outputFileName"
+        val inputLlPath = "$outputDir/$outputFileName.ll"
+//        val outputExePath = "$outputDir/$outputFileName"
 
-        File(outputExePath).delete()
+//        File(outputExePath).delete()
         File(inputLlPath).delete()
+        File(inputLlPath).createNewFile()
         File(inputLlPath).writeText(llvmIr)
 
-        val clangProcess = ProcessBuilder(
-            "clang",
-            inputLlPath,
-            "-o",
-            outputExePath
-        )
-            .redirectError(ProcessBuilder.Redirect.INHERIT)
-            .start()
-        clangProcess.waitFor()
+//        val clangProcess = ProcessBuilder(
+//            "clang",
+//            inputLlPath,
+//            "-o",
+//            outputExePath
+//        )
+//            .redirectError(ProcessBuilder.Redirect.INHERIT)
+//            .start()
+//        clangProcess.waitFor()
     }
 
     companion object {

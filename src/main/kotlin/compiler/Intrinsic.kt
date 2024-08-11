@@ -11,41 +11,14 @@ abstract class IntrinsicFunction(
     val returnType: LLVMType,
     val modifiers: MutableList<TokenKind>
 ) {
-   abstract fun execute(parameters: List<Any>): Any
+    abstract fun llvmIr(): String
 
-   abstract fun llvmIr(): String
+    abstract fun handleCall(call: CallNode, types: Collection<Type>, arguments: String): String
 
-   abstract fun handleCall(call: CallNode, types: Collection<Type>, arguments: String): String
+    abstract fun declarations(): List<String>
 
-   open fun dependencies(): List<String> = emptyList()
-}
+    open fun dependencies(): List<String> = emptyList()
 
-class PrintFunction: IntrinsicFunction(
-    "printf",
-    listOf(LLVMType.Pointer(LLVMType.I8)),
-    LLVMType.I32,
-    mutableListOf()
-) {
-    override fun execute(parameters: List<Any>): Any {
-        println(parameters.first())
-        return Unit
-    }
-
-    override fun llvmIr(): String {
-        return "declare i32 @printf(i8*, ...)"
-    }
-
-    override fun handleCall(call: CallNode, types: Collection<Type>, arguments: String): String {
-        when (types.firstOrNull()) {
-            Type.String -> {
-                return "call i32 @printf(${arguments})"
-            }
-            Type.Int32 -> {
-                return "call i32 @printf(i8* getelementptr inbounds ([3 x i8], [3 x i8]* @format_n, i32 0, i32 0), ${arguments})"
-            }
-            else -> error("Unknown type ${types.firstOrNull()}")
-        }
-    }
 }
 
 class PrintlnFunction: IntrinsicFunction(
@@ -54,11 +27,6 @@ class PrintlnFunction: IntrinsicFunction(
     LLVMType.Void,
     mutableListOf()
 ) {
-    override fun execute(parameters: List<Any>): Any {
-        println(parameters.first())
-        return Unit
-    }
-
     override fun llvmIr(): String {
         return """
             define void @println_str(i8* %str) {
@@ -92,6 +60,14 @@ class PrintlnFunction: IntrinsicFunction(
         """.trimIndent()
     }
 
+    override fun declarations(): List<String> {
+        return listOf(
+            "declare void @println_str(i8*)",
+            "declare void @println_i32(i32)",
+            "declare void @println_bool(i1)"
+        )
+    }
+
     override fun handleCall(call: CallNode, types: Collection<Type>, arguments: String): String {
         val type = types.firstOrNull() ?: Type.Unknown
         return when (type) {
@@ -103,7 +79,10 @@ class PrintlnFunction: IntrinsicFunction(
     }
 
     override fun dependencies(): List<String> {
-        return listOf("declare i32 @putchar(i32)")
+        return listOf(
+            "declare i32 @printf(i8*, ...)",
+            "declare i32 @putchar(i32)"
+        )
     }
 }
 
@@ -113,15 +92,15 @@ class ReadlineFunction: IntrinsicFunction(
     LLVMType.Pointer(LLVMType.I8),
     mutableListOf()
 ) {
-    override fun execute(parameters: List<Any>): Any {
-        return readln()
-    }
-
     override fun dependencies(): List<String> {
         return listOf(
             "@buffer = global [256 x i8] zeroinitializer",
             "declare i32 @getchar()"
         )
+    }
+
+    override fun declarations(): List<String> {
+        return listOf("declare i8* @readln()")
     }
 
     override fun llvmIr(): String {
