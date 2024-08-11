@@ -74,7 +74,7 @@ class StringLexer(private val data: String): Lexer {
                     if (data[position + 1] == '=') {
                         tokens.add(Token(TokenKind.EQUALS, "==", position)).also { position += 2 }
                     } else {
-                        return Either.Left(LexingError.UnknownToken(token.toString(), position))
+                        tokens.add(Token(TokenKind.MUTATION, "=", position)).also { position++ }
                     }
                 }
                 else -> return Either.Left(LexingError.UnknownToken(token.toString(), position))

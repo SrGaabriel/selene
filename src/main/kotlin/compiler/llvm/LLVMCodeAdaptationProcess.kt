@@ -73,6 +73,7 @@ class LLVMCodeAdaptationProcess(
         is DataStructureNode -> generateDataStruct(block, node)
         is InstantiationNode -> generateInstantiation(block, node)
         is StructAccessNode -> generateStructAccess(block, node)
+        is MutationNode -> generateMutation(block, node)
         else -> error("Node $node not supported")
     }
 
@@ -351,6 +352,23 @@ class LLVMCodeAdaptationProcess(
             index = LLVMConstant(index, LLVMType.I32),
         )
         return assembler.loadPointer(pointer)
+    }
+
+    fun generateMutation(block: MemoryBlock, node: MutationNode): MemoryUnit {
+        val struct = block.figureOutMemory(node.struct) ?: error("Struct ${node.struct} not found")
+        val pointerType = struct.type as LLVMType.Pointer
+        val structType = pointerType.type as LLVMType.Struct
+        val index = structType.fields.keys.indexOf(node.field)
+        val type = structType.fields[node.field] ?: error("Field ${node.field} not found in struct ${node.struct}")
+        val value = acceptNode(block, node.expression)
+
+        assembler.setStructElementTo(
+            value = value,
+            struct = struct,
+            type = type,
+            index = LLVMConstant(index, LLVMType.I32)
+        )
+        return NullMemoryUnit
     }
 
     fun getProperReturnType(returnType: Type): LLVMType {

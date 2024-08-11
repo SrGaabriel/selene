@@ -243,3 +243,12 @@ class StructAccessNode(
 ) : SyntaxTreeNode(null, null) {
     override fun getChildren(): List<SyntaxTreeNode> = listOf()
 }
+
+class MutationNode(
+    val struct: String,
+    val field: String,
+    val expression: SyntaxTreeNode,
+    start: Token
+) : SyntaxTreeNode(start, expression.end) {
+    override fun getChildren(): List<SyntaxTreeNode> = listOf(expression)
+}

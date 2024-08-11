@@ -151,7 +151,7 @@ class Parser(private val tokens: TokenStream) {
                 Either.Right(AssignmentNode(identifier.unwrap(), expression.getRight(), true, Type.Unknown, token))
             }
             TokenKind.IDENTIFIER -> {
-                position++;
+                position++
                 val peek = peek()
                 if (peek.kind == TokenKind.DECLARATION) {
                     position++
@@ -182,6 +182,15 @@ class Parser(private val tokens: TokenStream) {
                         return Either.Left(it)
                     }
                     Either.Right(CallNode(token.value, parameters.unwrap()))
+                } else if (peek.kind == TokenKind.DOT && peekNext().kind == TokenKind.IDENTIFIER && tokens[position + 2].kind == TokenKind.MUTATION) {
+                    val mutation = parseMutation(token.value)
+                    if (mutation.isLeft()) {
+                        return Either.Left(mutation.getLeft())
+                    }
+                    consume(TokenKind.SEMICOLON).ifLeft {
+                        return Either.Left(it)
+                    }
+                    Either.Right(mutation.unwrap())
                 } else {
                     Either.Left(ParsingError.UnexpectedIdentifier(token))
                 }
@@ -792,6 +801,30 @@ class Parser(private val tokens: TokenStream) {
             index = index.unwrap(),
             start = openingToken,
             end = closingToken
+        ))
+    }
+
+    fun parseMutation(struct: String): Either<ParsingError, SyntaxTreeNode> {
+        consume(TokenKind.DOT).ifLeft {
+            return Either.Left(it)
+        }
+        println("Field")
+        val field = parseIdentifier()
+        if (field.isLeft()) {
+            return Either.Left(field.getLeft())
+        }
+        val mutation = consume(TokenKind.MUTATION).ifLeft {
+            return Either.Left(it)
+        }
+        val expression = parseExpression()
+        if (expression.isLeft()) {
+            return Either.Left(expression.getLeft())
+        }
+        return Either.Right(MutationNode(
+            struct = struct,
+            field = field.unwrap(),
+            expression = expression.unwrap(),
+            start = mutation.unwrap()
         ))
     }
 

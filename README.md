@@ -35,3 +35,34 @@ func check_typed() {
     check_if_typed_apple(reading);
 }
 ```
+
+```go
+data Point(
+    x: int32,
+    y: int32,
+    signed: bool
+);
+
+func main() {
+    mut point := new_point();
+    print_point(point);
+    change_point(point);
+    print_point(point);
+}
+
+func new_point() :: Point {
+    return @Point(100, 400, true);
+}
+
+func change_point(point: Point) {
+    point.x = 200;
+    point.y = 800;
+    point.signed = false;
+}
+
+func print_point(point: Point) {
+    println(point.x);
+    println(point.y);
+    println(point.signed);
+}
+```

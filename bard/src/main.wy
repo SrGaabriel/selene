@@ -1,11 +1,13 @@
 data Point(
-    xixa: int32,
-    yoyo: int32,
+    x: int32,
+    y: int32,
     signed: bool
 );
 
 func main() {
     mut point := new_point();
+    print_point(point);
+    change_point(point);
     print_point(point);
 }
 
@@ -14,11 +16,13 @@ func new_point() :: Point {
 }
 
 func change_point(point: Point) {
-
+    point.x = 200;
+    point.y = 800;
+    point.signed = false;
 }
 
 func print_point(point: Point) {
-    println(point.xixa);
-    println(point.yoyo);
+    println(point.x);
+    println(point.y);
     println(point.signed);
 }

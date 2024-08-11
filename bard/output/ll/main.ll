@@ -14,6 +14,8 @@ define void @main() {
 entry:
 %2 = call %Point* @new_point()
 call i1 @print_point(%Point* %2)
+call i1 @change_point(%Point* %2)
+call i1 @print_point(%Point* %2)
 ret void
 }
 define %Point** @new_point() {
@@ -34,18 +36,27 @@ ret %Point* %6
 }
 define void @change_point(%Point* %20) {
 entry:
+%22 = add i32 200, 0
+%24 = getelementptr inbounds %Point, %Point* %20, i32 0, i32 0
+store i32 %22, i32* %24
+%26 = add i32 800, 0
+%28 = getelementptr inbounds %Point, %Point* %20, i32 0, i32 1
+store i32 %26, i32* %28
+%30 = add i1 0, 0
+%32 = getelementptr inbounds %Point, %Point* %20, i32 0, i32 2
+store i1 %30, i1* %32
 ret void
 }
-define void @print_point(%Point* %22) {
+define void @print_point(%Point* %34) {
 entry:
-%24 = getelementptr inbounds %Point, %Point* %22, i32 0, i32 0
-%26 = load i32, i32* %24
-call void @println_i32(i32 %26)
-%28 = getelementptr inbounds %Point, %Point* %22, i32 0, i32 1
-%30 = load i32, i32* %28
-call void @println_i32(i32 %30)
-%32 = getelementptr inbounds %Point, %Point* %22, i32 0, i32 2
-%34 = load i1, i1* %32
-call void @println_bool(i1 %34)
+%36 = getelementptr inbounds %Point, %Point* %34, i32 0, i32 0
+%38 = load i32, i32* %36
+call void @println_i32(i32 %38)
+%40 = getelementptr inbounds %Point, %Point* %34, i32 0, i32 1
+%42 = load i32, i32* %40
+call void @println_i32(i32 %42)
+%44 = getelementptr inbounds %Point, %Point* %34, i32 0, i32 2
+%46 = load i1, i1* %44
+call void @println_bool(i1 %46)
 ret void
 }
