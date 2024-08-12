@@ -53,12 +53,4 @@ class LLVMCodeAdapter: CodeGenerator {
 //            .start()
 //        clangProcess.waitFor()
     }
-
-    companion object {
-        val VACUUM = File(
-            if (System.getProperty("os.name").startsWith("Windows"))
-                "NUL"
-            else
-                "/dev/null")
-    }
 }

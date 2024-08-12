@@ -65,7 +65,7 @@ fn compile(file: &Path, is_stdlib: bool, project_root: &Path) {
     let output_dir = project_root.join("bard/output/ll");
     fs::create_dir_all(&output_dir).expect("Failed to create output directory");
 
-    let mut command = Command::new("C:\\Users\\gaabr\\.jdks\\corretto-21.0.2\\bin\\java.exe");
+    let mut command = Command::new("java");
     command.arg("-jar")
         .arg(&gwydion_jar)
         .arg(file)
