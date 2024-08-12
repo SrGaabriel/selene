@@ -3,7 +3,6 @@ package me.gabriel.gwydion.analyzer
 import me.gabriel.gwydion.compiler.MemoryBlock
 import me.gabriel.gwydion.compiler.ProgramMemoryRepository
 import me.gabriel.gwydion.exception.AnalysisError
-import me.gabriel.gwydion.compiler.IntrinsicFunction
 import me.gabriel.gwydion.parsing.*
 import me.gabriel.gwydion.util.Either
 
@@ -32,38 +31,34 @@ class CumulativeSemanticAnalyzer(
                     parent.getChildren().forEach { findSymbols(it, parentBlock ?: block) }
                 }
             }
+
             is DataStructureNode -> {
-                block.symbols.declare(node.name, Type.Struct(node.name, node.fields.associate { it.name to it.type }, false))
+                block.symbols.declare(
+                    node.name,
+                    Type.Struct(node.name, node.fields.associate { it.name to it.type }, false)
+                )
             }
+
             is BlockNode -> {
                 node.getChildren().forEach { findSymbols(it, block) }
             }
+
             is FunctionNode -> {
-                if (node.returnType is Type.UnknownReference) {
-                    val returnType = block.figureOutSymbol((node.returnType as Type.UnknownReference).reference)
-                    if (returnType == null || returnType !is Type.Struct) {
-                        errors.add(AnalysisError.UnknownType(node, node.returnType))
-                        return null
-                    }
-                    node.returnType = returnType.copy(
-                        mutable = (node.returnType as Type.UnknownReference).mutable
-                    )
-                }
+                node.returnType = handleUnknownReference(
+                    block = block,
+                    node = node,
+                    type = node.returnType
+                ) ?: node.returnType
                 block.symbols.declare(node.name, node.returnType)
                 block.symbols.define(node.name, node)
                 return repository.createBlock(node.name, block)
             }
             is ParameterNode -> {
-                if (node.type is Type.UnknownReference) {
-                    val type = block.figureOutSymbol((node.type as Type.UnknownReference).reference)
-                    if (type == null || type !is Type.Struct) {
-                        errors.add(AnalysisError.UnknownType(node, node.type))
-                        return null
-                    }
-                    node.type = type.copy(
-                        mutable = (node.type as Type.UnknownReference).mutable
-                    )
-                }
+                node.type = handleUnknownReference(
+                    block = block,
+                    node = node,
+                    type = node.type
+                ) ?: node.type
                 if (node.type == Type.Unknown) {
                     errors.add(AnalysisError.UnknownType(node, node.type))
                     return null
@@ -71,6 +66,7 @@ class CumulativeSemanticAnalyzer(
                 block.symbols.declare(node.name, node.type)
                 node.getChildren().forEach { findSymbols(it, block) }
             }
+
             is AssignmentNode -> {
                 val type = if (node.type == Type.Unknown) {
                     getExpressionType(block, node.expression).getRightOrNull() ?: Type.Unknown
@@ -86,6 +82,13 @@ class CumulativeSemanticAnalyzer(
                 }
                 block.symbols.define(node.name, node)
                 node.getChildren().forEach { findSymbols(it, block) }
+            }
+            is DataFieldNode -> {
+                node.type = handleUnknownReference(
+                    block = block,
+                    node = node,
+                    type = node.type
+                ) ?: node.type
             }
             else -> {}
         }
@@ -112,8 +115,10 @@ class CumulativeSemanticAnalyzer(
                 }
                 block
             }
+
             is FunctionNode -> {
-                val functionBlock = repository.root.surfaceSearchChild(node.name) ?: error("Block ${node.name} not found")
+                val functionBlock =
+                    repository.root.surfaceSearchChild(node.name) ?: error("Block ${node.name} not found")
                 if (node.modifiers.contains(Modifiers.INTRINSIC)) {
                     return
                 }
@@ -130,12 +135,17 @@ class CumulativeSemanticAnalyzer(
                     Type.Void
                 }
                 // If the user is returning an unknown type, we will assume that the function is returning that type
-                val inferredType = if (returnType == Type.Unknown) { node.returnType } else { returnType }
+                val inferredType = if (returnType == Type.Unknown) {
+                    node.returnType
+                } else {
+                    returnType
+                }
                 if (inferredType != node.returnType) {
                     errors.add(AnalysisError.ReturnTypeMismatch(node, node.returnType, returnType))
                 }
                 functionBlock
             }
+
             is IfNode -> {
                 val conditionType = getExpressionType(block, node.condition)
                 if (conditionType is Either.Left) {
@@ -147,6 +157,7 @@ class CumulativeSemanticAnalyzer(
                 }
                 block
             }
+
             is MutationNode -> {
                 val variable = block.figureOutSymbol(node.struct)
                 if (variable == null) {
@@ -158,6 +169,7 @@ class CumulativeSemanticAnalyzer(
                 }
                 block
             }
+
             is VariableReferenceNode -> {
                 val symbol = block.figureOutSymbol(node.name)
                 if (symbol == null) {
@@ -165,6 +177,7 @@ class CumulativeSemanticAnalyzer(
                 }
                 block
             }
+
             is CallNode -> {
                 val function: Type? = block.figureOutSymbol(node.name)
                 val definition = block.figureOutDefinition(node.name) as FunctionNode?
@@ -178,7 +191,13 @@ class CumulativeSemanticAnalyzer(
                 }
 
                 if (node.arguments.size != definition.parameters.size) {
-                    errors.add(AnalysisError.MissingArgumentsForFunctionCall(node, definition.parameters.size, node.arguments.size))
+                    errors.add(
+                        AnalysisError.MissingArgumentsForFunctionCall(
+                            node,
+                            definition.parameters.size,
+                            node.arguments.size
+                        )
+                    )
                     return
                 }
 
@@ -189,11 +208,18 @@ class CumulativeSemanticAnalyzer(
                         return
                     }
                     if (!doTypesMatch(parameter.type, argumentType.unwrap())) {
-                        errors.add(AnalysisError.WrongArgumentTypeForFunctionCall(node, parameter.type, argumentType.unwrap()))
+                        errors.add(
+                            AnalysisError.WrongArgumentTypeForFunctionCall(
+                                node,
+                                parameter.type,
+                                argumentType.unwrap()
+                            )
+                        )
                     }
                 }
                 block
             }
+
             is InstantiationNode -> {
                 val struct = block.figureOutSymbol(node.name)
                 if (struct == null) {
@@ -210,6 +236,7 @@ class CumulativeSemanticAnalyzer(
                 }
                 block
             }
+
             is StructAccessNode -> {
                 val struct = block.figureOutSymbol(node.struct)
                 if (struct == null) {
@@ -227,6 +254,7 @@ class CumulativeSemanticAnalyzer(
                 }
                 block
             }
+
             else -> {
                 block
             }
@@ -242,5 +270,34 @@ class CumulativeSemanticAnalyzer(
             return required.name == provided.name && !(required.mutable && !provided.mutable) && required.fields == provided.fields
         }
         return required == provided
+    }
+
+    fun handleUnknownReference(
+        block: MemoryBlock,
+        node: SyntaxTreeNode,
+        type: Type
+    ): Type? {
+        when (type) {
+            is Type.UnknownReference -> {
+                val actualType = block.figureOutSymbol(type.reference)
+                if (actualType == null || actualType !is Type.Struct) {
+                    errors.add(AnalysisError.UnknownType(node, type))
+                    return null
+                }
+                return actualType.copy(
+                    mutable = type.mutable
+                )
+            }
+            is Type.FixedArray -> {
+                val actualType = handleUnknownReference(block, node, type.type) ?: return null
+                return Type.FixedArray(actualType, type.length)
+            }
+
+            is Type.DynamicArray -> {
+                val actualType = handleUnknownReference(block, node, type.type) ?: return null
+                return Type.DynamicArray(actualType)
+            }
+            else -> return type
+        }
     }
 }

@@ -4,6 +4,10 @@ data Point(
     signed: bool
 );
 
+data Map(
+    points: Point[*]
+)
+
 func main() {
     mut point := new_point();
     print_point(point);

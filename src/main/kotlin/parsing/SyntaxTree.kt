@@ -198,7 +198,7 @@ class DataStructureNode(
 
 class DataFieldNode(
     val name: String,
-    val type: Type,
+    var type: Type,
     start: Token,
     end: Token
 ) : SyntaxTreeNode(start, end) {
