@@ -20,6 +20,11 @@ sealed class LLVMType(
         val fields: Map<String, LLVMType>
     ) : LLVMType("%$name", 8, fields.values.sumOf { it.size })
 
+    data class Trait(
+        val name: String,
+        val functions: List<VirtualFunction>
+    ) : LLVMType("%$name", 8, 0)
+
     override fun toString(): String = llvm
 }
 

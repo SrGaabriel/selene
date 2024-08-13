@@ -6,6 +6,7 @@ declare i8* @readln()
 declare void @println_bool(i1)
 declare void @println_i32(i32)
 declare void @println_str(i8*)
+declare i8* @test()
 declare void @memset(i8*, i32, i32)
 declare i8* @malloc(i32)
 %Point = type { i32, i32, i1 }

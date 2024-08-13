@@ -74,6 +74,8 @@ class LLVMCodeAdaptationProcess(
         is InstantiationNode -> generateInstantiation(block, node)
         is StructAccessNode -> generateStructAccess(block, node)
         is MutationNode -> generateMutation(block, node)
+        is TraitNode -> generateTrait(block, node)
+        is TraitImplNode -> generateTraitImpl(block, node)
         else -> error("Node $node not supported")
     }
 
@@ -368,6 +370,45 @@ class LLVMCodeAdaptationProcess(
             type = type,
             index = LLVMConstant(index, LLVMType.I32)
         )
+        return NullMemoryUnit
+    }
+
+    fun generateTrait(block: MemoryBlock, node: TraitNode): MemoryUnit {
+        assembler.createVirtualTable(
+            name = "trait.${node.name}",
+            functions = node.functions.map {
+                VirtualFunction(
+                    arguments = it.parameters.map { it.type.asLLVM() },
+                    returnType = it.returnType.asLLVM(),
+                )
+            }
+        )
+        block.symbols.define(node.name, node)
+        return NullMemoryUnit
+    }
+
+    fun generateTraitImpl(block: MemoryBlock, node: TraitImplNode): MemoryUnit {
+        val trait = block.figureOutDefinition(node.trait) as TraitNode
+        val struct = block.figureOutMemory(node.`object`) ?: error("Struct ${node.`object`} not found")
+        val pointerType = struct.type as LLVMType.Pointer
+        val structType = pointerType.type as LLVMType.Struct
+        val vtable = assembler.getElementFromStructure(
+            struct = struct,
+            type = LLVMType.Pointer(LLVMType.Trait("trait.${node.trait}", trait.functions.map {
+                VirtualFunction(
+                    arguments = it.parameters.map { it.type.asLLVM() },
+                    returnType = it.returnType.asLLVM(),
+                )
+            })),
+            index = LLVMConstant(0, LLVMType.I32),
+            total = false
+        )
+        assembler.unsafelyLoadPointer(vtable, LLVMType.Pointer(LLVMType.Trait("trait.${node.trait}", trait.functions.map {
+            VirtualFunction(
+                arguments = it.parameters.map { it.type.asLLVM() },
+                returnType = it.returnType.asLLVM(),
+            )
+        })))
         return NullMemoryUnit
     }
 

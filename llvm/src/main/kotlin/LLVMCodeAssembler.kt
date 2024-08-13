@@ -139,6 +139,15 @@ class LLVMCodeAssembler(val generator: ILLVMCodeGenerator): ILLVMCodeAssembler {
         return unit
     }
 
+    override fun createVirtualTable(name: String, functions: List<VirtualFunction>): MemoryUnit {
+        val unit = MemoryUnit.Unsized(
+            register = nextRegister(),
+            type = LLVMType.Trait(name, functions)
+        )
+        instruct("%$name = ${generator.virtualTableDeclaration(name, functions)}")
+        return unit
+    }
+
     override fun createArray(type: LLVMType, size: Int?, elements: List<Value>): MemoryUnit {
         val unit = if (size != null) MemoryUnit.Sized(
             register = nextRegister(),
