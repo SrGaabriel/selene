@@ -378,6 +378,7 @@ class LLVMCodeAdaptationProcess(
             name = "trait.${node.name}",
             functions = node.functions.map {
                 VirtualFunction(
+                    name = it.name,
                     arguments = it.parameters.map { it.type.asLLVM() },
                     returnType = it.returnType.asLLVM(),
                 )
@@ -390,25 +391,25 @@ class LLVMCodeAdaptationProcess(
     fun generateTraitImpl(block: MemoryBlock, node: TraitImplNode): MemoryUnit {
         val trait = block.figureOutDefinition(node.trait) as TraitNode
         val struct = block.figureOutMemory(node.`object`) ?: error("Struct ${node.`object`} not found")
-        val pointerType = struct.type as LLVMType.Pointer
-        val structType = pointerType.type as LLVMType.Struct
-        val vtable = assembler.getElementFromStructure(
-            struct = struct,
-            type = LLVMType.Pointer(LLVMType.Trait("trait.${node.trait}", trait.functions.map {
+
+        val vtable = assembler.createVirtualTable(
+            name = "vtable.${node.trait}.${node.`object`}",
+            functions = trait.functions.map { function ->
                 VirtualFunction(
-                    arguments = it.parameters.map { it.type.asLLVM() },
-                    returnType = it.returnType.asLLVM(),
+                    name = "${node.`object`}.${function.name}",
+                    arguments = function.parameters.map { it.type.asLLVM() },
+                    returnType = function.returnType.asLLVM()
                 )
-            })),
-            index = LLVMConstant(0, LLVMType.I32),
-            total = false
+            }
         )
-        assembler.unsafelyLoadPointer(vtable, LLVMType.Pointer(LLVMType.Trait("trait.${node.trait}", trait.functions.map {
-            VirtualFunction(
-                arguments = it.parameters.map { it.type.asLLVM() },
-                returnType = it.returnType.asLLVM(),
-            )
-        })))
+
+        assembler.setStructElementTo(
+            value = vtable,
+            struct = struct,
+            type = LLVMType.Pointer(vtable.type),
+            index = LLVMConstant(0, LLVMType.I32)
+        )
+
         return NullMemoryUnit
     }
 
