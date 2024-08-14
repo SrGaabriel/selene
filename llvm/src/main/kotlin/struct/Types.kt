@@ -15,6 +15,11 @@ sealed class LLVMType(
 
     data class Pointer(val type: LLVMType) : LLVMType(if (type == Void) type.llvm else "${type.llvm}*", 8, 8)
 
+    data class Function(
+        val parameterTypes: List<LLVMType>,
+        val returnType: LLVMType
+    ) : LLVMType("void", 0, 0)
+
     data class Struct(
         val name: String,
         val fields: Map<String, LLVMType>
@@ -22,7 +27,7 @@ sealed class LLVMType(
 
     data class Trait(
         val name: String,
-        val functions: List<VirtualFunction>
+        val functions: List<Function>
     ) : LLVMType("%$name", 8, 0)
 
     override fun toString(): String = llvm

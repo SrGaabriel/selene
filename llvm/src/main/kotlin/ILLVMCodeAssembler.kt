@@ -3,7 +3,6 @@ package me.gabriel.gwydion.llvm
 import me.gabriel.gwydion.llvm.struct.LLVMType
 import me.gabriel.gwydion.llvm.struct.MemoryUnit
 import me.gabriel.gwydion.llvm.struct.Value
-import me.gabriel.gwydion.llvm.struct.VirtualFunction
 
 interface ILLVMCodeAssembler {
     fun addDependency(dependency: String)
@@ -91,7 +90,7 @@ interface ILLVMCodeAssembler {
 
     fun createVirtualTable(
         name: String,
-        functions: List<VirtualFunction>
+        functions: List<LLVMType.Function>
     ): MemoryUnit
 
     fun addNumber(

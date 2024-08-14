@@ -139,7 +139,7 @@ class LLVMCodeAssembler(val generator: ILLVMCodeGenerator): ILLVMCodeAssembler {
         return unit
     }
 
-    override fun createVirtualTable(name: String, functions: List<VirtualFunction>): MemoryUnit {
+    override fun createVirtualTable(name: String, functions: List<LLVMType.Function>): MemoryUnit {
         val unit = MemoryUnit.Unsized(
             register = nextRegister(),
             type = LLVMType.Trait(name, functions)

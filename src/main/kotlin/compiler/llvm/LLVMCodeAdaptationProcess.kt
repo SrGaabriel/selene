@@ -24,6 +24,8 @@ class LLVMCodeAdaptationProcess(
     private val llvmGenerator = LLVMCodeGenerator()
     private val assembler = LLVMCodeAssembler(llvmGenerator)
 
+    private val traitImpls = mutableMapOf
+
     fun setup() {
         val dependencies = mutableSetOf<String>()
         stdlibDependencies.forEach {
@@ -49,7 +51,13 @@ class LLVMCodeAdaptationProcess(
         }
     }
 
-    fun finish(): String = assembler.finish()
+    fun finish() {
+
+    }
+
+    fun getGeneratedCode(): String {
+        return assembler.finish()
+    }
 
     fun acceptNode(
         block: MemoryBlock,
@@ -377,9 +385,8 @@ class LLVMCodeAdaptationProcess(
         assembler.createVirtualTable(
             name = "trait.${node.name}",
             functions = node.functions.map {
-                VirtualFunction(
-                    name = it.name,
-                    arguments = it.parameters.map { it.type.asLLVM() },
+                LLVMType.Function(
+                    parameterTypes = it.parameters.map { it.type.asLLVM() },
                     returnType = it.returnType.asLLVM(),
                 )
             }
@@ -395,9 +402,8 @@ class LLVMCodeAdaptationProcess(
         val vtable = assembler.createVirtualTable(
             name = "vtable.${node.trait}.${node.`object`}",
             functions = trait.functions.map { function ->
-                VirtualFunction(
-                    name = "${node.`object`}.${function.name}",
-                    arguments = function.parameters.map { it.type.asLLVM() },
+                LLVMType.Function(
+                    parameterTypes = function.parameters.map { it.type.asLLVM() },
                     returnType = function.returnType.asLLVM()
                 )
             }

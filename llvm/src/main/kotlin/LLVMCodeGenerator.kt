@@ -132,8 +132,8 @@ class LLVMCodeGenerator: ILLVMCodeGenerator {
         return "load ${type.llvm}, ${type.llvm}* ${value.llvm()}"
     }
 
-    override fun virtualTableDeclaration(name: String, functions: List<VirtualFunction>): String {
-        val functionsString = functions.joinToString(", ") { "${it.returnType.llvm} (${it.arguments.joinToString(", ") { it.llvm }})*" }
+    override fun virtualTableDeclaration(name: String, functions: List<LLVMType.Function>): String {
+        val functionsString = functions.joinToString(", ") { "${it.returnType.llvm} (${it.parameterTypes.joinToString(", ") { it.llvm }})*" }
         return "type { $functionsString }"
     }
 

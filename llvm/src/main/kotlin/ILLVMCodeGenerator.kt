@@ -53,7 +53,7 @@ interface ILLVMCodeGenerator {
 
     fun structDeclaration(fields: Collection<LLVMType>): String
 
-    fun virtualTableDeclaration(name: String, functions: List<VirtualFunction>): String
+    fun virtualTableDeclaration(name: String, functions: List<LLVMType.Function>): String
 
     fun returnInstruction(type: LLVMType, value: Value): String
 }
