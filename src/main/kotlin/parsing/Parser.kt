@@ -243,8 +243,8 @@ class Parser(private val tokens: TokenStream) {
             parameters = parameters.unwrap(),
             returnType = returnType,
             body = block.unwrap(),
-            modifiers = mutableListOf(),
-            start = token
+
+            modifiers = mutableListOf()
         )
         return Either.Right(function)
     }

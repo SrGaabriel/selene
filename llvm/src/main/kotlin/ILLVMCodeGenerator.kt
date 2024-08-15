@@ -37,6 +37,8 @@ interface ILLVMCodeGenerator {
 
     fun concatenateStrings(left: Value, right: Value): String
 
+    fun createTraitObject(vtable: String, obj: TraitObject): String
+
     fun createBranch(label: String): String
 
     fun unconditionalBranchTo(label: String): String

@@ -34,6 +34,10 @@ data class MemoryBlock(
         val definition = symbols.lookupDefinition(name)
         return definition ?: parent?.figureOutDefinition(name)
     }
+
+    override fun toString(): String {
+        return "MemoryBlock(name='$name', symbols=$symbols, memory=$memory, parent=$parent)"
+    }
 }
 
 class ProgramMemoryRepository {

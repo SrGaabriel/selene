@@ -48,7 +48,7 @@ class LLVMCodeAssembler(val generator: ILLVMCodeGenerator): ILLVMCodeAssembler {
     }
 
     override fun declareFunction(name: String, returnType: LLVMType, arguments: List<MemoryUnit>) {
-        instruct(generator.functionDeclaration(name, LLVMType.Pointer(returnType), arguments))
+        instruct(generator.functionDeclaration(name, returnType, arguments))
     }
 
     override fun createBranch(label: String) {

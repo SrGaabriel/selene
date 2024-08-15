@@ -46,14 +46,13 @@ data class RootNode(private val children: MutableList<SyntaxTreeNode>) : SyntaxT
     override fun getChildren(): List<SyntaxTreeNode> = children
 }
 
-class FunctionNode(
+data class FunctionNode(
     val name: String,
     var returnType: Type,
     val parameters: List<ParameterNode>,
     val body: BlockNode,
     val modifiers: MutableList<Modifiers>,
-    start: Token
-) : SyntaxTreeNode(start, body.end) {
+) : SyntaxTreeNode(null, body.end) {
     override fun getChildren(): List<SyntaxTreeNode> = parameters + body
 }
 

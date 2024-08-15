@@ -38,11 +38,23 @@ class CumulativeSemanticAnalyzer(
                     Type.Struct(node.name, node.fields.associate { it.name to it.type }, false)
                 )
             }
-
+            is TraitImplNode -> {
+                val name = "${node.trait}_trait_${node.`object`}"
+                block.symbols.define(name, node)
+                val newBlock = repository.createBlock(
+                    name,
+                    block
+                )
+                node.functions.forEach {
+                    println("Name: ${node.`object`}_${it.name} in ${newBlock.name}")
+                    newBlock.symbols.declare("${node.`object`}_${it.name}", it.returnType)
+                    newBlock.symbols.define("${node.`object`}_${it.name}", it)
+                }
+                return newBlock
+            }
             is BlockNode -> {
                 node.getChildren().forEach { findSymbols(it, block) }
             }
-
             is FunctionNode -> {
                 node.returnType = handleUnknownReference(
                     block = block,
@@ -118,7 +130,7 @@ class CumulativeSemanticAnalyzer(
 
             is FunctionNode -> {
                 val functionBlock =
-                    repository.root.surfaceSearchChild(node.name) ?: error("Block ${node.name} not found")
+                    block.surfaceSearchChild(node.name) ?: error("Block ${node.name} not found")
                 if (node.modifiers.contains(Modifiers.INTRINSIC)) {
                     return
                 }
@@ -157,7 +169,11 @@ class CumulativeSemanticAnalyzer(
                 }
                 block
             }
-
+            is TraitImplNode -> {
+                val traitBlock = block.surfaceSearchChild("${node.trait}_trait_${node.`object`}")
+                    ?: error("Block ${node.trait}_trait_${node.`object`} not found")
+                traitBlock
+            }
             is MutationNode -> {
                 val variable = block.figureOutSymbol(node.struct)
                 if (variable == null) {

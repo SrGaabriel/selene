@@ -24,7 +24,7 @@ class LLVMCodeAdaptationProcess(
     private val llvmGenerator = LLVMCodeGenerator()
     private val assembler = LLVMCodeAssembler(llvmGenerator)
 
-    private val traitImpls = mutableMapOf
+    private val traitObjects = mutableListOf<TraitObject>()
 
     fun setup() {
         val dependencies = mutableSetOf<String>()
@@ -52,7 +52,13 @@ class LLVMCodeAdaptationProcess(
     }
 
     fun finish() {
-
+        traitObjects.forEachIndexed { index, obj ->
+            val vtable = "vtable.$index"
+            assembler.addDependency(assembler.generator.createTraitObject(
+                vtable = vtable,
+                obj = obj
+            ))
+        }
     }
 
     fun getGeneratedCode(): String {
@@ -65,7 +71,7 @@ class LLVMCodeAdaptationProcess(
         store: Boolean = false
     ): MemoryUnit = when (node) {
         is RootNode, is BlockNode -> blockAdaptChildren(block, node)
-        is FunctionNode -> generateFunction(node)
+        is FunctionNode -> generateFunction(block, node)
         is CallNode -> generateFunctionCall(block, node, store)
         is StringNode -> generateString(block, node)
         is AssignmentNode -> generateAssignment(block, node)
@@ -92,10 +98,8 @@ class LLVMCodeAdaptationProcess(
         return NullMemoryUnit
     }
 
-    fun generateFunction(node: FunctionNode): NullMemoryUnit {
+    fun generateFunction(block: MemoryBlock, node: FunctionNode): NullMemoryUnit {
         if (node.modifiers.contains(Modifiers.INTRINSIC)) return NullMemoryUnit
-        val block = repository.root.surfaceSearchChild(node.name)
-            ?: error("Function ${node.name} not found in the memory repository")
 
         val parameters = node.parameters.map {
             val type = getProperReturnType(it.type)
@@ -382,39 +386,41 @@ class LLVMCodeAdaptationProcess(
     }
 
     fun generateTrait(block: MemoryBlock, node: TraitNode): MemoryUnit {
-        assembler.createVirtualTable(
-            name = "trait.${node.name}",
-            functions = node.functions.map {
-                LLVMType.Function(
-                    parameterTypes = it.parameters.map { it.type.asLLVM() },
-                    returnType = it.returnType.asLLVM(),
-                )
-            }
-        )
-        block.symbols.define(node.name, node)
+//        assembler.createVirtualTable(
+//            name = "trait.${node.name}",
+//            functions = node.functions.map {
+//                LLVMType.Function(
+//                    parameterTypes = it.parameters.map { it.type.asLLVM() },
+//                    returnType = it.returnType.asLLVM(),
+//                )
+//            }
+//        )
+//        block.symbols.define(node.name, node)
         return NullMemoryUnit
     }
 
     fun generateTraitImpl(block: MemoryBlock, node: TraitImplNode): MemoryUnit {
-        val trait = block.figureOutDefinition(node.trait) as TraitNode
-        val struct = block.figureOutMemory(node.`object`) ?: error("Struct ${node.`object`} not found")
-
-        val vtable = assembler.createVirtualTable(
-            name = "vtable.${node.trait}.${node.`object`}",
-            functions = trait.functions.map { function ->
-                LLVMType.Function(
-                    parameterTypes = function.parameters.map { it.type.asLLVM() },
-                    returnType = function.returnType.asLLVM()
-                )
-            }
+        traitObjects.add(
+            TraitObject(
+                prefix= node.`object`,
+                size = 8,
+                alignment = 8,
+                functions = node.functions.map { it.name }
+            )
         )
 
-        assembler.setStructElementTo(
-            value = vtable,
-            struct = struct,
-            type = LLVMType.Pointer(vtable.type),
-            index = LLVMConstant(0, LLVMType.I32)
-        )
+        val traitBlock = block.surfaceSearchChild("${node.trait}_trait_${node.`object`}")
+            ?: error("Trait ${node.trait} not found in block ${block.name}")
+
+        node.functions.forEach {
+            traitBlock.symbols.declare(
+                name = "${node.`object`}_${it.name}",
+                type = it.returnType
+            )
+            acceptNode(traitBlock, it.copy(
+                name = "${node.`object`}_${it.name}"
+            ))
+        }
 
         return NullMemoryUnit
     }

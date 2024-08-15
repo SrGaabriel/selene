@@ -120,6 +120,16 @@ class LLVMCodeGenerator: ILLVMCodeGenerator {
         return "call i8* @strcat(i8* ${right.llvm()}, i8* ${left.llvm()})"
     }
 
+    override fun createTraitObject(vtable: String, obj: TraitObject): String {
+        return """
+            @${vtable} = private unnamed_addr constant <{ i16, i16, ${obj.functions.joinToString(", ") { "ptr" }} }> <{
+                i16 ${obj.size},
+                i16 ${obj.alignment},
+                ${obj.functions.joinToString(", \n") { "ptr @${obj.prefix}_$it" }}
+            }>, align 8
+        """.trimIndent()
+    }
+
     override fun addNumber(type: LLVMType, left: Value, right: Value): String {
         return "add ${type.llvm} ${left.llvm()}, ${right.llvm()}"
     }

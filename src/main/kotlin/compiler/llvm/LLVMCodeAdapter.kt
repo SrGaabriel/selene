@@ -18,7 +18,8 @@ class LLVMCodeAdapter: CodeGenerator {
         val process = LLVMCodeAdaptationProcess(tree, memory, intrinsics, stdlibDependencies, compileIntrinsics)
         process.acceptNode(memory.root, tree.root)
         process.setup()
-        return process.finish()
+        process.finish()
+        return process.getGeneratedCode()
     }
 
     override fun addStdlibDependency(dependency: String) {
