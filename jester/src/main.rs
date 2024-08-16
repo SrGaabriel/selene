@@ -46,7 +46,12 @@ fn link_files(project_root: &Path) {
     }
 
     let mut command = Command::new("clang");
-    command.arg("-o").arg(project_root.join("bard/output/output.exe"));
+    let output_filename = if cfg!(windows) {
+        "output.exe"
+    } else {
+        "output"
+    };
+    command.arg("-o").arg(project_root.join(format!("bard/output/{}", output_filename)));
     command.args(&files);
     command.current_dir(&output_dir);
     command.stdout(Stdio::inherit());

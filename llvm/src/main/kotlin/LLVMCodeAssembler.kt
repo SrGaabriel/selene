@@ -291,8 +291,15 @@ class LLVMCodeAssembler(val generator: ILLVMCodeGenerator): ILLVMCodeAssembler {
         instruct(generator.storage(value, address))
     }
 
-    override fun returnValue(type: LLVMType, value: MemoryUnit) {
+    override fun returnValue(type: LLVMType, value: Value) {
         instruct(generator.returnInstruction(type, value))
+    }
+
+    override fun simpleString(text: String): Value {
+        return LLVMConstant(
+            value = "c\"$text\\00\"",
+            type = LLVMType.Array(LLVMType.I8, text.length + 1)
+        )
     }
 
     override fun buildString(text: String): MemoryUnit =
@@ -363,7 +370,7 @@ class LLVMCodeAssembler(val generator: ILLVMCodeGenerator): ILLVMCodeAssembler {
         return unit
     }
 
-    override fun compareStrings(left: MemoryUnit, right: MemoryUnit): MemoryUnit {
+    override fun compareStrings(left: Value, right: Value): MemoryUnit {
         val unit = MemoryUnit.Sized(
             register = nextRegister(),
             type = LLVMType.I1,
@@ -376,7 +383,7 @@ class LLVMCodeAssembler(val generator: ILLVMCodeGenerator): ILLVMCodeAssembler {
         return unit
     }
 
-    override fun handleComparison(left: MemoryUnit, right: MemoryUnit, type: LLVMType): MemoryUnit {
+    override fun handleComparison(left: Value, right: Value, type: LLVMType): MemoryUnit {
         when (type) {
             LLVMType.I1 -> {
                 val comparison = addNumber(

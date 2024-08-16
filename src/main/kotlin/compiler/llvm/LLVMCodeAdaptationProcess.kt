@@ -70,18 +70,18 @@ class LLVMCodeAdaptationProcess(
         node: SyntaxTreeNode,
         store: Boolean = false,
         self: Type.Struct? = null
-    ): MemoryUnit = when (node) {
+    ): Value = when (node) {
         is RootNode, is BlockNode -> blockAdaptChildren(block, node)
         is FunctionNode -> generateFunction(block, node, self)
         is CallNode -> generateFunctionCall(block, node, store)
-        is StringNode -> generateString(block, node)
+        is StringNode -> generateString(block, node, store)
         is AssignmentNode -> generateAssignment(block, node)
-        is NumberNode -> generateNumber(block, node)
+        is NumberNode -> generateNumber(block, node, store)
         is VariableReferenceNode -> generateVariableReference(block, node)
         is BinaryOperatorNode -> generateBinaryOperator(block, node)
         is ReturnNode -> generateReturn(block, node)
         is IfNode -> generateIf(block, node)
-        is BooleanNode -> generateBoolean(block, node)
+        is BooleanNode -> generateBoolean(block, node, store)
         is EqualsNode -> generateEquality(block, node)
         is ArrayNode -> generateArray(block, node)
         is ArrayAccessNode -> generateArrayAccess(block, node)
@@ -161,7 +161,7 @@ class LLVMCodeAdaptationProcess(
             val call = intrinsic.handleCall(
                 call = node,
                 types = node.arguments.map { getExpressionType(block, it).let { it.getRightOrNull() ?: error(it.getLeft().message) } },
-                arguments = arguments.joinToString(", ") { "${it.type.llvm} %${it.register}" }
+                arguments = arguments.joinToString(", ") { "${it.type.llvm} ${it.llvm()}" }
             )
             if (store) {
                 assembler.saveToRegister(assignment.register, call)
@@ -180,7 +180,8 @@ class LLVMCodeAdaptationProcess(
     }
 
     fun generateAssignment(block: MemoryBlock, node: AssignmentNode): MemoryUnit {
-        val expression = acceptNode(block, node.expression, true)
+        val expression = acceptNode(block, node.expression, true) as? MemoryUnit.Sized
+            ?: error("Expression ${node.expression} not stored")
 
         block.memory.allocate(node.name, expression)
         block.symbols.declare(
@@ -191,7 +192,12 @@ class LLVMCodeAdaptationProcess(
         return expression
     }
 
-    fun generateString(block: MemoryBlock, node: StringNode): MemoryUnit {
+    fun generateString(block: MemoryBlock, node: StringNode, store: Boolean): Value {
+        val singleSegment = node.segments.singleOrNull()
+        if (singleSegment != null && singleSegment is StringNode.Segment.Text) {
+            return assembler.buildString(singleSegment.text)
+        }
+
         val segmentUnits = mutableListOf<MemoryUnit>()
         for (segment in node.segments) {
             when (segment) {
@@ -210,6 +216,7 @@ class LLVMCodeAdaptationProcess(
         val space = assembler.allocateHeapMemory(
             size = 64
         ) as MemoryUnit.Sized
+
         segmentUnits.forEach { segment ->
             assembler.addSourceToDestinationString(
                 source = segment,
@@ -219,14 +226,20 @@ class LLVMCodeAdaptationProcess(
         return space
     }
 
-    fun generateNumber(block: MemoryBlock, node: NumberNode): MemoryUnit {
+    fun generateNumber(block: MemoryBlock, node: NumberNode, store: Boolean): Value {
         val type = node.type.asLLVM()
-        val addition = assembler.addNumber(
-            type = type,
-            left = LLVMConstant(node.value.toInt(), type),
-            right = LLVMConstant(0, type)
+        if (store) {
+            val addition = assembler.addNumber(
+                type = type,
+                left = LLVMConstant(node.value.toInt(), type),
+                right = LLVMConstant(0, type)
+            )
+            return addition
+        }
+        return LLVMConstant(
+            node.value.toLong(),
+            type
         )
-        return addition
     }
 
     fun generateVariableReference(block: MemoryBlock, node: VariableReferenceNode): MemoryUnit {
@@ -261,7 +274,7 @@ class LLVMCodeAdaptationProcess(
     }
 
     fun generateIf(block: MemoryBlock, node: IfNode): NullMemoryUnit {
-        val condition = acceptNode(block, node.condition)
+        val condition = acceptNode(block, node.condition, true) as MemoryUnit.Sized
         val trueLabel = assembler.nextLabel()
         val falseLabel = assembler.nextLabel()
         val endLabel = assembler.nextLabel()
@@ -287,13 +300,17 @@ class LLVMCodeAdaptationProcess(
         return assembler.handleComparison(left, right, type.asLLVM())
     }
 
-    fun generateBoolean(block: MemoryBlock, node: BooleanNode): MemoryUnit {
+    fun generateBoolean(block: MemoryBlock, node: BooleanNode, store: Boolean): Value {
         val type = LLVMType.I1
-        return assembler.addNumber(
-            type = type,
-            left = LLVMConstant(if (node.value) 1 else 0, type),
-            right = LLVMConstant(0, type)
-        )
+        if (store) {
+            val value = assembler.addNumber(
+                type = type,
+                left = LLVMConstant(if (node.value) 1 else 0, type),
+                right = LLVMConstant(0, type)
+            )
+            return value
+        }
+        return LLVMConstant(if (node.value) 1 else 0, type)
     }
 
     fun generateReturn(block: MemoryBlock, node: ReturnNode): NullMemoryUnit {
@@ -444,13 +461,18 @@ class LLVMCodeAdaptationProcess(
             type = LLVMType.Ptr,
             index = LLVMConstant(2, LLVMType.I32), // todo: fix
         )
-        val functionPointer = assembler.getElementFromStructure(
-            struct = assembler.loadPointer(traitImplPointer),
-            type = LLVMType.Ptr,
-            index = LLVMConstant(0, LLVMType.I32)
+
+        val loadedFunction = assembler.loadPointer(traitImplPointer)
+
+        val castedFunction = MemoryUnit.Unsized(
+            register = assembler.nextRegister(),
+            type = LLVMType.Ptr
+        )
+        assembler.saveToRegister(
+            register = castedFunction.register,
+            "bitcast ptr ${loadedFunction.llvm()} to ${type.llvm} (%Point*)*"
         )
 
-        val loadedFunction = assembler.loadPointer(functionPointer)
         val assignment = MemoryUnit.Sized(
             register = assembler.nextRegister(),
             type = type,
@@ -465,7 +487,7 @@ class LLVMCodeAdaptationProcess(
         arguments.add(0, variableMemory)
 
         assembler.callFunction(
-            name = loadedFunction.register.toString(),
+            name = castedFunction.register.toString(),
             arguments = arguments,
             assignment = assignment,
             local = true

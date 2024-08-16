@@ -108,11 +108,13 @@ interface ILLVMCodeAssembler {
         right: Value
     ): MemoryUnit
 
+    fun simpleString(text: String): Value
+
     fun buildString(text: String): MemoryUnit
 
     fun storeTo(value: Value, address: MemoryUnit)
 
-    fun returnValue(type: LLVMType, value: MemoryUnit)
+    fun returnValue(type: LLVMType, value: Value)
 
     fun copySourceToDestinationString(source: MemoryUnit, destination: MemoryUnit)
 
@@ -120,9 +122,9 @@ interface ILLVMCodeAssembler {
 
     fun calculateStringLength(string: MemoryUnit): MemoryUnit
 
-    fun handleComparison(left: MemoryUnit, right: MemoryUnit, type: LLVMType): MemoryUnit
+    fun handleComparison(left: Value, right: Value, type: LLVMType): MemoryUnit
 
-    fun compareStrings(left: MemoryUnit, right: MemoryUnit): MemoryUnit
+    fun compareStrings(left: Value, right: Value): MemoryUnit
 
     fun isTrue(value: Value): MemoryUnit
 

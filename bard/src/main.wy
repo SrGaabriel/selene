@@ -12,6 +12,7 @@ func main() {
     println("Hello, World!");
     p := @Point(0, 0);
     p.area();
+    println(5);
 }
 
 make Point into Shape {
