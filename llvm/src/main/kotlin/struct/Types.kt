@@ -35,8 +35,8 @@ sealed class LLVMType(
     data class Dynamic(
         val types: List<LLVMType>
     ): LLVMType(types.joinToString(
-        prefix = "{",
-        postfix = "}",
+        prefix = "<{",
+        postfix = "}>",
         separator = ", "
     ) { it.llvm }, 8, types.sumOf { it.size })
 

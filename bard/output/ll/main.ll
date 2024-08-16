@@ -54,7 +54,7 @@ call void @memset(i8* %34, i32 0, i32 8)
 store i32 0, i32* %38
 %40 = getelementptr inbounds %Point, %Point* %36, i32 0, i32 1
 store i32 0, i32* %40
-%42 = getelementptr inbounds {i16, i16, ptr, ptr}, ptr @trait_2, i32 0, i32 2
+%42 = getelementptr inbounds <{i16, i16, ptr, ptr}>, ptr @trait_2, i32 0, i32 2
 %44 = load ptr, ptr %42
 %46 = bitcast ptr %44 to i32 (%Point*)*
 %48 = call i32 %46(%Point* %36)
