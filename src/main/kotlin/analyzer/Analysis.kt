@@ -45,7 +45,7 @@ tailrec fun getExpressionType(block: MemoryBlock, node: SyntaxTreeNode): Either<
             val struct = block.figureOutSymbol(node.name) ?: return Either.Left(AnalysisError.UndefinedDataStructure(node, node.name))
             Either.Right(struct)
         }
-        is DataStructureNode -> Either.Right(Type.Struct(node.name, node.fields.associate { it.name to it.type }, false))
+        is DataStructureNode -> Either.Right(block.figureOutSymbol(node.name) ?: return Either.Left(AnalysisError.UndefinedDataStructure(node, node.name)))
         is TraitFunctionCallNode -> {
             val (_, function) = figureOutTraitForVariable(
                 block = block,

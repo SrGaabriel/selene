@@ -45,12 +45,14 @@ class CumulativeSemanticAnalyzer(
                     errors.add(AnalysisError.UndefinedDataStructure(node, node.`object`))
                     return null
                 }
+
                 block.symbols.define(name, node)
                 val newBlock = repository.createBlock(
                     name,
                     block,
                     self = struct
                 )
+                struct.traits.add(block.figureOutSymbol(node.trait) as Type.Trait)
                 node.functions.forEach {
                     newBlock.symbols.declare("${node.`object`}_${it.name}", it.returnType)
                     newBlock.symbols.define("${node.`object`}_${it.name}", it)
@@ -87,7 +89,6 @@ class CumulativeSemanticAnalyzer(
                     errors.add(AnalysisError.UnknownType(node, node.type))
                     return null
                 }
-                println("PAram ${node.name} as ${node.type}")
                 block.symbols.declare(node.name, node.type)
                 node.getChildren().forEach { findSymbols(it, block) }
             }
@@ -194,8 +195,6 @@ class CumulativeSemanticAnalyzer(
                     errors.add(AnalysisError.NotADataStructure(node, obj))
                     return
                 }
-                obj.traits.add(traitBlock.figureOutSymbol(node.trait) as Type.Trait)
-
                 traitBlock
             }
             is MutationNode -> {

@@ -57,18 +57,23 @@ store i32 6, i32* %38
 store i32 4, i32* %40
 %42 = getelementptr inbounds <{i16, i16, ptr, ptr}>, ptr @trait_2, i32 0, i32 2
 %44 = load ptr, ptr %42
-%46 = bitcast ptr %44 to i32 (%Point*)*
-%48 = call i32 %46(%Point* %36)
-call void @println_i32(i32 %48)
+%46 = call i32 %44(%Point* %36)
+%48 = getelementptr inbounds %Point, %Point* %36, i32 0, i32 0
+store i32 8, i32* %48
+call void @println_i32(i32 %46)
+%50 = getelementptr inbounds <{i16, i16, ptr, ptr}>, ptr @trait_2, i32 0, i32 2
+%52 = load ptr, ptr %50
+%54 = call i32 %52(%Point* %36)
+call void @println_i32(i32 %54)
 ret void
 }
-define i32 @Point_area(%Point* %50) {
+define i32 @Point_area(%Point* %56) {
 entry:
-%52 = getelementptr inbounds %Point, %Point* %50, i32 0, i32 0
-%54 = load i32, i32* %52
-ret i32 %54
+%58 = getelementptr inbounds %Point, %Point* %56, i32 0, i32 0
+%60 = load i32, i32* %58
+ret i32 %60
 }
-define i32 @Point_perimeter(%Point* %56) {
+define i32 @Point_perimeter(%Point* %62) {
 entry:
 ret i32 0
 }

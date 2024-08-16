@@ -10,9 +10,11 @@ trait Shape(
 
 func main() {
     println("Hello, World!");
-    p := @Point(6, 4);
+    mut p := @Point(6, 4);
     x := p.area();
+    p.x = 8;
     println(x);
+    println(p.area());
 }
 
 make Point into Shape {

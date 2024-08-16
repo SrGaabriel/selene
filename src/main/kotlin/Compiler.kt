@@ -21,21 +21,22 @@ import java.io.File
 import java.time.Instant
 
 fun main(args: Array<String>) {
+    val logger = MordantLogger()
+
     val isStdlib = args.contains("--internal-compile-stdlib")
     val toolchain = File(System.getProperty("user.home"), ".gwydion")
     if (args.isEmpty()) {
-        println("The argument should be the path to the file to compile")
+        logger.log(LogLevel.ERROR) { +"The argument should be the path to the file to compile" }
         return
     }
     val filePath = args[0]
     val file = File(filePath)
     if (!file.exists()) {
-        println("The file $filePath does not exist")
+        logger.log(LogLevel.ERROR) { +"The file does not exist" }
         return
     }
 
     val currentFolder = File("").absolutePath
-    val logger = MordantLogger()
     logger.log(LogLevel.INFO) { +"Starting the Gwydion compiler..." }
     val memory = ProgramMemoryRepository()
 

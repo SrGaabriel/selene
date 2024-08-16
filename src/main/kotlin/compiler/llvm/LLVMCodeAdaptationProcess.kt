@@ -405,7 +405,6 @@ class LLVMCodeAdaptationProcess(
     }
 
     fun generateTrait(block: MemoryBlock, node: TraitNode): MemoryUnit {
-        println("Allocating ${node.name} in ${block.name}")
         return block.memory.allocate(
             name = node.name,
             unit = MemoryUnit.Unsized(
@@ -454,24 +453,15 @@ class LLVMCodeAdaptationProcess(
 
         val virtualTable = block.figureOutMemory(trait.identifier) ?: error("Trait ${trait.identifier} not found")
         val type = getProperReturnType(function.returnType)
+        val functionIndex = trait.functions.indexOfFirst { it.name == node.function }
 
         val traitImplPointer = assembler.getElementFromVirtualTable(
             table = '@' + TraitObject.PREFIX + virtualTable.register,
             tableType = virtualTable.type as LLVMType.Dynamic,
             type = LLVMType.Ptr,
-            index = LLVMConstant(2, LLVMType.I32), // todo: fix
+            index = LLVMConstant(functionIndex + 2, LLVMType.I32),
         )
-
         val loadedFunction = assembler.loadPointer(traitImplPointer)
-
-        val castedFunction = MemoryUnit.Unsized(
-            register = assembler.nextRegister(),
-            type = LLVMType.Ptr
-        )
-        assembler.saveToRegister(
-            register = castedFunction.register,
-            "bitcast ptr ${loadedFunction.llvm()} to ${type.llvm} (%Point*)*"
-        )
 
         val assignment = if (store) {
             MemoryUnit.Sized(
@@ -489,7 +479,7 @@ class LLVMCodeAdaptationProcess(
         arguments.add(0, variableMemory)
 
         assembler.callFunction(
-            name = castedFunction.register.toString(),
+            name = loadedFunction.register.toString(),
             arguments = arguments,
             assignment = assignment,
             local = true

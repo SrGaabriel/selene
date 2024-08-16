@@ -163,7 +163,6 @@ class Parser(private val tokens: TokenStream) {
                     consume(TokenKind.SEMICOLON).ifLeft {
                         return Either.Left(it)
                     }
-                    println("AssignmentNode(${token.value}, ${expression.unwrap()}, false, Type.Unknown, token)")
                     Either.Right(AssignmentNode(token.value, expression.getRight(), false, Type.Unknown, token))
                 } else if (peek.kind == TokenKind.PLUS_ASSIGN || peek.kind == TokenKind.MINUS_ASSIGN || peek.kind == TokenKind.TIMES_ASSIGN || peek.kind == TokenKind.DIVIDE_ASSIGN) {
                     val compoundAssignment = parseCompoundAssignment(token)
@@ -637,7 +636,6 @@ class Parser(private val tokens: TokenStream) {
                         val field = parseIdentifier()
                         if (tokens[position + 2].kind == TokenKind.OPENING_PARENTHESES) {
                             val call = parseTraitFunctionCall(token.value)
-                            println(call)
                             if (call.isLeft()) {
                                 return Either.Left(call.getLeft())
                             }
@@ -733,7 +731,6 @@ class Parser(private val tokens: TokenStream) {
     }
 
     fun parseCallParameters(): Either<ParsingError, List<SyntaxTreeNode>> {
-        println("Call Parameters ${peek()}")
         consume(TokenKind.OPENING_PARENTHESES).ifLeft {
             return Either.Left(it)
         }
@@ -871,7 +868,6 @@ class Parser(private val tokens: TokenStream) {
         consume(TokenKind.DOT).ifLeft {
             return Either.Left(it)
         }
-        println("Field")
         val field = parseIdentifier()
         if (field.isLeft()) {
             return Either.Left(field.getLeft())
