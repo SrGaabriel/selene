@@ -13,10 +13,6 @@ data class MemoryBlock(
     val children: MutableList<MemoryBlock> = mutableListOf(),
     var self: Type.Struct? = null
 ) {
-    fun getNextRegister(): Int {
-        return memory.registerCounter++
-    }
-
     fun surfaceSearchChild(name: String): MemoryBlock? {
         return children.find { it.name == name }
     }
@@ -34,6 +30,12 @@ data class MemoryBlock(
     fun figureOutDefinition(name: String): SyntaxTreeNode? {
         val definition = symbols.lookupDefinition(name)
         return definition ?: parent?.figureOutDefinition(name)
+    }
+
+    fun merge(other: MemoryBlock) {
+        symbols.merge(other.symbols)
+        memory.allocateAll(other.memory)
+        children.addAll(other.children)
     }
 
     override fun toString(): String {
@@ -61,18 +63,27 @@ class ProgramMemoryRepository {
         parent.children.add(block)
         return block
     }
+
+    fun merge(other: ProgramMemoryRepository) {
+        root.merge(other.root)
+    }
 }
 
 class MemoryTable {
     private val memory = mutableMapOf<String, MemoryUnit>()
-    var registerCounter = 1
 
     fun allocate(name: String, unit: MemoryUnit): MemoryUnit {
         memory[name] = unit
         return unit
     }
 
+    fun allocateAll(other: MemoryTable) {
+        memory.putAll(other.memory)
+    }
+
     fun lookup(name: String): MemoryUnit? {
         return memory[name]
     }
+
+    override fun toString(): String = memory.toString()
 }

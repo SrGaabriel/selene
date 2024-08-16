@@ -1,9 +1,8 @@
-            @trait_2 = private unnamed_addr constant <{ i16, i16, ptr, ptr }> <{
-                i16 8,
-                i16 8,
-                ptr @Point_area, 
-ptr @Point_perimeter
-            }>, align 8
+@trait_2 = private unnamed_addr constant <{ i16, i16, ptr }> <{
+    i16 8,
+    i16 8,
+    ptr @Map_fooat
+}>, align 8
 @format_b = private unnamed_addr constant [3 x i8] c"%d\00"
 @format_n = private unnamed_addr constant [3 x i8] c"%d\00"
 @format_s = private unnamed_addr constant [3 x i8] c"%s\00"
@@ -12,10 +11,11 @@ declare i8* @readln()
 declare void @println_bool(i1)
 declare void @println_i32(i32)
 declare void @println_str(i8*)
+%Point = type { i32, i32 }
 declare i8* @test()
 declare void @memset(i8*, i32, i32)
 declare i8* @malloc(i32)
-%Point = type { i32, i32 }
+%Map = type { i32 }
 define void @main() {
 entry:
 %4 = alloca [14 x i8], align 1
@@ -55,25 +55,26 @@ call void @memset(i8* %34, i32 0, i32 8)
 store i32 6, i32* %38
 %40 = getelementptr inbounds %Point, %Point* %36, i32 0, i32 1
 store i32 4, i32* %40
-%42 = getelementptr inbounds <{i16, i16, ptr, ptr}>, ptr @trait_2, i32 0, i32 2
-%44 = load ptr, ptr %42
-%46 = call i32 %44(%Point* %36)
+%42 = call i8* @malloc(i32 4)
+call void @memset(i8* %42, i32 0, i32 4)
+%44 = bitcast i8* %42 to %Map*
+%46 = getelementptr inbounds %Map, %Map* %44, i32 0, i32 0
+store i32 20, i32* %46
 %48 = getelementptr inbounds %Point, %Point* %36, i32 0, i32 0
-store i32 8, i32* %48
-call void @println_i32(i32 %46)
-%50 = getelementptr inbounds <{i16, i16, ptr, ptr}>, ptr @trait_2, i32 0, i32 2
-%52 = load ptr, ptr %50
-%54 = call i32 %52(%Point* %36)
+%50 = load i32, i32* %48
+call void @println_i32(i32 %50)
+%52 = getelementptr inbounds %Point, %Point* %36, i32 0, i32 1
+%54 = load i32, i32* %52
 call void @println_i32(i32 %54)
+%56 = getelementptr inbounds <{i16, i16, ptr}>, ptr @trait_2, i32 0, i32 2
+%58 = load ptr, ptr %56
+%60 = call i32 %58(%Map* %44)
+call void @println_i32(i32 %60)
 ret void
 }
-define i32 @Point_area(%Point* %56) {
+define i32 @Map_fooat(%Map* %62) {
 entry:
-%58 = getelementptr inbounds %Point, %Point* %56, i32 0, i32 0
-%60 = load i32, i32* %58
-ret i32 %60
-}
-define i32 @Point_perimeter(%Point* %62) {
-entry:
-ret i32 0
+%64 = getelementptr inbounds %Map, %Map* %62, i32 0, i32 0
+%66 = load i32, i32* %64
+ret i32 %66
 }

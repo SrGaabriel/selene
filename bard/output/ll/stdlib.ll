@@ -1,3 +1,9 @@
+            @trait_2 = private unnamed_addr constant <{ i16, i16, ptr, ptr }> <{
+                i16 8,
+                i16 8,
+                ptr @Point_area, 
+ptr @Point_perimeter
+            }>, align 8
 @format_b = private unnamed_addr constant [3 x i8] c"%d\00"
 @format_n = private unnamed_addr constant [3 x i8] c"%d\00"
 @format_s = private unnamed_addr constant [3 x i8] c"%s\00"
@@ -58,3 +64,12 @@ entry:
 }
 declare i32 @putchar(i32)
 declare i32 @printf(i8*, ...)
+%Point = type { i32, i32 }
+define i32 @Point_area() {
+entry:
+ret i32 4
+}
+define i32 @Point_perimeter() {
+entry:
+ret i32 2
+}

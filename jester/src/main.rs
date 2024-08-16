@@ -1,3 +1,4 @@
+use serde::Deserialize;
 use std::fs;
 use std::path::{Path, PathBuf};
 use std::process::{Command, Stdio};
@@ -12,28 +13,21 @@ fn main() {
     }
 
     let stdlib = project_root.join("stdlib");
-    compile_project_sources(&stdlib, project_root, true);
+    let stdlib_props = parse_properties(&stdlib);
+    compile_project_sources(&stdlib_props, &stdlib, project_root, true);
     let bard_dir = project_root.join("bard");
-    compile_project_sources(&bard_dir, project_root, false);
+    let bard_props = parse_properties(&bard_dir);
+    compile_project_sources(&bard_props, &bard_dir, project_root, false);
 
     link_files(project_root);
 }
 
-fn compile_project_sources(source_root: &Path, project_root: &Path, is_stdlib: bool) {
-    let target_srcs = source_root.join("src");
-
-    if let Ok(entries) = fs::read_dir(&target_srcs) {
-        for entry in entries.flatten() {
-            let path = entry.path();
-            if path.extension().map_or(false, |ext| ext == "wy") {
-                compile(&path, is_stdlib, project_root);
-            }
-        }
-    }
+fn compile_project_sources(props: &ModuleProperties, source_root: &Path, project_root: &Path, is_stdlib: bool) {
+    compile(&props.name, &source_root, is_stdlib, project_root);
 }
 
 fn link_files(project_root: &Path) {
-    let output_dir = project_root.join("bard/output/ll");
+    let output_dir = project_root.join("bard\\output\\ll");
 
     let files: Vec<PathBuf> = fs::read_dir(&output_dir)
         .unwrap_or_else(|_| panic!("Failed to read directory: {:?}", output_dir))
@@ -63,7 +57,7 @@ fn link_files(project_root: &Path) {
     }
 }
 
-fn compile(file: &Path, is_stdlib: bool, project_root: &Path) {
+fn compile(name: &String, file: &Path, is_stdlib: bool, project_root: &Path) {
     println!("Compiling {:?}", file);
     let gwydion_jar = project_root.join("build/libs/gwydion.jar");
 
@@ -74,6 +68,7 @@ fn compile(file: &Path, is_stdlib: bool, project_root: &Path) {
     command.arg("-jar")
         .arg(&gwydion_jar)
         .arg(file)
+        .arg(name)
         .current_dir(&output_dir);
 
     if is_stdlib {
@@ -83,4 +78,22 @@ fn compile(file: &Path, is_stdlib: bool, project_root: &Path) {
     let output = command.output().expect("Failed to execute java process");
     output.stdout.iter().for_each(|b| print!("{}", *b as char));
     output.stderr.iter().for_each(|b| eprint!("{}", *b as char));
+}
+
+#[derive(Deserialize)]
+pub struct ModuleProperties{
+    name: String
+}
+
+fn parse_properties(module_root: &Path) -> ModuleProperties {
+    // Now we just need to read and parse module_root/module.toml
+    // print files under module_root
+    for entry in fs::read_dir(module_root).expect("Failed to read directory") {
+        let entry = entry.expect("Failed to read entry");
+        println!("{:?}", entry.path());
+    }
+
+    let toml_path = module_root.join("module.toml");
+    let toml_str = fs::read_to_string(&toml_path).expect("Failed to read module.toml");
+    toml::from_str(&toml_str).expect("Failed to parse module.toml")
 }

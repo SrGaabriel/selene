@@ -1,0 +1,18 @@
+data Point(
+    x: int32,
+    y: int32
+)
+
+trait Shape(
+    area() :: int32;
+    perimeter() :: int32;
+)
+
+make Point into Shape {
+    func area() :: int32 {
+        return 4;
+    }
+    func perimeter() :: int32 {
+        return 2;
+    }
+}

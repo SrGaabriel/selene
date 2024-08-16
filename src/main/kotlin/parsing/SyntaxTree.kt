@@ -125,7 +125,10 @@ class VariableReferenceNode(
     val name: String,
     start: Token
 ) : SyntaxTreeNode(start, start) {
+
     override fun getChildren(): List<SyntaxTreeNode> = emptyList()
+
+    override fun toString(): String = "VariableReferenceNode(name='$name')"
 }
 
 class NumberNode(
@@ -241,6 +244,8 @@ class StructAccessNode(
     val field: String,
 ) : SyntaxTreeNode(null, null) {
     override fun getChildren(): List<SyntaxTreeNode> = listOf()
+
+    override fun toString(): String = "StructAccessNode(struct='$struct', field='$field')"
 }
 
 class MutationNode(

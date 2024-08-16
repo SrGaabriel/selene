@@ -633,15 +633,16 @@ class Parser(private val tokens: TokenStream) {
                         parseArrayAccess()
                     }
                     TokenKind.DOT -> {
-                        val field = parseIdentifier()
-                        if (tokens[position + 2].kind == TokenKind.OPENING_PARENTHESES) {
+                        if (tokens[position + 3].kind == TokenKind.OPENING_PARENTHESES) {
+                            position++
                             val call = parseTraitFunctionCall(token.value)
                             if (call.isLeft()) {
                                 return Either.Left(call.getLeft())
                             }
                             return Either.Right(call.unwrap())
                         }
-                        position++
+                        position += 2
+                        val field = parseIdentifier()
                         if (field.isLeft()) {
                             return Either.Left(field.getLeft())
                         }
@@ -651,6 +652,7 @@ class Parser(private val tokens: TokenStream) {
                         ))
                     }
                     else -> {
+                        println("Unexpected token: ${peekNext()}")
                         parseNumericExpression()
                     }
                 }
@@ -736,10 +738,12 @@ class Parser(private val tokens: TokenStream) {
         }
         val parameters = mutableListOf<SyntaxTreeNode>()
         while (peek().kind != TokenKind.CLOSING_PARENTHESES) {
+            val a = peek()
             val expression = parseExpression()
             if (expression.isLeft()) {
                 return Either.Left(expression.getLeft())
             }
+            println("Expression: ${expression.unwrap()} Due to ${a}")
             parameters.add(expression.getRight())
             if (peek().kind == TokenKind.COMMA) {
                 position++

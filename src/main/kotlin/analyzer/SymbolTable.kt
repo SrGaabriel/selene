@@ -38,4 +38,6 @@ class SymbolTable {
             define(name, node)
         }
     }
+
+    override fun toString(): String = symbols.toString()
 }

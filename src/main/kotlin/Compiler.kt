@@ -29,10 +29,12 @@ fun main(args: Array<String>) {
         logger.log(LogLevel.ERROR) { +"The argument should be the path to the file to compile" }
         return
     }
-    val filePath = args[0]
-    val file = File(filePath)
-    if (!file.exists()) {
-        logger.log(LogLevel.ERROR) { +"The file does not exist" }
+    val sourcePath = args[0]
+    val name = args.getOrNull(1) ?: "program"
+    val folder = File(sourcePath)
+    println(folder.absolutePath)
+    if (!folder.exists() || folder.isFile) {
+        logger.log(LogLevel.ERROR) { +"The folder does not exist" }
         return
     }
 
@@ -47,6 +49,7 @@ fun main(args: Array<String>) {
         PrintlnFunction(),
         ReadlineFunction()
     )
+
     if (!isStdlib) {
         logger.log(LogLevel.INFO) { +"Linking the stdlib symbols..." }
 
@@ -58,13 +61,22 @@ fun main(args: Array<String>) {
         val stdlibText = sourceReader.read(stdlib)
         val stdlibMemory = ProgramMemoryRepository()
         val stdlibTree = parse(logger, stdlibText, stdlibMemory) ?: return
-        memory.root.symbols.merge(stdlibMemory.root.symbols)
+        llvmCodeAdapter.generate(
+            stdlibTree,
+            stdlibMemory,
+            compileIntrinsics = true
+        )
+        println("Symbols: ${stdlibMemory.root.symbols} Memory: ${stdlibMemory.root.memory}")
+        memory.merge(stdlibMemory)
         StdlibLinker.link(
             stdlibTree,
             llvmCodeAdapter
         )
     }
-    val tree = parse(logger, file.readText(), memory) ?: return
+    println("Symbols: ${memory.root.symbols} Memory: ${memory.root.memory}")
+
+    val sources = File(folder, "src")
+    val tree = parse(logger, sourceReader.read(sources), memory) ?: return
     val memoryEnd = Instant.now()
     val memoryDelay = memoryEnd.toEpochMilli() - memoryStart.toEpochMilli()
     logger.log(LogLevel.INFO) { +"Memory analysis took ${memoryDelay}ms" }
@@ -78,7 +90,7 @@ fun main(args: Array<String>) {
     llvmCodeAdapter.generateExecutable(
         llvmIr = generated,
         outputDir = currentFolder,
-        outputFileName = file.nameWithoutExtension
+        outputFileName = name
     )
     val executionEnd = Instant.now()
     val executionDelay = executionEnd.toEpochMilli() - compilingStart.toEpochMilli()

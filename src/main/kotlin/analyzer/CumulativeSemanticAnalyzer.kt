@@ -230,6 +230,9 @@ class CumulativeSemanticAnalyzer(
                 }
 
                 if (node.arguments.size != definition.parameters.size) {
+                    node.arguments.forEach {
+                        println(it)
+                    }
                     errors.add(
                         AnalysisError.MissingArgumentsForFunctionCall(
                             node,
