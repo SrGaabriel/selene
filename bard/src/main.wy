@@ -16,7 +16,7 @@ func main() {
 
 make Point into Shape {
     func area(self) :: int32 {
-        println("Area of Point");
+        println(self.x);
         return 0;
     }
     func perimeter(self) :: int32 {

@@ -439,7 +439,7 @@ class LLVMCodeAdaptationProcess(
             acceptNode(traitBlock, it.copy(
                 name = "${node.`object`}_${it.name}",
                 parameters = it.parameters
-            ), self = struct as Type.Struct)
+            ), self = struct)
         }
 
         return NullMemoryUnit

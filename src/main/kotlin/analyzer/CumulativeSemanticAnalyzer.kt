@@ -46,7 +46,6 @@ class CumulativeSemanticAnalyzer(
                     block
                 )
                 node.functions.forEach {
-                    println("Name: ${node.`object`}_${it.name} in ${newBlock.name}")
                     newBlock.symbols.declare("${node.`object`}_${it.name}", it.returnType)
                     newBlock.symbols.define("${node.`object`}_${it.name}", it)
                 }
@@ -82,6 +81,7 @@ class CumulativeSemanticAnalyzer(
                     errors.add(AnalysisError.UnknownType(node, node.type))
                     return null
                 }
+                println("PAram ${node.name} as ${node.type}")
                 block.symbols.declare(node.name, node.type)
                 node.getChildren().forEach { findSymbols(it, block) }
             }

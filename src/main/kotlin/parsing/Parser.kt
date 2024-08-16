@@ -604,6 +604,17 @@ class Parser(private val tokens: TokenStream) {
                     arguments = arguments.unwrap()
                 ))
             }
+            TokenKind.SELF -> {
+                if (peekNext().kind !== TokenKind.DOT) {
+                    return Either.Left(ParsingError.UnexpectedToken(token))
+                }
+                position += 2
+                val field = parseIdentifier()
+                Either.Right(StructAccessNode(
+                    struct = "self",
+                    field = field.unwrap(),
+                ))
+            }
             TokenKind.IDENTIFIER -> {
                 when (peekNext().kind) {
                     TokenKind.OPENING_PARENTHESES -> {
