@@ -55,7 +55,11 @@ tailrec fun getExpressionType(block: MemoryBlock, node: SyntaxTreeNode): Either<
             Either.Right(function.returnType)
         }
         is StructAccessNode -> {
-            val struct = block.figureOutSymbol(node.struct) ?: return Either.Left(AnalysisError.UndefinedDataStructure(node, node.struct))
+            val struct = when (node.struct) {
+                "self" -> block.self ?: return Either.Left(AnalysisError.UndefinedDataStructure(node, node.struct))
+                else -> block.figureOutSymbol(node.struct) ?: return Either.Left(AnalysisError.UndefinedDataStructure(node, node.struct))
+            }
+
             when (struct) {
                 is Type.Struct -> {
                     val field = struct.fields[node.field] ?: return Either.Left(AnalysisError.UndefinedField(node, node.field))

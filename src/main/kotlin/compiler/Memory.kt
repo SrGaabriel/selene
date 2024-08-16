@@ -10,7 +10,8 @@ data class MemoryBlock(
     val symbols: SymbolTable,
     val memory: MemoryTable,
     val parent: MemoryBlock?,
-    val children: MutableList<MemoryBlock> = mutableListOf()
+    val children: MutableList<MemoryBlock> = mutableListOf(),
+    var self: Type.Struct? = null
 ) {
     fun getNextRegister(): Int {
         return memory.registerCounter++
@@ -53,9 +54,10 @@ class ProgramMemoryRepository {
         name: String,
         parent: MemoryBlock,
         symbols: SymbolTable = SymbolTable(),
-        table: MemoryTable = MemoryTable()
+        table: MemoryTable = MemoryTable(),
+        self: Type.Struct? = parent.self
     ): MemoryBlock {
-        val block = MemoryBlock(name, symbols, table, parent)
+        val block = MemoryBlock(name, symbols, table, parent, mutableListOf(), self)
         parent.children.add(block)
         return block
     }

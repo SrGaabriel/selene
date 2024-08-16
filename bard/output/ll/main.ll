@@ -12,6 +12,7 @@ declare i8* @readln()
 declare void @println_bool(i1)
 declare void @println_i32(i32)
 declare void @println_str(i8*)
+declare i8* @test()
 declare void @memset(i8*, i32, i32)
 declare i8* @malloc(i32)
 %Point = type { i32, i32 }
@@ -51,52 +52,23 @@ call void @println_str(i8* %6)
 call void @memset(i8* %34, i32 0, i32 8)
 %36 = bitcast i8* %34 to %Point*
 %38 = getelementptr inbounds %Point, %Point* %36, i32 0, i32 0
-store i32 0, i32* %38
+store i32 6, i32* %38
 %40 = getelementptr inbounds %Point, %Point* %36, i32 0, i32 1
-store i32 0, i32* %40
+store i32 4, i32* %40
 %42 = getelementptr inbounds <{i16, i16, ptr, ptr}>, ptr @trait_2, i32 0, i32 2
 %44 = load ptr, ptr %42
 %46 = bitcast ptr %44 to i32 (%Point*)*
 %48 = call i32 %46(%Point* %36)
-%50 = add i32 5, 0
-call void @println_i32(i32 %50)
+call void @println_i32(i32 %48)
 ret void
 }
-define i32 @Point_area(%Point* %52) {
+define i32 @Point_area(%Point* %50) {
 entry:
-%54 = alloca [14 x i8], align 1
-%56 = getelementptr inbounds [14 x i8], [14 x i8]* %54, i32 0, i32 0
-store i8 65, i8* %56
-%58 = getelementptr inbounds [14 x i8], [14 x i8]* %54, i32 0, i32 1
-store i8 114, i8* %58
-%60 = getelementptr inbounds [14 x i8], [14 x i8]* %54, i32 0, i32 2
-store i8 101, i8* %60
-%62 = getelementptr inbounds [14 x i8], [14 x i8]* %54, i32 0, i32 3
-store i8 97, i8* %62
-%64 = getelementptr inbounds [14 x i8], [14 x i8]* %54, i32 0, i32 4
-store i8 32, i8* %64
-%66 = getelementptr inbounds [14 x i8], [14 x i8]* %54, i32 0, i32 5
-store i8 111, i8* %66
-%68 = getelementptr inbounds [14 x i8], [14 x i8]* %54, i32 0, i32 6
-store i8 102, i8* %68
-%70 = getelementptr inbounds [14 x i8], [14 x i8]* %54, i32 0, i32 7
-store i8 32, i8* %70
-%72 = getelementptr inbounds [14 x i8], [14 x i8]* %54, i32 0, i32 8
-store i8 80, i8* %72
-%74 = getelementptr inbounds [14 x i8], [14 x i8]* %54, i32 0, i32 9
-store i8 111, i8* %74
-%76 = getelementptr inbounds [14 x i8], [14 x i8]* %54, i32 0, i32 10
-store i8 105, i8* %76
-%78 = getelementptr inbounds [14 x i8], [14 x i8]* %54, i32 0, i32 11
-store i8 110, i8* %78
-%80 = getelementptr inbounds [14 x i8], [14 x i8]* %54, i32 0, i32 12
-store i8 116, i8* %80
-%82 = getelementptr inbounds [14 x i8], [14 x i8]* %54, i32 0, i32 13
-store i8 0, i8* %82
-call void @println_str(i8* %56)
-ret i32 0
+%52 = getelementptr inbounds %Point, %Point* %50, i32 0, i32 0
+%54 = load i32, i32* %52
+ret i32 %54
 }
-define i32 @Point_perimeter(%Point* %84) {
+define i32 @Point_perimeter(%Point* %56) {
 entry:
 ret i32 0
 }

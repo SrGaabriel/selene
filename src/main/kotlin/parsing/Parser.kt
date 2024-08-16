@@ -634,8 +634,16 @@ class Parser(private val tokens: TokenStream) {
                         parseArrayAccess()
                     }
                     TokenKind.DOT -> {
-                        position += 2
                         val field = parseIdentifier()
+                        if (tokens[position + 2].kind == TokenKind.OPENING_PARENTHESES) {
+                            val call = parseTraitFunctionCall(token.value)
+                            println(call)
+                            if (call.isLeft()) {
+                                return Either.Left(call.getLeft())
+                            }
+                            return Either.Right(call.unwrap())
+                        }
+                        position++
                         if (field.isLeft()) {
                             return Either.Left(field.getLeft())
                         }
@@ -725,6 +733,7 @@ class Parser(private val tokens: TokenStream) {
     }
 
     fun parseCallParameters(): Either<ParsingError, List<SyntaxTreeNode>> {
+        println("Call Parameters ${peek()}")
         consume(TokenKind.OPENING_PARENTHESES).ifLeft {
             return Either.Left(it)
         }

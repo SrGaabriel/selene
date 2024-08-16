@@ -10,14 +10,14 @@ trait Shape(
 
 func main() {
     println("Hello, World!");
-    p := @Point(0, 0);
-    p.area();
+    p := @Point(6, 4);
+    x := p.area();
+    println(x);
 }
 
 make Point into Shape {
     func area(self) :: int32 {
-        println(self.x);
-        return 0;
+        return self.x;
     }
     func perimeter(self) :: int32 {
         return 0;

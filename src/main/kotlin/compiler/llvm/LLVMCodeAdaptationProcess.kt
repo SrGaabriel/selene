@@ -473,11 +473,13 @@ class LLVMCodeAdaptationProcess(
             "bitcast ptr ${loadedFunction.llvm()} to ${type.llvm} (%Point*)*"
         )
 
-        val assignment = MemoryUnit.Sized(
-            register = assembler.nextRegister(),
-            type = type,
-            size = type.size
-        )
+        val assignment = if (store) {
+            MemoryUnit.Sized(
+                register = assembler.nextRegister(),
+                type = type,
+                size = type.size
+            )
+        } else NullMemoryUnit
 
         val arguments = node.arguments.map {
             acceptNode(block, it)
@@ -493,7 +495,7 @@ class LLVMCodeAdaptationProcess(
             local = true
         )
 
-        return NullMemoryUnit
+        return assignment
     }
 
     fun getProperReturnType(returnType: Type): LLVMType {

@@ -40,10 +40,16 @@ class CumulativeSemanticAnalyzer(
             }
             is TraitImplNode -> {
                 val name = "${node.trait}_trait_${node.`object`}"
+                val struct = block.figureOutSymbol(node.`object`) as? Type.Struct
+                if (struct == null) {
+                    errors.add(AnalysisError.UndefinedDataStructure(node, node.`object`))
+                    return null
+                }
                 block.symbols.define(name, node)
                 val newBlock = repository.createBlock(
                     name,
-                    block
+                    block,
+                    self = struct
                 )
                 node.functions.forEach {
                     newBlock.symbols.declare("${node.`object`}_${it.name}", it.returnType)
@@ -272,6 +278,7 @@ class CumulativeSemanticAnalyzer(
             }
 
             is StructAccessNode -> {
+                if (node.struct == "self") return
                 val struct = block.figureOutSymbol(node.struct)
                 if (struct == null) {
                     errors.add(AnalysisError.UndefinedDataStructure(node, node.struct))
