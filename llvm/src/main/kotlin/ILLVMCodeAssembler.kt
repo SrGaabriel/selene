@@ -47,6 +47,14 @@ interface ILLVMCodeAssembler {
         total: Boolean = true
     ): MemoryUnit
 
+    fun getElementFromVirtualTable(
+        table: String,
+        tableType: LLVMType.Dynamic,
+        type: LLVMType,
+        index: Value,
+        total: Boolean = true
+    ): MemoryUnit
+
     fun loadPointer(value: MemoryUnit): MemoryUnit
 
     fun unsafelyLoadPointer(value: MemoryUnit, pointer: LLVMType.Pointer): MemoryUnit
@@ -80,7 +88,8 @@ interface ILLVMCodeAssembler {
     fun callFunction(
         name: String,
         arguments: Collection<Value>,
-        assignment: Value
+        assignment: Value,
+        local: Boolean = false
     )
 
     fun declareStruct(

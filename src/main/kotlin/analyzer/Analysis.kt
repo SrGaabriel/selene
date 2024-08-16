@@ -46,6 +46,14 @@ tailrec fun getExpressionType(block: MemoryBlock, node: SyntaxTreeNode): Either<
             Either.Right(struct)
         }
         is DataStructureNode -> Either.Right(Type.Struct(node.name, node.fields.associate { it.name to it.type }, false))
+        is TraitFunctionCallNode -> {
+            val (_, function) = figureOutTraitForVariable(
+                block = block,
+                variable = node.trait,
+                call = node.function
+            ) ?: return Either.Left(AnalysisError.UndefinedTrait(node, node.trait))
+            Either.Right(function.returnType)
+        }
         is StructAccessNode -> {
             val struct = block.figureOutSymbol(node.struct) ?: return Either.Left(AnalysisError.UndefinedDataStructure(node, node.struct))
             when (struct) {
@@ -63,4 +71,28 @@ tailrec fun getExpressionType(block: MemoryBlock, node: SyntaxTreeNode): Either<
 fun inferCallType(block: MemoryBlock, node: CallNode): Type {
     val function = block.figureOutSymbol(node.name) ?: return Type.Unknown
     return function
+}
+
+fun figureOutTraitForVariable(
+    block: MemoryBlock,
+    variable: String,
+    call: String
+): Pair<Type.Trait, TraitFunctionNode>? {
+    val resolvedVariable = block.figureOutSymbol(variable) ?: return null
+
+    return when (resolvedVariable) {
+        is Type.Struct -> {
+            val (trait, function) = resolvedVariable.traits
+                .firstNotNullOfOrNull { trait ->
+                    trait.functions.find { it.name == call }?.let { trait to it }
+                } ?: return null
+
+            trait to function
+        }
+        is Type.Trait -> {
+            val function = resolvedVariable.functions.find { it.name == call } ?: return null
+            resolvedVariable to function
+        }
+        else -> null
+    }
 }

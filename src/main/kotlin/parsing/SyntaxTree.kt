@@ -251,3 +251,11 @@ class MutationNode(
 ) : SyntaxTreeNode(start, expression.end) {
     override fun getChildren(): List<SyntaxTreeNode> = listOf(expression)
 }
+
+class TraitFunctionCallNode(
+    val trait: String,
+    val function: String,
+    val arguments: List<SyntaxTreeNode>,
+) : SyntaxTreeNode(null, null) {
+    override fun getChildren(): List<SyntaxTreeNode> = arguments
+}

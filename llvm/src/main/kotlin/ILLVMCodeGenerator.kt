@@ -19,7 +19,7 @@ interface ILLVMCodeGenerator {
 
     fun stringComparison(left: Value, right: Value): String
 
-    fun functionCall(name: String, returnType: LLVMType, arguments: Collection<Value>): String
+    fun functionCall(name: String, returnType: LLVMType, arguments: Collection<Value>, local: Boolean = false): String
 
     fun signedIntegerComparison(left: Value, right: Value): String
 
@@ -33,11 +33,13 @@ interface ILLVMCodeGenerator {
 
     fun unsafeSubElementAddressDirectReading(struct: Value, index: Value): String
 
+    fun virtualTableReading(table: String, tableType: LLVMType.Dynamic, index: Value): String
+
     fun getGeneratedDependencies(): Set<String>
 
     fun concatenateStrings(left: Value, right: Value): String
 
-    fun createTraitObject(vtable: String, obj: TraitObject): String
+    fun createTraitObject(obj: TraitObject): String
 
     fun createBranch(label: String): String
 

@@ -115,11 +115,12 @@ class LLVMCodeAssembler(val generator: ILLVMCodeGenerator): ILLVMCodeAssembler {
         }
     }
 
-    override fun callFunction(name: String, arguments: Collection<Value>, assignment: Value) {
+    override fun callFunction(name: String, arguments: Collection<Value>, assignment: Value, local: Boolean) {
         val call = generator.functionCall(
             name = name,
             arguments = arguments,
-            returnType = assignment.type
+            returnType = assignment.type,
+            local = local
         )
 
         when (assignment) {
@@ -180,6 +181,12 @@ class LLVMCodeAssembler(val generator: ILLVMCodeGenerator): ILLVMCodeAssembler {
         return firstPointer!!
     }
 
+    /**
+     * @param struct The struct to get the element from
+     * @param type The type of the returned element
+     * @param index The index of the element to get
+     * @param total Whether to read from start of struct or from the pointer
+     */
     override fun getElementFromStructure(
         struct: Value,
         type: LLVMType,
@@ -209,7 +216,44 @@ class LLVMCodeAssembler(val generator: ILLVMCodeGenerator): ILLVMCodeAssembler {
         return unit
     }
 
+    override fun getElementFromVirtualTable(
+        table: String,
+        tableType: LLVMType.Dynamic,
+        type: LLVMType,
+        index: Value,
+        total: Boolean
+    ): MemoryUnit {
+        val reading = generator.virtualTableReading(
+            table = table,
+            tableType = tableType,
+            index = index
+        )
+        val unit = MemoryUnit.Sized(
+            register = nextRegister(),
+            type = LLVMType.Pointer(type),
+            size = type.size
+        )
+        saveToRegister(
+            register = unit.register,
+            expression = reading
+        )
+        return unit
+    }
+
     override fun loadPointer(value: MemoryUnit): MemoryUnit {
+        if (value.type == LLVMType.Ptr) {
+            val unit = MemoryUnit.Sized(
+                register = nextRegister(),
+                type = value.type,
+                size = value.type.size
+            )
+            saveToRegister(
+                register = unit.register,
+                expression = generator.loadPointer(value.type, value)
+            )
+            return unit
+        }
+
         if (value.type !is LLVMType.Pointer) {
             error("Expected pointer type, got ${value.type}")
         }

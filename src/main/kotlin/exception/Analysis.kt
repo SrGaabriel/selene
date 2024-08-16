@@ -23,6 +23,11 @@ sealed class AnalysisError(val message: String, val node: SyntaxTreeNode) {
         node
     )
 
+    class UndefinedTrait(node: SyntaxTreeNode, name: String) : AnalysisError(
+        "undefined trait: $name",
+        node
+    )
+
     class UndefinedFunction(node: CallNode, block: MemoryBlock) : AnalysisError(
         "undefined function: ${node.name} in block ${block.name}",
         node

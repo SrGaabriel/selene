@@ -121,6 +121,7 @@ class StringLexer(private val data: String): Lexer {
             "trait" -> Either.Right(Token(TokenKind.TRAIT, value, start))
             "make" -> Either.Right(Token(TokenKind.MAKE, value, start))
             "into" -> Either.Right(Token(TokenKind.INTO, value, start))
+            "self" -> Either.Right(Token(TokenKind.SELF, value, start))
             "mut" -> Either.Right(Token(TokenKind.MUT, value, start))
             else -> Either.Right(Token(TokenKind.IDENTIFIER, value, start))
         }

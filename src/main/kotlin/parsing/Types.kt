@@ -3,7 +3,7 @@ package me.gabriel.gwydion.parsing
 import me.gabriel.gwydion.lexing.Token
 import me.gabriel.gwydion.lexing.TokenKind
 
-sealed class Type(val name: kotlin.String) {
+sealed class Type(val id: kotlin.String) {
     data object Any : Type("any")
     data object Int8 : Type("int8")
     data object Int16 : Type("int16")
@@ -16,6 +16,7 @@ sealed class Type(val name: kotlin.String) {
     data object Float32 : Type("float32")
     data object Float64 : Type("float64")
     data object String : Type("string")
+    data object Self: Type("self")
     data object Void : Type("void")
     data object Boolean : Type("bool")
     data object Unknown : Type("unknown")
@@ -31,10 +32,16 @@ sealed class Type(val name: kotlin.String) {
     data class Struct(
         val identifier: kotlin.String,
         val fields: Map<kotlin.String, Type>,
-        val mutable: kotlin.Boolean
+        val mutable: kotlin.Boolean,
+        val traits: MutableList<Trait> = mutableListOf()
     ): Type("struct")
 
-    override fun toString(): kotlin.String = name
+    data class Trait(
+        val identifier: kotlin.String,
+        val functions: List<TraitFunctionNode>
+    ): Type("trait")
+
+    override fun toString(): kotlin.String = id
 }
 
 fun tokenKindToType(token: Token, mutable: Boolean) = when (token.kind) {

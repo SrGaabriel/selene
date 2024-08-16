@@ -1,5 +1,6 @@
 package me.gabriel.gwydion.compiler.llvm
 
+import me.gabriel.gwydion.analyzer.figureOutTraitForVariable
 import me.gabriel.gwydion.analyzer.getExpressionType
 import me.gabriel.gwydion.compiler.MemoryBlock
 import me.gabriel.gwydion.compiler.ProgramMemoryRepository
@@ -24,7 +25,7 @@ class LLVMCodeAdaptationProcess(
     private val llvmGenerator = LLVMCodeGenerator()
     private val assembler = LLVMCodeAssembler(llvmGenerator)
 
-    private val traitObjects = mutableListOf<TraitObject>()
+    private val traitObjects = mutableMapOf<MemoryUnit.Unsized, MutableList<TraitObject>>()
 
     fun setup() {
         val dependencies = mutableSetOf<String>()
@@ -52,12 +53,11 @@ class LLVMCodeAdaptationProcess(
     }
 
     fun finish() {
-        traitObjects.forEachIndexed { index, obj ->
-            val vtable = "vtable.$index"
-            assembler.addDependency(assembler.generator.createTraitObject(
-                vtable = vtable,
-                obj = obj
-            ))
+        traitObjects.forEach { (traitMem, traits) ->
+            // TODO: fix
+            traits.forEach { obj ->
+                assembler.addDependency(assembler.generator.createTraitObject(obj = obj))
+            }
         }
     }
 
@@ -68,10 +68,11 @@ class LLVMCodeAdaptationProcess(
     fun acceptNode(
         block: MemoryBlock,
         node: SyntaxTreeNode,
-        store: Boolean = false
+        store: Boolean = false,
+        self: Type.Struct? = null
     ): MemoryUnit = when (node) {
         is RootNode, is BlockNode -> blockAdaptChildren(block, node)
-        is FunctionNode -> generateFunction(block, node)
+        is FunctionNode -> generateFunction(block, node, self)
         is CallNode -> generateFunctionCall(block, node, store)
         is StringNode -> generateString(block, node)
         is AssignmentNode -> generateAssignment(block, node)
@@ -90,6 +91,7 @@ class LLVMCodeAdaptationProcess(
         is MutationNode -> generateMutation(block, node)
         is TraitNode -> generateTrait(block, node)
         is TraitImplNode -> generateTraitImpl(block, node)
+        is TraitFunctionCallNode -> generateTraitCall(block, node, store)
         else -> error("Node $node not supported")
     }
 
@@ -98,11 +100,11 @@ class LLVMCodeAdaptationProcess(
         return NullMemoryUnit
     }
 
-    fun generateFunction(block: MemoryBlock, node: FunctionNode): NullMemoryUnit {
+    fun generateFunction(block: MemoryBlock, node: FunctionNode, self: Type.Struct?): NullMemoryUnit {
         if (node.modifiers.contains(Modifiers.INTRINSIC)) return NullMemoryUnit
 
         val parameters = node.parameters.map {
-            val type = getProperReturnType(it.type)
+            val type = if (it.type !== Type.Self) getProperReturnType(it.type) else self?.asLLVM()?.let { LLVMType.Pointer(it) } ?: error("Self type not found")
             val unit = MemoryUnit.Sized(
                 register = assembler.nextRegister(),
                 type = type,
@@ -386,27 +388,27 @@ class LLVMCodeAdaptationProcess(
     }
 
     fun generateTrait(block: MemoryBlock, node: TraitNode): MemoryUnit {
-//        assembler.createVirtualTable(
-//            name = "trait.${node.name}",
-//            functions = node.functions.map {
-//                LLVMType.Function(
-//                    parameterTypes = it.parameters.map { it.type.asLLVM() },
-//                    returnType = it.returnType.asLLVM(),
-//                )
-//            }
-//        )
-//        block.symbols.define(node.name, node)
-        return NullMemoryUnit
+        println("Allocating ${node.name} in ${block.name}")
+        return block.memory.allocate(
+            name = node.name,
+            unit = MemoryUnit.Unsized(
+                register = assembler.nextRegister(),
+                type = LLVMType.Dynamic(listOf(
+                    LLVMType.I16,
+                    LLVMType.I16,
+                ).plus(node.functions.map { LLVMType.Ptr }))
+            )
+        )
     }
 
     fun generateTraitImpl(block: MemoryBlock, node: TraitImplNode): MemoryUnit {
-        traitObjects.add(
-            TraitObject(
-                prefix= node.`object`,
-                size = 8,
-                alignment = 8,
-                functions = node.functions.map { it.name }
-            )
+        val trait = block.figureOutMemory(node.trait) ?: error("Trait ${node.trait} not found")
+        val struct = block.figureOutSymbol(node.`object`) as? Type.Struct ?: error("Struct ${node.`object`} not found")
+
+        registerTraitObject(
+            traitMem = trait as MemoryUnit.Unsized,
+            structName = struct.identifier,
+            functions = node.functions.map { it.name }
         )
 
         val traitBlock = block.surfaceSearchChild("${node.trait}_trait_${node.`object`}")
@@ -418,9 +420,56 @@ class LLVMCodeAdaptationProcess(
                 type = it.returnType
             )
             acceptNode(traitBlock, it.copy(
-                name = "${node.`object`}_${it.name}"
-            ))
+                name = "${node.`object`}_${it.name}",
+                parameters = it.parameters
+            ), self = struct as Type.Struct)
         }
+
+        return NullMemoryUnit
+    }
+
+    fun generateTraitCall(block: MemoryBlock, node: TraitFunctionCallNode, store: Boolean): MemoryUnit {
+        val (trait, function) = figureOutTraitForVariable(
+            block = block,
+            variable = node.trait,
+            call = node.function
+        ) ?: error("Trait for ${node.trait} not found")
+
+        val virtualTable = block.figureOutMemory(trait.identifier) ?: error("Trait ${trait.identifier} not found")
+        val type = getProperReturnType(function.returnType)
+
+        val traitImplPointer = assembler.getElementFromVirtualTable(
+            table = '@' + TraitObject.PREFIX + virtualTable.register,
+            tableType = virtualTable.type as LLVMType.Dynamic,
+            type = LLVMType.Ptr,
+            index = LLVMConstant(2, LLVMType.I32), // todo: fix
+        )
+        val functionPointer = assembler.getElementFromStructure(
+            struct = assembler.loadPointer(traitImplPointer),
+            type = LLVMType.Ptr,
+            index = LLVMConstant(0, LLVMType.I32)
+        )
+
+        val loadedFunction = assembler.loadPointer(functionPointer)
+        val assignment = MemoryUnit.Sized(
+            register = assembler.nextRegister(),
+            type = type,
+            size = type.size
+        )
+
+        val arguments = node.arguments.map {
+            acceptNode(block, it)
+        }.toMutableList()
+
+        val variableMemory = block.figureOutMemory(node.trait) ?: error("Variable for trait ${node.trait} not found")
+        arguments.add(0, variableMemory)
+
+        assembler.callFunction(
+            name = loadedFunction.register.toString(),
+            arguments = arguments,
+            assignment = assignment,
+            local = true
+        )
 
         return NullMemoryUnit
     }
@@ -431,5 +480,17 @@ class LLVMCodeAdaptationProcess(
             is LLVMType.Array -> LLVMType.Pointer(type.type)
             else -> type
         }
+    }
+
+    fun registerTraitObject(traitMem: MemoryUnit.Unsized, structName: String, functions: List<String>) {
+        // Create new key if trait doesn't exist, otherwise add to the list of functions.
+        traitObjects.computeIfAbsent(traitMem) { mutableListOf() }
+            .add(TraitObject(
+                register = traitMem.register,
+                name = structName,
+                size = 8,
+                alignment = 8,
+                functions = functions
+            ))
     }
 }

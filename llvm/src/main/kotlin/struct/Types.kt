@@ -8,11 +8,13 @@ sealed class LLVMType(
     data object Void : LLVMType("void", 0, 0)
     data object I1 : LLVMType("i1", 1, 1)
     data object I8 : LLVMType("i8", 1, 1)
+    data object I16 : LLVMType("i16", 2, 2)
     data object I32 : LLVMType("i32", 4, 4)
     data object I64 : LLVMType("i64", 8, 8)
 
     data class Array(val type: LLVMType, val length: Int) : LLVMType("[$length x ${type.llvm}]", type.defaultAlignment, type.size * length)
 
+    data object Ptr : LLVMType("ptr", 1, 1)
     data class Pointer(val type: LLVMType) : LLVMType(if (type == Void) type.llvm else "${type.llvm}*", 8, 8)
 
     data class Function(
@@ -29,6 +31,14 @@ sealed class LLVMType(
         val name: String,
         val functions: List<Function>
     ) : LLVMType("%$name", 8, 0)
+
+    data class Dynamic(
+        val types: List<LLVMType>
+    ): LLVMType(types.joinToString(
+        prefix = "{",
+        postfix = "}",
+        separator = ", "
+    ) { it.llvm }, 8, types.sumOf { it.size })
 
     override fun toString(): String = llvm
 }
