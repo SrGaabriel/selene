@@ -1,32 +1,25 @@
-data Point(
-    x: int32,
-    y: int32,
-    signed: bool
-);
-
 data Map(
-    points: Point[*]
+    foo: int32
 )
 
+trait Fooable(
+    fooat() :: int32
+)
+
+make Map into Fooable {
+    func fooat(self) :: int32 {
+        return self.foo;
+    }
+}
+
 func main() {
-    mut point := new_point();
-    print_point(point);
-    change_point(point);
-    print_point(point);
+    println("Hello, World!");
+    mut p := @Point(24, 4);
+    println(p.x);
+    println(p.y);
+    println(p.area());
+    println(p.perimeter());
+    map := @Map(42);
+    println(map.fooat());
 }
 
-func new_point() :: Point {
-    return @Point(100, 400, true);
-}
-
-func change_point(point: mut Point) {
-    point.x = 200;
-    point.y = 800;
-    point.signed = false;
-}
-
-func print_point(point: Point) {
-    println(point.x);
-    println(point.y);
-    println(point.signed);
-}

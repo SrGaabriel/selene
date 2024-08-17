@@ -46,14 +46,13 @@ data class RootNode(private val children: MutableList<SyntaxTreeNode>) : SyntaxT
     override fun getChildren(): List<SyntaxTreeNode> = children
 }
 
-class FunctionNode(
+data class FunctionNode(
     val name: String,
     var returnType: Type,
     val parameters: List<ParameterNode>,
     val body: BlockNode,
     val modifiers: MutableList<Modifiers>,
-    start: Token
-) : SyntaxTreeNode(start, body.end) {
+) : SyntaxTreeNode(null, body.end) {
     override fun getChildren(): List<SyntaxTreeNode> = parameters + body
 }
 
@@ -89,6 +88,8 @@ class BinaryOperatorNode(
     val right: SyntaxTreeNode,
 ) : SyntaxTreeNode(left.start, right.end) {
     override fun getChildren(): List<SyntaxTreeNode> = listOf(left, right)
+
+    override fun toString(): String = "BinaryOperatorNode(left=$left operator=$operator right=$right)"
 }
 
 class EqualsNode(
@@ -126,7 +127,10 @@ class VariableReferenceNode(
     val name: String,
     start: Token
 ) : SyntaxTreeNode(start, start) {
+
     override fun getChildren(): List<SyntaxTreeNode> = emptyList()
+
+    override fun toString(): String = "VariableReferenceNode(name='$name')"
 }
 
 class NumberNode(
@@ -242,6 +246,8 @@ class StructAccessNode(
     val field: String,
 ) : SyntaxTreeNode(null, null) {
     override fun getChildren(): List<SyntaxTreeNode> = listOf()
+
+    override fun toString(): String = "StructAccessNode(struct='$struct', field='$field')"
 }
 
 class MutationNode(
@@ -251,4 +257,12 @@ class MutationNode(
     start: Token
 ) : SyntaxTreeNode(start, expression.end) {
     override fun getChildren(): List<SyntaxTreeNode> = listOf(expression)
+}
+
+class TraitFunctionCallNode(
+    val trait: String,
+    val function: String,
+    val arguments: List<SyntaxTreeNode>,
+) : SyntaxTreeNode(null, null) {
+    override fun getChildren(): List<SyntaxTreeNode> = arguments
 }

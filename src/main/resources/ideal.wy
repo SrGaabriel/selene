@@ -12,4 +12,7 @@ make Point into Shape {
     func area() :: int32 {
         return 0;
     }
+    func perimeter() :: int32 {
+        return 0;
+    }
 }

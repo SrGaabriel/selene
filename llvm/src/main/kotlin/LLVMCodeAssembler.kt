@@ -48,7 +48,7 @@ class LLVMCodeAssembler(val generator: ILLVMCodeGenerator): ILLVMCodeAssembler {
     }
 
     override fun declareFunction(name: String, returnType: LLVMType, arguments: List<MemoryUnit>) {
-        instruct(generator.functionDeclaration(name, LLVMType.Pointer(returnType), arguments))
+        instruct(generator.functionDeclaration(name, returnType, arguments))
     }
 
     override fun createBranch(label: String) {
@@ -83,9 +83,12 @@ class LLVMCodeAssembler(val generator: ILLVMCodeGenerator): ILLVMCodeAssembler {
         instruct("}")
     }
 
-    override fun addNumber(type: LLVMType, left: Value, right: Value): MemoryUnit {
+    override fun addNumber(type: LLVMType, left: Value, right: Value): MemoryUnit =
+        binaryOp(type, left, BinaryOp.Addition, right)
+
+    override fun binaryOp(type: LLVMType, left: Value, op: BinaryOp, right: Value): MemoryUnit {
         val register = nextRegister()
-        saveToRegister(register, generator.addNumber(type, left, right))
+        saveToRegister(register, generator.binaryOp(left, op, right, type))
         return MemoryUnit.Sized(
             register = register,
             type = type,
@@ -115,11 +118,12 @@ class LLVMCodeAssembler(val generator: ILLVMCodeGenerator): ILLVMCodeAssembler {
         }
     }
 
-    override fun callFunction(name: String, arguments: Collection<Value>, assignment: Value) {
+    override fun callFunction(name: String, arguments: Collection<Value>, assignment: Value, local: Boolean) {
         val call = generator.functionCall(
             name = name,
             arguments = arguments,
-            returnType = assignment.type
+            returnType = assignment.type,
+            local = local
         )
 
         when (assignment) {
@@ -136,6 +140,15 @@ class LLVMCodeAssembler(val generator: ILLVMCodeGenerator): ILLVMCodeAssembler {
             size = fields.values.sumOf { it.size }
         )
         instruct("%$name = ${generator.structDeclaration(fields.values)}")
+        return unit
+    }
+
+    override fun createVirtualTable(name: String, functions: List<LLVMType.Function>): MemoryUnit {
+        val unit = MemoryUnit.Unsized(
+            register = nextRegister(),
+            type = LLVMType.Trait(name, functions)
+        )
+        instruct("%$name = ${generator.virtualTableDeclaration(name, functions)}")
         return unit
     }
 
@@ -171,6 +184,12 @@ class LLVMCodeAssembler(val generator: ILLVMCodeGenerator): ILLVMCodeAssembler {
         return firstPointer!!
     }
 
+    /**
+     * @param struct The struct to get the element from
+     * @param type The type of the returned element
+     * @param index The index of the element to get
+     * @param total Whether to read from start of struct or from the pointer
+     */
     override fun getElementFromStructure(
         struct: Value,
         type: LLVMType,
@@ -200,7 +219,44 @@ class LLVMCodeAssembler(val generator: ILLVMCodeGenerator): ILLVMCodeAssembler {
         return unit
     }
 
+    override fun getElementFromVirtualTable(
+        table: String,
+        tableType: LLVMType.Dynamic,
+        type: LLVMType,
+        index: Value,
+        total: Boolean
+    ): MemoryUnit {
+        val reading = generator.virtualTableReading(
+            table = table,
+            tableType = tableType,
+            index = index
+        )
+        val unit = MemoryUnit.Sized(
+            register = nextRegister(),
+            type = LLVMType.Pointer(type),
+            size = type.size
+        )
+        saveToRegister(
+            register = unit.register,
+            expression = reading
+        )
+        return unit
+    }
+
     override fun loadPointer(value: MemoryUnit): MemoryUnit {
+        if (value.type == LLVMType.Ptr) {
+            val unit = MemoryUnit.Sized(
+                register = nextRegister(),
+                type = value.type,
+                size = value.type.size
+            )
+            saveToRegister(
+                register = unit.register,
+                expression = generator.loadPointer(value.type, value)
+            )
+            return unit
+        }
+
         if (value.type !is LLVMType.Pointer) {
             error("Expected pointer type, got ${value.type}")
         }
@@ -238,8 +294,15 @@ class LLVMCodeAssembler(val generator: ILLVMCodeGenerator): ILLVMCodeAssembler {
         instruct(generator.storage(value, address))
     }
 
-    override fun returnValue(type: LLVMType, value: MemoryUnit) {
+    override fun returnValue(type: LLVMType, value: Value) {
         instruct(generator.returnInstruction(type, value))
+    }
+
+    override fun simpleString(text: String): Value {
+        return LLVMConstant(
+            value = "c\"$text\\00\"",
+            type = LLVMType.Array(LLVMType.I8, text.length + 1)
+        )
     }
 
     override fun buildString(text: String): MemoryUnit =
@@ -310,7 +373,7 @@ class LLVMCodeAssembler(val generator: ILLVMCodeGenerator): ILLVMCodeAssembler {
         return unit
     }
 
-    override fun compareStrings(left: MemoryUnit, right: MemoryUnit): MemoryUnit {
+    override fun compareStrings(left: Value, right: Value): MemoryUnit {
         val unit = MemoryUnit.Sized(
             register = nextRegister(),
             type = LLVMType.I1,
@@ -323,7 +386,7 @@ class LLVMCodeAssembler(val generator: ILLVMCodeGenerator): ILLVMCodeAssembler {
         return unit
     }
 
-    override fun handleComparison(left: MemoryUnit, right: MemoryUnit, type: LLVMType): MemoryUnit {
+    override fun handleComparison(left: Value, right: Value, type: LLVMType): MemoryUnit {
         when (type) {
             LLVMType.I1 -> {
                 val comparison = addNumber(

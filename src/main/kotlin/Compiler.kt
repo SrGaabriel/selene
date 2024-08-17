@@ -1,6 +1,8 @@
 package me.gabriel.gwydion
 
 import com.github.ajalt.mordant.rendering.TextColors
+import kotlinx.serialization.decodeFromString
+import kotlinx.serialization.json.Json
 import me.gabriel.gwydion.analyzer.CumulativeSemanticAnalyzer
 import me.gabriel.gwydion.compiler.ProgramMemoryRepository
 import me.gabriel.gwydion.compiler.llvm.LLVMCodeAdapter
@@ -14,28 +16,45 @@ import me.gabriel.gwydion.log.MordantLogger
 import me.gabriel.gwydion.parsing.Parser
 import me.gabriel.gwydion.parsing.SyntaxTree
 import me.gabriel.gwydion.reader.AmbiguousSourceReader
+import me.gabriel.gwydion.signature.SignatureHandler
+import me.gabriel.gwydion.signature.Signatures
 import me.gabriel.gwydion.util.findRowOfIndex
 import me.gabriel.gwydion.util.replaceAtIndex
 import me.gabriel.gwydion.util.trimIndentReturningWidth
 import java.io.File
 import java.time.Instant
+import kotlin.math.sign
+
+private val json = Json {
+    encodeDefaults = false
+}
 
 fun main(args: Array<String>) {
+    val logger = MordantLogger()
+
     val isStdlib = args.contains("--internal-compile-stdlib")
     val toolchain = File(System.getProperty("user.home"), ".gwydion")
     if (args.isEmpty()) {
-        println("The argument should be the path to the file to compile")
+        logger.log(LogLevel.ERROR) { +"The argument should be the path to the file to compile" }
         return
     }
-    val filePath = args[0]
-    val file = File(filePath)
-    if (!file.exists()) {
-        println("The file $filePath does not exist")
+    val sourcePath = args[0]
+    val name = args.getOrNull(1) ?: "program"
+    val signatureHandler = SignatureHandler(name, logger, json)
+    val signaturesFile = args.getOrNull(2)?.let { File(it) } ?: File("signatures.json")
+    signaturesFile.createNewFile()
+    signaturesFile.writeText(signaturesFile.readText().ifEmpty { "{}" })
+    val signatures = signaturesFile.let {
+        signatureHandler.parseSignature(it)
+    }
+
+    val folder = File(sourcePath)
+    if (!folder.exists() || folder.isFile) {
+        logger.log(LogLevel.ERROR) { +"The folder does not exist" }
         return
     }
 
     val currentFolder = File("").absolutePath
-    val logger = MordantLogger()
     logger.log(LogLevel.INFO) { +"Starting the Gwydion compiler..." }
     val memory = ProgramMemoryRepository()
 
@@ -57,19 +76,28 @@ fun main(args: Array<String>) {
         val stdlibText = sourceReader.read(stdlib)
         val stdlibMemory = ProgramMemoryRepository()
         val stdlibTree = parse(logger, stdlibText, stdlibMemory) ?: return
-        memory.root.symbols.merge(stdlibMemory.root.symbols)
+        llvmCodeAdapter.generate(
+            "stdlib",
+            stdlibTree,
+            stdlibMemory,
+            Signatures(),
+            compileIntrinsics = true
+        )
+        memory.merge(stdlibMemory)
         StdlibLinker.link(
             stdlibTree,
             llvmCodeAdapter
         )
     }
-    val tree = parse(logger, file.readText(), memory) ?: return
+
+    val sources = File(folder, "src")
+    val tree = parse(logger, sourceReader.read(sources), memory) ?: return
     val memoryEnd = Instant.now()
     val memoryDelay = memoryEnd.toEpochMilli() - memoryStart.toEpochMilli()
     logger.log(LogLevel.INFO) { +"Memory analysis took ${memoryDelay}ms" }
 
     val generationStart = Instant.now()
-    val generated = llvmCodeAdapter.generate(tree, memory, isStdlib)
+    val generated = llvmCodeAdapter.generate(name, tree, memory, signatures, isStdlib)
     val generationEnd = Instant.now()
     val generationDelay = generationEnd.toEpochMilli() - generationStart.toEpochMilli()
     logger.log(LogLevel.INFO) { +"Code generation took ${generationDelay}ms" }
@@ -77,11 +105,15 @@ fun main(args: Array<String>) {
     llvmCodeAdapter.generateExecutable(
         llvmIr = generated,
         outputDir = currentFolder,
-        outputFileName = file.nameWithoutExtension
+        outputFileName = name
     )
     val executionEnd = Instant.now()
     val executionDelay = executionEnd.toEpochMilli() - compilingStart.toEpochMilli()
     logger.log(LogLevel.INFO) { +"Compiling took ${executionDelay}ms" }
+    signatureHandler.appendSignatureToFile(
+        signaturesFile,
+        signatures
+    )
 
     logger.log(LogLevel.INFO) { +"The total time to generate and compile the code was ${executionDelay + generationDelay + memoryDelay}ms" }
     return

@@ -1,13 +1,18 @@
 package me.gabriel.gwydion.compiler.llvm
 
+import me.gabriel.gwydion.analyzer.figureOutTraitForVariable
 import me.gabriel.gwydion.analyzer.getExpressionType
 import me.gabriel.gwydion.compiler.MemoryBlock
 import me.gabriel.gwydion.compiler.ProgramMemoryRepository
 import me.gabriel.gwydion.compiler.IntrinsicFunction
+import me.gabriel.gwydion.lexing.TokenKind
 import me.gabriel.gwydion.llvm.LLVMCodeAssembler
 import me.gabriel.gwydion.llvm.LLVMCodeGenerator
 import me.gabriel.gwydion.llvm.struct.*
 import me.gabriel.gwydion.parsing.*
+import me.gabriel.gwydion.signature.*
+import kotlin.math.sign
+import kotlin.random.Random
 
 /*
  * I decided to use exceptions instead of errors because the exceptions should be caught in
@@ -15,14 +20,17 @@ import me.gabriel.gwydion.parsing.*
  * when there shouldn't be any errors in the first place.
  */
 class LLVMCodeAdaptationProcess(
-    private val tree: SyntaxTree,
-    private val repository: ProgramMemoryRepository,
+    private val module: String,
     private val intrinsics: List<IntrinsicFunction>,
+    private val signatures: Signatures,
     private val stdlibDependencies: List<String>,
     private val compileIntrinsics: Boolean
 ) {
     private val llvmGenerator = LLVMCodeGenerator()
     private val assembler = LLVMCodeAssembler(llvmGenerator)
+
+    private val traitObjects = mutableMapOf<MemoryUnit.Unsized, MutableList<TraitObject>>()
+    private val traitObjectsImpl = mutableSetOf<String>()
 
     fun setup() {
         val dependencies = mutableSetOf<String>()
@@ -43,30 +51,45 @@ class LLVMCodeAdaptationProcess(
         dependencies.add("@format_s = private unnamed_addr constant [3 x i8] c\"%s\\00\"")
         dependencies.add("@format_n = private unnamed_addr constant [3 x i8] c\"%d\\00\"")
         dependencies.add("@format_b = private unnamed_addr constant [3 x i8] c\"%d\\00\"")
+        traitObjectsImpl.forEach {
+            dependencies.add(it)
+        }
 
         (assembler.generator.getGeneratedDependencies() + dependencies).forEach {
             assembler.addDependency(it)
         }
     }
 
-    fun finish(): String = assembler.finish()
+    fun finish() {
+        traitObjects.forEach { (traitMem, traits) ->
+            // TODO: fix
+            traits.forEach { obj ->
+                assembler.addDependency(assembler.generator.createTraitObject(obj = obj))
+            }
+        }
+    }
+
+    fun getGeneratedCode(): String {
+        return assembler.finish()
+    }
 
     fun acceptNode(
         block: MemoryBlock,
         node: SyntaxTreeNode,
-        store: Boolean = false
-    ): MemoryUnit = when (node) {
+        store: Boolean = false,
+        self: Type.Struct? = null
+    ): Value = when (node) {
         is RootNode, is BlockNode -> blockAdaptChildren(block, node)
-        is FunctionNode -> generateFunction(node)
+        is FunctionNode -> generateFunction(block, node, self)
         is CallNode -> generateFunctionCall(block, node, store)
-        is StringNode -> generateString(block, node)
+        is StringNode -> generateString(block, node, store)
         is AssignmentNode -> generateAssignment(block, node)
-        is NumberNode -> generateNumber(block, node)
+        is NumberNode -> generateNumber(block, node, store)
         is VariableReferenceNode -> generateVariableReference(block, node)
         is BinaryOperatorNode -> generateBinaryOperator(block, node)
         is ReturnNode -> generateReturn(block, node)
         is IfNode -> generateIf(block, node)
-        is BooleanNode -> generateBoolean(block, node)
+        is BooleanNode -> generateBoolean(block, node, store)
         is EqualsNode -> generateEquality(block, node)
         is ArrayNode -> generateArray(block, node)
         is ArrayAccessNode -> generateArrayAccess(block, node)
@@ -74,6 +97,9 @@ class LLVMCodeAdaptationProcess(
         is InstantiationNode -> generateInstantiation(block, node)
         is StructAccessNode -> generateStructAccess(block, node)
         is MutationNode -> generateMutation(block, node)
+        is TraitNode -> generateTrait(block, node)
+        is TraitImplNode -> generateTraitImpl(block, node)
+        is TraitFunctionCallNode -> generateTraitCall(block, node, store)
         else -> error("Node $node not supported")
     }
 
@@ -82,13 +108,11 @@ class LLVMCodeAdaptationProcess(
         return NullMemoryUnit
     }
 
-    fun generateFunction(node: FunctionNode): NullMemoryUnit {
+    fun generateFunction(block: MemoryBlock, node: FunctionNode, self: Type.Struct?): NullMemoryUnit {
         if (node.modifiers.contains(Modifiers.INTRINSIC)) return NullMemoryUnit
-        val block = repository.root.surfaceSearchChild(node.name)
-            ?: error("Function ${node.name} not found in the memory repository")
 
         val parameters = node.parameters.map {
-            val type = getProperReturnType(it.type)
+            val type = if (it.type !== Type.Self) getProperReturnType(it.type) else self?.asLLVM()?.let { LLVMType.Pointer(it) } ?: error("Self type not found")
             val unit = MemoryUnit.Sized(
                 register = assembler.nextRegister(),
                 type = type,
@@ -145,7 +169,7 @@ class LLVMCodeAdaptationProcess(
             val call = intrinsic.handleCall(
                 call = node,
                 types = node.arguments.map { getExpressionType(block, it).let { it.getRightOrNull() ?: error(it.getLeft().message) } },
-                arguments = arguments.joinToString(", ") { "${it.type.llvm} %${it.register}" }
+                arguments = arguments.joinToString(", ") { "${it.type.llvm} ${it.llvm()}" }
             )
             if (store) {
                 assembler.saveToRegister(assignment.register, call)
@@ -164,7 +188,8 @@ class LLVMCodeAdaptationProcess(
     }
 
     fun generateAssignment(block: MemoryBlock, node: AssignmentNode): MemoryUnit {
-        val expression = acceptNode(block, node.expression, true)
+        val expression = acceptNode(block, node.expression, true) as? MemoryUnit.Sized
+            ?: error("Expression ${node.expression} not stored")
 
         block.memory.allocate(node.name, expression)
         block.symbols.declare(
@@ -175,7 +200,12 @@ class LLVMCodeAdaptationProcess(
         return expression
     }
 
-    fun generateString(block: MemoryBlock, node: StringNode): MemoryUnit {
+    fun generateString(block: MemoryBlock, node: StringNode, store: Boolean): Value {
+        val singleSegment = node.segments.singleOrNull()
+        if (singleSegment != null && singleSegment is StringNode.Segment.Text) {
+            return assembler.buildString(singleSegment.text)
+        }
+
         val segmentUnits = mutableListOf<MemoryUnit>()
         for (segment in node.segments) {
             when (segment) {
@@ -194,6 +224,7 @@ class LLVMCodeAdaptationProcess(
         val space = assembler.allocateHeapMemory(
             size = 64
         ) as MemoryUnit.Sized
+
         segmentUnits.forEach { segment ->
             assembler.addSourceToDestinationString(
                 source = segment,
@@ -203,14 +234,20 @@ class LLVMCodeAdaptationProcess(
         return space
     }
 
-    fun generateNumber(block: MemoryBlock, node: NumberNode): MemoryUnit {
+    fun generateNumber(block: MemoryBlock, node: NumberNode, store: Boolean): Value {
         val type = node.type.asLLVM()
-        val addition = assembler.addNumber(
-            type = type,
-            left = LLVMConstant(node.value.toInt(), type),
-            right = LLVMConstant(0, type)
+        if (store) {
+            val addition = assembler.addNumber(
+                type = type,
+                left = LLVMConstant(node.value.toInt(), type),
+                right = LLVMConstant(0, type)
+            )
+            return addition
+        }
+        return LLVMConstant(
+            node.value.toLong(),
+            type
         )
-        return addition
     }
 
     fun generateVariableReference(block: MemoryBlock, node: VariableReferenceNode): MemoryUnit {
@@ -225,6 +262,7 @@ class LLVMCodeAdaptationProcess(
         if (typeResult.isLeft()) error("Couldn't figure out binary operation type")
 
         val type = typeResult.unwrap()
+        val op = getBinaryOp(node.operator)
         if (type == Type.String) {
             val left = acceptNode(block, node.left) as MemoryUnit.Sized
             val right = acceptNode(block, node.right) as MemoryUnit.Sized
@@ -241,11 +279,22 @@ class LLVMCodeAdaptationProcess(
             )
             return resultString
         }
+        if (type == Type.Int32) {
+            val left = acceptNode(block, node.left)
+            val right = acceptNode(block, node.right)
+            val result = assembler.binaryOp(
+                type = LLVMType.I32,
+                left = left,
+                op = op,
+                right = right
+            )
+            return result
+        }
         return NullMemoryUnit
     }
 
     fun generateIf(block: MemoryBlock, node: IfNode): NullMemoryUnit {
-        val condition = acceptNode(block, node.condition)
+        val condition = acceptNode(block, node.condition, true) as MemoryUnit.Sized
         val trueLabel = assembler.nextLabel()
         val falseLabel = assembler.nextLabel()
         val endLabel = assembler.nextLabel()
@@ -271,13 +320,17 @@ class LLVMCodeAdaptationProcess(
         return assembler.handleComparison(left, right, type.asLLVM())
     }
 
-    fun generateBoolean(block: MemoryBlock, node: BooleanNode): MemoryUnit {
+    fun generateBoolean(block: MemoryBlock, node: BooleanNode, store: Boolean): Value {
         val type = LLVMType.I1
-        return assembler.addNumber(
-            type = type,
-            left = LLVMConstant(if (node.value) 1 else 0, type),
-            right = LLVMConstant(0, type)
-        )
+        if (store) {
+            val value = assembler.addNumber(
+                type = type,
+                left = LLVMConstant(if (node.value) 1 else 0, type),
+                right = LLVMConstant(0, type)
+            )
+            return value
+        }
+        return LLVMConstant(if (node.value) 1 else 0, type)
     }
 
     fun generateReturn(block: MemoryBlock, node: ReturnNode): NullMemoryUnit {
@@ -371,11 +424,151 @@ class LLVMCodeAdaptationProcess(
         return NullMemoryUnit
     }
 
+    fun generateTrait(block: MemoryBlock, node: TraitNode): MemoryUnit {
+        return NullMemoryUnit
+    }
+
+    fun generateTraitImpl(block: MemoryBlock, node: TraitImplNode): MemoryUnit {
+        val struct = block.figureOutSymbol(node.`object`) as? Type.Struct ?: error("Struct ${node.`object`} not found")
+
+        val trait = MemoryUnit.Unsized(
+            register = Random.nextInt(),
+            type = LLVMType.Dynamic(listOf(
+                LLVMType.I16,
+                LLVMType.I16,
+            ).plus(node.functions.map { LLVMType.Ptr }))
+        )
+        block.memory.allocate(
+            name = "${node.trait}_trait_${node.`object`}",
+            unit = trait
+        )
+
+        registerTraitObject(
+            traitMem = trait,
+            structName = struct.identifier,
+            functions = node.functions.map { it.name }
+        )
+
+        val traitBlock = block.surfaceSearchChild("${node.trait}_trait_${node.`object`}")
+            ?: error("Trait ${node.trait} not found in block ${block.name}")
+
+        node.functions.forEach {
+            traitBlock.symbols.declare(
+                name = "${node.`object`}_${it.name}",
+                type = it.returnType
+            )
+            acceptNode(traitBlock, it.copy(
+                name = "${node.`object`}_${it.name}",
+                parameters = it.parameters
+            ), self = struct)
+        }
+
+        signatures.traitImpls.add(
+            SignatureTraitImpl(
+                trait = node.trait,
+                struct = struct.identifier,
+                index = trait.register,
+                module = module,
+                types = node.functions.map { it.returnType.asLLVM().llvm },
+            )
+        )
+
+        return NullMemoryUnit
+    }
+
+    fun generateTraitCall(block: MemoryBlock, node: TraitFunctionCallNode, store: Boolean): MemoryUnit {
+        val (trait, function) = figureOutTraitForVariable(
+            block = block,
+            variable = node.trait,
+            call = node.function
+        ) ?: error("Trait for ${node.trait} not found")
+        val struct = block.figureOutSymbol(node.trait) as? Type.Struct ?: error("Struct ${node.trait} not found")
+        val virtualTable = getTraitImpl(trait.identifier, struct.identifier)
+
+        val type = getProperReturnType(function.returnType)
+        val functionIndex = trait.functions.indexOfFirst { it.name == node.function }
+
+        val traitImplPointer = assembler.getElementFromVirtualTable(
+            table = '@' + TraitObject.PREFIX + virtualTable.register,
+            tableType = virtualTable.type as LLVMType.Dynamic,
+            type = LLVMType.Ptr,
+            index = LLVMConstant(functionIndex + 2, LLVMType.I32),
+        )
+        val loadedFunction = assembler.loadPointer(traitImplPointer)
+
+        val assignment = if (store) {
+            MemoryUnit.Sized(
+                register = assembler.nextRegister(),
+                type = type,
+                size = type.size
+            )
+        } else NullMemoryUnit
+
+        val arguments = node.arguments.map {
+            acceptNode(block, it)
+        }.toMutableList()
+
+        val variableMemory = block.figureOutMemory(node.trait) ?: error("Variable for trait ${node.trait} not found")
+        arguments.add(0, variableMemory)
+
+        assembler.callFunction(
+            name = loadedFunction.register.toString(),
+            arguments = arguments,
+            assignment = assignment,
+            local = true
+        )
+
+        return assignment
+    }
+
     fun getProperReturnType(returnType: Type): LLVMType {
         return when (val type = returnType.asLLVM()) {
             is LLVMType.Struct -> LLVMType.Pointer(type)
             is LLVMType.Array -> LLVMType.Pointer(type.type)
             else -> type
+        }
+    }
+
+    fun registerTraitObject(traitMem: MemoryUnit.Unsized, structName: String, functions: List<String>) {
+        // Create new key if trait doesn't exist, otherwise add to the list of functions.
+        traitObjects.computeIfAbsent(traitMem) { mutableListOf() }
+            .add(TraitObject(
+                register = traitMem.register,
+                name = structName,
+                size = 8,
+                alignment = 8,
+                functions = functions
+            ))
+    }
+
+    fun getTraitImpl(trait: String, struct: String): MemoryUnit.Unsized {
+        val value =
+            signatures.traitImpls.find { it.trait == trait && it.struct == struct } ?: error("Trait impl not found ${signatures.traitImpls}")
+        if (value.module != module) {
+            traitObjectsImpl.add(
+                "@trait_${value.index} = external constant <{ i16, i16, ${
+                    value.types.joinToString(
+                        ", "
+                    ) { "ptr" }
+                } }>"
+            )
+        }
+        return MemoryUnit.Unsized(
+            register = value.index,
+            type = LLVMType.Dynamic(listOf(
+                LLVMType.I16,
+                LLVMType.I16,
+            ).plus(value.types.map { LLVMType.Ptr }))
+        )
+    }
+
+    fun getBinaryOp(kind: TokenKind): BinaryOp {
+        return when (kind) {
+            TokenKind.PLUS -> BinaryOp.Addition
+            TokenKind.MINUS -> BinaryOp.Subtraction
+            TokenKind.TIMES -> BinaryOp.Multiplication
+            TokenKind.DIVIDE -> BinaryOp.Division
+            else -> error("Binary operation not supported")
         }
     }
 }

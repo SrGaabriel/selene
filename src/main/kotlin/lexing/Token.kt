@@ -51,6 +51,7 @@ enum class TokenKind {
     TRAIT,
     MAKE,
     INTO,
+    SELF,
     MUT,
     MUTATION
 }

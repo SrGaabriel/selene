@@ -19,10 +19,6 @@ class LLVMCodeGenerator: ILLVMCodeGenerator {
         return "call void @memset(i8* ${value.llvm()}, i32 0, i32 ${size})"
     }
 
-    override fun addition(left: Value, right: Value, type: LLVMType): String {
-        return "add $type %${left.llvm()}, %${right.llvm()}"
-    }
-
     override fun cast(value: Value, type: LLVMType): String {
         return "bitcast ${value.type.llvm} ${value.llvm()} to ${type.llvm}"
     }
@@ -45,9 +41,9 @@ class LLVMCodeGenerator: ILLVMCodeGenerator {
         return "call i32 @strlen(${argument.type.llvm} %${argument.llvm()})"
     }
 
-    override fun functionCall(name: String, returnType: LLVMType, arguments: Collection<Value>): String {
+    override fun functionCall(name: String, returnType: LLVMType, arguments: Collection<Value>, local: Boolean): String {
         val argsString = arguments.joinToString(", ") { "${it.type.llvm} ${it.llvm()}" }
-        return "call ${returnType.llvm} @$name($argsString)"
+        return "call ${returnType.llvm} ${if (local) '%' else '@'}$name($argsString)"
     }
 
     override fun memoryCopy(source: MemoryUnit, destination: MemoryUnit, size: Value): String {
@@ -81,6 +77,10 @@ class LLVMCodeGenerator: ILLVMCodeGenerator {
         }
         val pointerType = LLVMType.Pointer(originalType)
         return "getelementptr inbounds ${originalType.llvm}, ${pointerType.llvm} ${struct.llvm()}, i32 ${index.llvm()}"
+    }
+
+    override fun virtualTableReading(table: String, tableType: LLVMType.Dynamic, index: Value): String {
+        return "getelementptr inbounds ${tableType.llvm}, ptr $table, i32 0, i32 ${index.llvm()}"
     }
 
     override fun returnInstruction(type: LLVMType, value: Value): String {
@@ -120,8 +120,18 @@ class LLVMCodeGenerator: ILLVMCodeGenerator {
         return "call i8* @strcat(i8* ${right.llvm()}, i8* ${left.llvm()})"
     }
 
-    override fun addNumber(type: LLVMType, left: Value, right: Value): String {
-        return "add ${type.llvm} ${left.llvm()}, ${right.llvm()}"
+    override fun createTraitObject(obj: TraitObject): String {
+        return """
+            @${obj.prefix}${obj.register} = unnamed_addr constant <{ i16, i16, ${obj.functions.joinToString(", ") { "ptr" }} }> <{
+                i16 ${obj.size},
+                i16 ${obj.alignment},
+                ${obj.functions.joinToString(", \n") { "ptr @${obj.name}_$it" }}
+            }>, align 8
+        """.trimIndent()
+    }
+
+    override fun binaryOp(left: Value, op: BinaryOp, right: Value, type: LLVMType): String {
+        return "${op.llvm} ${type.llvm} ${left.llvm()}, ${right.llvm()}"
     }
 
     override fun storage(value: Value, address: MemoryUnit): String {
@@ -129,7 +139,17 @@ class LLVMCodeGenerator: ILLVMCodeGenerator {
     }
 
     override fun loadPointer(type: LLVMType, value: MemoryUnit): String {
-        return "load ${type.llvm}, ${type.llvm}* ${value.llvm()}"
+        val pointerType = if (type is LLVMType.Ptr) {
+            type.llvm
+        } else {
+            type.llvm + "*"
+        }
+        return "load ${type.llvm}, $pointerType ${value.llvm()}"
+    }
+
+    override fun virtualTableDeclaration(name: String, functions: List<LLVMType.Function>): String {
+        val functionsString = functions.joinToString(", ") { "${it.returnType.llvm} (${it.parameterTypes.joinToString(", ") { it.llvm }})*" }
+        return "type { $functionsString }"
     }
 
     override fun structDeclaration(fields: Collection<LLVMType>): String {

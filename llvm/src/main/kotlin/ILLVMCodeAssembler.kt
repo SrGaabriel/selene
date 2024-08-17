@@ -1,5 +1,6 @@
 package me.gabriel.gwydion.llvm
 
+import me.gabriel.gwydion.llvm.struct.BinaryOp
 import me.gabriel.gwydion.llvm.struct.LLVMType
 import me.gabriel.gwydion.llvm.struct.MemoryUnit
 import me.gabriel.gwydion.llvm.struct.Value
@@ -47,6 +48,14 @@ interface ILLVMCodeAssembler {
         total: Boolean = true
     ): MemoryUnit
 
+    fun getElementFromVirtualTable(
+        table: String,
+        tableType: LLVMType.Dynamic,
+        type: LLVMType,
+        index: Value,
+        total: Boolean = true
+    ): MemoryUnit
+
     fun loadPointer(value: MemoryUnit): MemoryUnit
 
     fun unsafelyLoadPointer(value: MemoryUnit, pointer: LLVMType.Pointer): MemoryUnit
@@ -80,12 +89,18 @@ interface ILLVMCodeAssembler {
     fun callFunction(
         name: String,
         arguments: Collection<Value>,
-        assignment: Value
+        assignment: Value,
+        local: Boolean = false
     )
 
     fun declareStruct(
         name: String,
         fields: Map<String, LLVMType>
+    ): MemoryUnit
+
+    fun createVirtualTable(
+        name: String,
+        functions: List<LLVMType.Function>
     ): MemoryUnit
 
     fun addNumber(
@@ -94,11 +109,20 @@ interface ILLVMCodeAssembler {
         right: Value
     ): MemoryUnit
 
+    fun binaryOp(
+        type: LLVMType,
+        left: Value,
+        op: BinaryOp,
+        right: Value
+    ): MemoryUnit
+
+    fun simpleString(text: String): Value
+
     fun buildString(text: String): MemoryUnit
 
     fun storeTo(value: Value, address: MemoryUnit)
 
-    fun returnValue(type: LLVMType, value: MemoryUnit)
+    fun returnValue(type: LLVMType, value: Value)
 
     fun copySourceToDestinationString(source: MemoryUnit, destination: MemoryUnit)
 
@@ -106,9 +130,9 @@ interface ILLVMCodeAssembler {
 
     fun calculateStringLength(string: MemoryUnit): MemoryUnit
 
-    fun handleComparison(left: MemoryUnit, right: MemoryUnit, type: LLVMType): MemoryUnit
+    fun handleComparison(left: Value, right: Value, type: LLVMType): MemoryUnit
 
-    fun compareStrings(left: MemoryUnit, right: MemoryUnit): MemoryUnit
+    fun compareStrings(left: Value, right: Value): MemoryUnit
 
     fun isTrue(value: Value): MemoryUnit
 

@@ -1,6 +1,8 @@
-use std::fs;
+use serde::Deserialize;
+use std::{fs, thread};
 use std::path::{Path, PathBuf};
 use std::process::{Command, Stdio};
+use std::time::Duration;
 
 fn main() {
     let binding = std::env::current_dir().expect("Failed to get current directory");
@@ -11,29 +13,30 @@ fn main() {
         return;
     }
 
-    let stdlib = project_root.join("stdlib");
-    compile_project_sources(&stdlib, project_root, true);
+    // delete output folder (current directory / output)
+    let output_dir = binding.join("output");
+    if output_dir.exists() {
+        remove_dir_all_retry(&output_dir, 3, 100).expect("Failed to remove output directory");
+    } else {
+        println!("Output directory does not exist");
+    }
+
     let bard_dir = project_root.join("bard");
-    compile_project_sources(&bard_dir, project_root, false);
+    let stdlib = project_root.join("stdlib");
+    let stdlib_props = parse_properties(&stdlib);
+    compile_project_sources(&stdlib_props, &stdlib, project_root, true);
+    let bard_props = parse_properties(&bard_dir);
+    compile_project_sources(&bard_props, &bard_dir, project_root, false);
 
     link_files(project_root);
 }
 
-fn compile_project_sources(source_root: &Path, project_root: &Path, is_stdlib: bool) {
-    let target_srcs = source_root.join("src");
-
-    if let Ok(entries) = fs::read_dir(&target_srcs) {
-        for entry in entries.flatten() {
-            let path = entry.path();
-            if path.extension().map_or(false, |ext| ext == "wy") {
-                compile(&path, is_stdlib, project_root);
-            }
-        }
-    }
+fn compile_project_sources(props: &ModuleProperties, source_root: &Path, project_root: &Path, is_stdlib: bool) {
+    compile(&props.name, &source_root, is_stdlib, project_root);
 }
 
 fn link_files(project_root: &Path) {
-    let output_dir = project_root.join("bard/output/ll");
+    let output_dir = project_root.join("bard\\output\\ll");
 
     let files: Vec<PathBuf> = fs::read_dir(&output_dir)
         .unwrap_or_else(|_| panic!("Failed to read directory: {:?}", output_dir))
@@ -46,7 +49,12 @@ fn link_files(project_root: &Path) {
     }
 
     let mut command = Command::new("clang");
-    command.arg("-o").arg(project_root.join("bard/output/output.exe"));
+    let output_filename = if cfg!(windows) {
+        "output.exe"
+    } else {
+        "output"
+    };
+    command.arg("-o").arg(project_root.join(format!("bard/output/{}", output_filename)));
     command.args(&files);
     command.current_dir(&output_dir);
     command.stdout(Stdio::inherit());
@@ -58,7 +66,7 @@ fn link_files(project_root: &Path) {
     }
 }
 
-fn compile(file: &Path, is_stdlib: bool, project_root: &Path) {
+fn compile(name: &String, file: &Path, is_stdlib: bool, project_root: &Path) {
     println!("Compiling {:?}", file);
     let gwydion_jar = project_root.join("build/libs/gwydion.jar");
 
@@ -69,6 +77,8 @@ fn compile(file: &Path, is_stdlib: bool, project_root: &Path) {
     command.arg("-jar")
         .arg(&gwydion_jar)
         .arg(file)
+        .arg(name)
+        .arg("signatures.json")
         .current_dir(&output_dir);
 
     if is_stdlib {
@@ -78,4 +88,49 @@ fn compile(file: &Path, is_stdlib: bool, project_root: &Path) {
     let output = command.output().expect("Failed to execute java process");
     output.stdout.iter().for_each(|b| print!("{}", *b as char));
     output.stderr.iter().for_each(|b| eprint!("{}", *b as char));
+}
+
+#[derive(Deserialize)]
+pub struct ModuleProperties{
+    name: String
+}
+
+fn parse_properties(module_root: &Path) -> ModuleProperties {
+    // Now we just need to read and parse module_root/module.toml
+    // print files under module_root
+    for entry in fs::read_dir(module_root).expect("Failed to read directory") {
+        let entry = entry.expect("Failed to read entry");
+        println!("{:?}", entry.path());
+    }
+
+    let toml_path = module_root.join("module.toml");
+    let toml_str = fs::read_to_string(&toml_path).expect("Failed to read module.toml");
+    toml::from_str(&toml_str).expect("Failed to parse module.toml")
+}
+
+fn remove_dir_all_retry<P: AsRef<Path>>(path: P, retries: u32, delay_ms: u64) -> std::io::Result<()> {
+    for _ in 0..retries {
+        match fs::remove_dir_all(&path) {
+            Ok(_) => {
+                if !path.as_ref().exists() {
+                    return Ok(());
+                }
+            }
+            Err(err) => {
+                // Handle the specific error if needed
+                eprintln!("Failed to remove directory: {}", err);
+            }
+        }
+
+        // Wait for the specified duration before retrying
+        thread::sleep(Duration::from_millis(delay_ms));
+    }
+
+    // Final attempt outside of the loop
+    fs::remove_dir_all(&path)?;
+    if path.as_ref().exists() {
+        Err(std::io::Error::new(std::io::ErrorKind::Other, "Directory still exists after maximum retries"))
+    } else {
+        Ok(())
+    }
 }

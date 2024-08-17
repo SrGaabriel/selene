@@ -38,11 +38,37 @@ class CumulativeSemanticAnalyzer(
                     Type.Struct(node.name, node.fields.associate { it.name to it.type }, false)
                 )
             }
+            is TraitImplNode -> {
+                val name = "${node.trait}_trait_${node.`object`}"
+                val struct = block.figureOutSymbol(node.`object`) as? Type.Struct
+                if (struct == null) {
+                    errors.add(AnalysisError.UndefinedDataStructure(node, node.`object`))
+                    return null
+                }
 
+                block.symbols.define(name, node)
+                val newBlock = repository.createBlock(
+                    name,
+                    block,
+                    self = struct
+                )
+                struct.traits.add(block.figureOutSymbol(node.trait) as Type.Trait)
+                node.functions.forEach {
+                    newBlock.symbols.declare("${node.`object`}_${it.name}", it.returnType)
+                    newBlock.symbols.define("${node.`object`}_${it.name}", it)
+                }
+                return newBlock
+            }
+            is TraitNode -> {
+                block.symbols.define(node.name, node)
+                block.symbols.declare(node.name, Type.Trait(
+                    node.name,
+                    node.functions
+                ))
+            }
             is BlockNode -> {
                 node.getChildren().forEach { findSymbols(it, block) }
             }
-
             is FunctionNode -> {
                 node.returnType = handleUnknownReference(
                     block = block,
@@ -118,7 +144,7 @@ class CumulativeSemanticAnalyzer(
 
             is FunctionNode -> {
                 val functionBlock =
-                    repository.root.surfaceSearchChild(node.name) ?: error("Block ${node.name} not found")
+                    block.surfaceSearchChild(node.name) ?: error("Block ${node.name} not found")
                 if (node.modifiers.contains(Modifiers.INTRINSIC)) {
                     return
                 }
@@ -157,7 +183,20 @@ class CumulativeSemanticAnalyzer(
                 }
                 block
             }
-
+            is TraitImplNode -> {
+                val traitBlock = block.surfaceSearchChild("${node.trait}_trait_${node.`object`}")
+                    ?: error("Block ${node.trait}_trait_${node.`object`} not found")
+                val obj = block.figureOutSymbol(node.`object`)
+                if (obj == null) {
+                    errors.add(AnalysisError.UndefinedVariable(node, node.`object`, block))
+                    return
+                }
+                if (obj !is Type.Struct) {
+                    errors.add(AnalysisError.NotADataStructure(node, obj))
+                    return
+                }
+                traitBlock
+            }
             is MutationNode -> {
                 val variable = block.figureOutSymbol(node.struct)
                 if (variable == null) {
@@ -165,7 +204,7 @@ class CumulativeSemanticAnalyzer(
                     return
                 }
                 if (variable is Type.Struct && !variable.mutable) {
-                    errors.add(AnalysisError.ImmutableVariableMutation(node, variable.name))
+                    errors.add(AnalysisError.ImmutableVariableMutation(node, variable.id))
                 }
                 block
             }
@@ -238,6 +277,7 @@ class CumulativeSemanticAnalyzer(
             }
 
             is StructAccessNode -> {
+                if (node.struct == "self") return
                 val struct = block.figureOutSymbol(node.struct)
                 if (struct == null) {
                     errors.add(AnalysisError.UndefinedDataStructure(node, node.struct))
@@ -267,7 +307,7 @@ class CumulativeSemanticAnalyzer(
             return true
         }
         if (required is Type.Struct && provided is Type.Struct) {
-            return required.name == provided.name && !(required.mutable && !provided.mutable) && required.fields == provided.fields
+            return required.id == provided.id && !(required.mutable && !provided.mutable) && required.fields == provided.fields
         }
         return required == provided
     }
@@ -280,13 +320,16 @@ class CumulativeSemanticAnalyzer(
         when (type) {
             is Type.UnknownReference -> {
                 val actualType = block.figureOutSymbol(type.reference)
-                if (actualType == null || actualType !is Type.Struct) {
+                if (actualType == null || (actualType !is Type.Struct && actualType !is Type.Trait)) {
                     errors.add(AnalysisError.UnknownType(node, type))
                     return null
                 }
-                return actualType.copy(
-                    mutable = type.mutable
-                )
+                if (actualType is Type.Struct) {
+                    return actualType.copy(
+                        mutable = type.mutable
+                    )
+                }
+                return actualType
             }
             is Type.FixedArray -> {
                 val actualType = handleUnknownReference(block, node, type.type) ?: return null
