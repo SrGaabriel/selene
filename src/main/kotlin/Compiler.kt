@@ -75,12 +75,13 @@ fun main(args: Array<String>) {
         }
         val stdlibText = sourceReader.read(stdlib)
         val stdlibMemory = ProgramMemoryRepository()
-        val stdlibTree = parse(logger, stdlibText, stdlibMemory) ?: return
+        val stdlibSignatures = Signatures()
+        val stdlibTree = parse(logger, stdlibText, stdlibMemory, stdlibSignatures) ?: return
         llvmCodeAdapter.generate(
             "stdlib",
             stdlibTree,
             stdlibMemory,
-            Signatures(),
+            stdlibSignatures,
             compileIntrinsics = true
         )
         memory.merge(stdlibMemory)
@@ -91,7 +92,7 @@ fun main(args: Array<String>) {
     }
 
     val sources = File(folder, "src")
-    val tree = parse(logger, sourceReader.read(sources), memory) ?: return
+    val tree = parse(logger, sourceReader.read(sources), memory, signatures) ?: return
     val memoryEnd = Instant.now()
     val memoryDelay = memoryEnd.toEpochMilli() - memoryStart.toEpochMilli()
     logger.log(LogLevel.INFO) { +"Memory analysis took ${memoryDelay}ms" }
@@ -119,7 +120,7 @@ fun main(args: Array<String>) {
     return
 }
 
-fun parse(logger: GwydionLogger, text: String, memory: ProgramMemoryRepository): SyntaxTree? {
+fun parse(logger: GwydionLogger, text: String, memory: ProgramMemoryRepository, signatures: Signatures): SyntaxTree? {
     val start = Instant.now()
     val lexer = StringLexer(text)
     val result = lexer.tokenize()
@@ -158,7 +159,7 @@ fun parse(logger: GwydionLogger, text: String, memory: ProgramMemoryRepository):
         logger.log(LogLevel.DEBUG) { +"The parsing was successful!" }
     }
 
-    val analyzer = CumulativeSemanticAnalyzer(parsingResult.getRight(), memory)
+    val analyzer = CumulativeSemanticAnalyzer(parsingResult.getRight(), memory, signatures)
     val analysis = analyzer.analyzeTree()
     if (analysis.errors.isNotEmpty()) {
         logger.log(LogLevel.ERROR) {

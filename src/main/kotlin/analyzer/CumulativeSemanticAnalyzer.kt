@@ -4,11 +4,16 @@ import me.gabriel.gwydion.compiler.MemoryBlock
 import me.gabriel.gwydion.compiler.ProgramMemoryRepository
 import me.gabriel.gwydion.exception.AnalysisError
 import me.gabriel.gwydion.parsing.*
+import me.gabriel.gwydion.signature.SignatureFunction
+import me.gabriel.gwydion.signature.SignatureTrait
+import me.gabriel.gwydion.signature.SignatureTraitImpl
+import me.gabriel.gwydion.signature.Signatures
 import me.gabriel.gwydion.util.Either
 
 class CumulativeSemanticAnalyzer(
     private val tree: SyntaxTree,
-    private val repository: ProgramMemoryRepository
+    private val repository: ProgramMemoryRepository,
+    private val signatures: Signatures
 ): SemanticAnalyzer {
     private val errors = mutableListOf<AnalysisError>()
 
@@ -39,23 +44,39 @@ class CumulativeSemanticAnalyzer(
                 )
             }
             is TraitImplNode -> {
-                val name = "${node.trait}_trait_${node.`object`}"
-                val struct = block.figureOutSymbol(node.`object`) as? Type.Struct
-                if (struct == null) {
-                    errors.add(AnalysisError.UndefinedDataStructure(node, node.`object`))
-                    return null
-                }
+                node.type = handleUnknownReference(
+                    block = block,
+                    node = node,
+                    type = node.type
+                ) ?: node.type
+                val name = "${node.trait}_trait_${node.type.signature}"
 
                 block.symbols.define(name, node)
                 val newBlock = repository.createBlock(
                     name,
                     block,
-                    self = struct
+                    self = node.type
                 )
-                struct.traits.add(block.figureOutSymbol(node.trait) as Type.Trait)
+
+                val traitSignature = signatures.traits.find { it.name == node.trait } ?: error("Trait ${node.trait} not found")
+                println("Adding trait impl for ${node.trait} and ${node.type.signature}")
+                traitSignature.impls.add(
+                    SignatureTraitImpl(
+                        trait = node.trait,
+                        struct = node.type.signature,
+                        index = null,
+                        module = null,
+                        types = node.functions.map { it.returnType },
+                    )
+                )
                 node.functions.forEach {
-                    newBlock.symbols.declare("${node.`object`}_${it.name}", it.returnType)
-                    newBlock.symbols.define("${node.`object`}_${it.name}", it)
+                    val treatedType = handleUnknownReference(
+                        block = newBlock,
+                        node = it,
+                        type = it.returnType
+                    ) ?: it.returnType
+                    newBlock.symbols.declare("${node.type.signature}_${it.name}", treatedType)
+                    newBlock.symbols.define("${node.type.signature}_${it.name}", it)
                 }
                 return newBlock
             }
@@ -65,6 +86,19 @@ class CumulativeSemanticAnalyzer(
                     node.name,
                     node.functions
                 ))
+
+                signatures.traits.add(
+                    SignatureTrait(
+                        name = node.name,
+                        functions = node.functions.map {
+                            SignatureFunction(
+                                name = it.name,
+                                returnType = it.returnType,
+                                parameters = it.parameters.map { it.type }
+                            )
+                        }
+                    )
+                )
             }
             is BlockNode -> {
                 node.getChildren().forEach { findSymbols(it, block) }
@@ -95,7 +129,7 @@ class CumulativeSemanticAnalyzer(
 
             is AssignmentNode -> {
                 val type = if (node.type == Type.Unknown) {
-                    getExpressionType(block, node.expression).getRightOrNull() ?: Type.Unknown
+                    getExpressionType(block, node.expression, signatures).getRightOrNull() ?: Type.Unknown
                 } else {
                     node.type
                 }
@@ -124,8 +158,8 @@ class CumulativeSemanticAnalyzer(
     fun analyzeNode(node: SyntaxTreeNode, block: MemoryBlock) {
         val deeperBlock: MemoryBlock = when (node) {
             is BinaryOperatorNode -> {
-                val getLeftType = getExpressionType(block, node.left)
-                val getRightType = getExpressionType(block, node.right)
+                val getLeftType = getExpressionType(block, node.left, signatures)
+                val getRightType = getExpressionType(block, node.right, signatures)
 
                 if (getLeftType is Either.Left) {
                     errors.add(getLeftType.value)
@@ -151,7 +185,7 @@ class CumulativeSemanticAnalyzer(
 
                 val returnNode = node.body.getChildren().find { it is ReturnNode }
                 val returnType = if (returnNode != null) {
-                    val result = getExpressionType(functionBlock, (returnNode as ReturnNode).expression)
+                    val result = getExpressionType(functionBlock, (returnNode as ReturnNode).expression, signatures)
                     if (result is Either.Left) {
                         errors.add(result.value)
                         return
@@ -173,7 +207,7 @@ class CumulativeSemanticAnalyzer(
             }
 
             is IfNode -> {
-                val conditionType = getExpressionType(block, node.condition)
+                val conditionType = getExpressionType(block, node.condition, signatures)
                 if (conditionType is Either.Left) {
                     errors.add(conditionType.value)
                     return
@@ -184,17 +218,8 @@ class CumulativeSemanticAnalyzer(
                 block
             }
             is TraitImplNode -> {
-                val traitBlock = block.surfaceSearchChild("${node.trait}_trait_${node.`object`}")
-                    ?: error("Block ${node.trait}_trait_${node.`object`} not found")
-                val obj = block.figureOutSymbol(node.`object`)
-                if (obj == null) {
-                    errors.add(AnalysisError.UndefinedVariable(node, node.`object`, block))
-                    return
-                }
-                if (obj !is Type.Struct) {
-                    errors.add(AnalysisError.NotADataStructure(node, obj))
-                    return
-                }
+                val traitBlock = block.surfaceSearchChild("${node.trait}_trait_${node.type.signature}")
+                    ?: error("Block ${node.trait}_trait_${node.type.signature} not found")
                 traitBlock
             }
             is MutationNode -> {
@@ -241,7 +266,7 @@ class CumulativeSemanticAnalyzer(
                 }
 
                 definition.parameters.forEachIndexed { index, parameter ->
-                    val argumentType = getExpressionType(block, node.arguments[index])
+                    val argumentType = getExpressionType(block, node.arguments[index], signatures)
                     if (argumentType is Either.Left) {
                         errors.add(argumentType.value)
                         return

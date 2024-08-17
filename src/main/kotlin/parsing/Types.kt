@@ -1,12 +1,18 @@
 package me.gabriel.gwydion.parsing
 
+import kotlinx.serialization.Serializable
 import me.gabriel.gwydion.lexing.Token
 import me.gabriel.gwydion.lexing.TokenKind
 
-sealed class Type(val id: kotlin.String, val signature: kotlin.String = id) {
+@Serializable
+sealed class Type(
+    val id: kotlin.String,
+    val signature: kotlin.String = id
+) {
     data object Any : Type("any")
     data object Int8 : Type("int8")
     data object Int16 : Type("int16")
+    @Serializable
     data object Int32 : Type("int32")
     data object Int64 : Type("int64")
     data object UInt8 : Type("uint8")
@@ -23,17 +29,16 @@ sealed class Type(val id: kotlin.String, val signature: kotlin.String = id) {
     data class UnknownReference(val reference: kotlin.String, val mutable: kotlin.Boolean): Type("unknown", reference)
     data class DynamicArray(
         val type: Type,
-    ): Type("fixed array", type.signature)
+    ): Type("fixed array", "${type.signature}[]")
     data class FixedArray(
         val type: Type,
         val length: Int
-    ): Type("fixed array", type.signature)
+    ): Type("fixed array", "${type.signature}[$length]")
 
     data class Struct(
         val identifier: kotlin.String,
         val fields: Map<kotlin.String, Type>,
-        val mutable: kotlin.Boolean,
-        val traits: MutableList<Trait> = mutableListOf()
+        val mutable: kotlin.Boolean
     ): Type("struct", identifier)
 
     data class Trait(

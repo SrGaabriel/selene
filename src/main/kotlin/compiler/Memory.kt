@@ -11,7 +11,7 @@ data class MemoryBlock(
     val memory: MemoryTable,
     val parent: MemoryBlock?,
     val children: MutableList<MemoryBlock> = mutableListOf(),
-    var self: Type.Struct? = null
+    var self: Type? = null
 ) {
     fun surfaceSearchChild(name: String): MemoryBlock? {
         return children.find { it.name == name }
@@ -57,7 +57,7 @@ class ProgramMemoryRepository {
         parent: MemoryBlock,
         symbols: SymbolTable = SymbolTable(),
         table: MemoryTable = MemoryTable(),
-        self: Type.Struct? = parent.self
+        self: Type? = parent.self
     ): MemoryBlock {
         val block = MemoryBlock(name, symbols, table, parent, mutableListOf(), self)
         parent.children.add(block)

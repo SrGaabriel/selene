@@ -22,7 +22,7 @@ class SignatureHandler(
 
         logger.log(LogLevel.INFO) { +"Parsing signature file" }
         val signatures = json.decodeFromString<Signatures>(file.readText())
-        logger.log(LogLevel.INFO) { +"Parsed ${signatures.traitImpls.size} trait implsl" }
+        logger.log(LogLevel.INFO) { +"Parsed ${signatures.traits.size} traits" }
         return signatures
     }
 
@@ -53,9 +53,7 @@ class SignatureHandler(
     fun appendSignatureToFile(file: File, signatures: Signatures) {
         logger.log(LogLevel.INFO) { +"Appending signature to file" }
         val currentContent = if (file.exists()) {
-            json.decodeFromString<Signatures>(file.readText()).filter {
-                it.module == module
-            }
+            json.decodeFromString<Signatures>(file.readText())
         } else {
             Signatures()
         }

@@ -7,10 +7,6 @@ data class SyntaxTree(val root: RootNode = RootNode(mutableListOf())) {
     fun addAllNodes(nodes: List<SyntaxTreeNode>) {
         root.addNodes(nodes)
     }
-
-    fun join(tree: SyntaxTree) {
-        addAllNodes(tree.root.getChildren())
-    }
 }
 
 sealed class SyntaxTreeNode(
@@ -227,11 +223,13 @@ class TraitFunctionNode(
 }
 
 class TraitImplNode(
-    val `object`: String,
+    var type: Type,
     val trait: String,
     val functions: List<FunctionNode>
 ) : SyntaxTreeNode(null, null) {
     override fun getChildren(): List<SyntaxTreeNode> = functions
+
+    override fun toString(): String = "TraitImplNode(type=$type, trait='$trait', functions=$functions)"
 }
 
 class InstantiationNode(

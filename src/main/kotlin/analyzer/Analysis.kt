@@ -3,31 +3,40 @@ package me.gabriel.gwydion.analyzer
 import me.gabriel.gwydion.compiler.MemoryBlock
 import me.gabriel.gwydion.exception.AnalysisError
 import me.gabriel.gwydion.parsing.*
+import me.gabriel.gwydion.signature.SignatureFunction
+import me.gabriel.gwydion.signature.SignatureTrait
+import me.gabriel.gwydion.signature.SignatureTraitImpl
+import me.gabriel.gwydion.signature.Signatures
 import me.gabriel.gwydion.util.Either
+import kotlin.math.sign
 
 class AnalysisResult(
     val errors: List<AnalysisError>
 )
 
-tailrec fun getExpressionType(block: MemoryBlock, node: SyntaxTreeNode): Either<AnalysisError, out Type> {
+tailrec fun getExpressionType(
+    block: MemoryBlock,
+    node: SyntaxTreeNode,
+    signatures: Signatures
+): Either<AnalysisError, out Type> {
     return when (node) {
         is VariableReferenceNode -> {
             Either.Right(block.figureOutSymbol(node.name) ?: return Either.Left(AnalysisError.UndefinedVariable(node, node.name, block)))
         }
         is AssignmentNode -> {
             if (node.type == Type.Unknown) {
-                getExpressionType(block, node.expression).getRightOrNull() ?: Type.Unknown
+                getExpressionType(block, node.expression, signatures).getRightOrNull() ?: Type.Unknown
             } else {
                 node.type
             }
 
-            getExpressionType(block, node.expression)
+            getExpressionType(block, node.expression, signatures)
         }
         is TypedSyntaxTreeNode -> Either.Right(node.type)
-        is BinaryOperatorNode -> getExpressionType(block, node.left)
+        is BinaryOperatorNode -> getExpressionType(block, node.left, signatures)
         is CallNode -> Either.Right(inferCallType(block, node))
         is EqualsNode -> Either.Right(Type.Boolean)
-        is ArrayNode -> getExpressionType(block, node.elements.first()).let {
+        is ArrayNode -> getExpressionType(block, node.elements.first(), signatures).let {
             it.mapRight {
                 if (!node.dynamic) Type.FixedArray(it, node.elements.size)
                 else Type.DynamicArray(it)
@@ -47,9 +56,10 @@ tailrec fun getExpressionType(block: MemoryBlock, node: SyntaxTreeNode): Either<
         }
         is DataStructureNode -> Either.Right(block.figureOutSymbol(node.name) ?: return Either.Left(AnalysisError.UndefinedDataStructure(node, node.name)))
         is TraitFunctionCallNode -> {
-            val (_, function) = figureOutTraitForVariable(
+            val (_, _, function) = figureOutTraitForVariable(
                 block = block,
                 variable = node.trait,
+                signatures = signatures,
                 call = node.function
             ) ?: return Either.Left(AnalysisError.UndefinedTrait(node, node.trait))
             Either.Right(function.returnType)
@@ -77,26 +87,29 @@ fun inferCallType(block: MemoryBlock, node: CallNode): Type {
     return function
 }
 
+data class TraitFunctionMetadata(
+    val trait: SignatureTrait,
+    val impl: SignatureTraitImpl,
+    val function: SignatureFunction,
+    val type: Type
+)
+
 fun figureOutTraitForVariable(
     block: MemoryBlock,
     variable: String,
+    signatures: Signatures,
     call: String
-): Pair<Type.Trait, TraitFunctionNode>? {
+): TraitFunctionMetadata? {
     val resolvedVariable = block.figureOutSymbol(variable) ?: return null
 
-    return when (resolvedVariable) {
-        is Type.Struct -> {
-            val (trait, function) = resolvedVariable.traits
-                .firstNotNullOfOrNull { trait ->
-                    trait.functions.find { it.name == call }?.let { trait to it }
-                } ?: return null
-
-            trait to function
+    return signatures.traits.firstNotNullOfOrNull { trait ->
+        val impl = trait.impls.firstOrNull { it.struct == resolvedVariable.signature }
+        if (impl != null) {
+            val function = trait.functions.firstOrNull { it.name == call }
+            if (function != null) {
+                return TraitFunctionMetadata(trait, impl, function, function.returnType)
+            }
         }
-        is Type.Trait -> {
-            val function = resolvedVariable.functions.find { it.name == call } ?: return null
-            resolvedVariable to function
-        }
-        else -> null
+        null
     }
 }

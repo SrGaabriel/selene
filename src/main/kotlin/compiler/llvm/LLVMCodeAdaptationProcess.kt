@@ -3,7 +3,6 @@ package me.gabriel.gwydion.compiler.llvm
 import me.gabriel.gwydion.analyzer.figureOutTraitForVariable
 import me.gabriel.gwydion.analyzer.getExpressionType
 import me.gabriel.gwydion.compiler.MemoryBlock
-import me.gabriel.gwydion.compiler.ProgramMemoryRepository
 import me.gabriel.gwydion.compiler.IntrinsicFunction
 import me.gabriel.gwydion.lexing.TokenKind
 import me.gabriel.gwydion.llvm.LLVMCodeAssembler
@@ -11,7 +10,6 @@ import me.gabriel.gwydion.llvm.LLVMCodeGenerator
 import me.gabriel.gwydion.llvm.struct.*
 import me.gabriel.gwydion.parsing.*
 import me.gabriel.gwydion.signature.*
-import kotlin.math.sign
 import kotlin.random.Random
 
 /*
@@ -77,7 +75,7 @@ class LLVMCodeAdaptationProcess(
         block: MemoryBlock,
         node: SyntaxTreeNode,
         store: Boolean = false,
-        self: Type.Struct? = null
+        self: Type? = null
     ): Value = when (node) {
         is RootNode, is BlockNode -> blockAdaptChildren(block, node)
         is FunctionNode -> generateFunction(block, node, self)
@@ -108,7 +106,7 @@ class LLVMCodeAdaptationProcess(
         return NullMemoryUnit
     }
 
-    fun generateFunction(block: MemoryBlock, node: FunctionNode, self: Type.Struct?): NullMemoryUnit {
+    fun generateFunction(block: MemoryBlock, node: FunctionNode, self: Type?): NullMemoryUnit {
         if (node.modifiers.contains(Modifiers.INTRINSIC)) return NullMemoryUnit
 
         val parameters = node.parameters.map {
@@ -168,7 +166,7 @@ class LLVMCodeAdaptationProcess(
         if (intrinsic != null) {
             val call = intrinsic.handleCall(
                 call = node,
-                types = node.arguments.map { getExpressionType(block, it).let { it.getRightOrNull() ?: error(it.getLeft().message) } },
+                types = node.arguments.map { getExpressionType(block, it, signatures).let { it.getRightOrNull() ?: error(it.getLeft().message) } },
                 arguments = arguments.joinToString(", ") { "${it.type.llvm} ${it.llvm()}" }
             )
             if (store) {
@@ -194,7 +192,7 @@ class LLVMCodeAdaptationProcess(
         block.memory.allocate(node.name, expression)
         block.symbols.declare(
             name = node.name,
-            type = getExpressionType(block, node.expression).unwrap()
+            type = getExpressionType(block, node.expression, signatures).unwrap()
         )
 //        assembler.saveToRegister(unit.register, expression.llvm())
         return expression
@@ -258,7 +256,7 @@ class LLVMCodeAdaptationProcess(
     }
 
     fun generateBinaryOperator(block: MemoryBlock, node: BinaryOperatorNode): MemoryUnit {
-        val typeResult = getExpressionType(block, node.left)
+        val typeResult = getExpressionType(block, node.left, signatures)
         if (typeResult.isLeft()) error("Couldn't figure out binary operation type")
 
         val type = typeResult.unwrap()
@@ -316,7 +314,7 @@ class LLVMCodeAdaptationProcess(
     fun generateEquality(block: MemoryBlock, node: EqualsNode): MemoryUnit {
         val left = acceptNode(block, node.left)
         val right = acceptNode(block, node.right)
-        val type = getExpressionType(block, node.left).unwrap()
+        val type = getExpressionType(block, node.left, signatures).unwrap()
         return assembler.handleComparison(left, right, type.asLLVM())
     }
 
@@ -340,7 +338,7 @@ class LLVMCodeAdaptationProcess(
     }
 
     fun generateArray(block: MemoryBlock, node: ArrayNode): MemoryUnit {
-        val arrayType = getExpressionType(block, node).unwrap().asLLVM()
+        val arrayType = getExpressionType(block, node, signatures).unwrap().asLLVM()
         val type = arrayType.descendOneLevel()
         return assembler.createArray(
             type = type,
@@ -363,7 +361,7 @@ class LLVMCodeAdaptationProcess(
     }
 
     fun generateDataStruct(block: MemoryBlock, node: DataStructureNode): MemoryUnit {
-        val structType = getExpressionType(block, node).unwrap().asLLVM()
+        val structType = getExpressionType(block, node, signatures).unwrap().asLLVM()
         if (structType !is LLVMType.Struct) error("Struct type not found")
 
         val struct = assembler.declareStruct(
@@ -377,7 +375,7 @@ class LLVMCodeAdaptationProcess(
     fun generateInstantiation(block: MemoryBlock, node: InstantiationNode): MemoryUnit {
         val memory = block.figureOutMemory(node.name) ?: error("Data structure ${node.name} not found")
         val allocation = assembler.allocateHeapMemoryAndCast(
-            size = node.arguments.sumOf { getExpressionType(block, it).getRightOrNull()?.asLLVM()?.size ?: 0 },
+            size = node.arguments.sumOf { getExpressionType(block, it, signatures).getRightOrNull()?.asLLVM()?.size ?: 0 },
             type = LLVMType.Pointer(memory.type)
         )
 
@@ -429,8 +427,6 @@ class LLVMCodeAdaptationProcess(
     }
 
     fun generateTraitImpl(block: MemoryBlock, node: TraitImplNode): MemoryUnit {
-        val struct = block.figureOutSymbol(node.`object`) as? Type.Struct ?: error("Struct ${node.`object`} not found")
-
         val trait = MemoryUnit.Unsized(
             register = Random.nextInt(),
             type = LLVMType.Dynamic(listOf(
@@ -438,52 +434,50 @@ class LLVMCodeAdaptationProcess(
                 LLVMType.I16,
             ).plus(node.functions.map { LLVMType.Ptr }))
         )
+        val traitSignature = signatures.traits.find { it.name == node.trait }
+            ?: error("Trait ${node.trait} not found in signatures")
+        val traitImplSignature = traitSignature.impls.find { it.struct == node.type.signature }
+            ?: error("Trait implementation for ${node.type.signature} not found in signatures")
+        traitImplSignature.index = trait.register
+        traitImplSignature.module = traitImplSignature.module ?: module
+
         block.memory.allocate(
-            name = "${node.trait}_trait_${node.`object`}",
+            name = "${node.trait}_trait_${node.type.signature}",
             unit = trait
         )
 
         registerTraitObject(
             traitMem = trait,
-            structName = struct.identifier,
+            structName = node.type.signature,
             functions = node.functions.map { it.name }
         )
 
-        val traitBlock = block.surfaceSearchChild("${node.trait}_trait_${node.`object`}")
+        val traitBlock = block.surfaceSearchChild("${node.trait}_trait_${node.type.signature}")
             ?: error("Trait ${node.trait} not found in block ${block.name}")
 
         node.functions.forEach {
             traitBlock.symbols.declare(
-                name = "${node.`object`}_${it.name}",
+                name = "${node.type.signature}_${it.name}",
                 type = it.returnType
             )
             acceptNode(traitBlock, it.copy(
-                name = "${node.`object`}_${it.name}",
+                name = "${node.type.signature}_${it.name}",
                 parameters = it.parameters
-            ), self = struct)
+            ), self = node.type)
         }
-
-        signatures.traitImpls.add(
-            SignatureTraitImpl(
-                trait = node.trait,
-                struct = struct.identifier,
-                index = trait.register,
-                module = module,
-                types = node.functions.map { it.returnType.asLLVM().llvm },
-            )
-        )
 
         return NullMemoryUnit
     }
 
     fun generateTraitCall(block: MemoryBlock, node: TraitFunctionCallNode, store: Boolean): MemoryUnit {
-        val (trait, function) = figureOutTraitForVariable(
+        val (trait, impl, function) = figureOutTraitForVariable(
             block = block,
             variable = node.trait,
+            signatures = signatures,
             call = node.function
         ) ?: error("Trait for ${node.trait} not found")
         val struct = block.figureOutSymbol(node.trait) as? Type.Struct ?: error("Struct ${node.trait} not found")
-        val virtualTable = getTraitImpl(trait.identifier, struct.identifier)
+        val virtualTable = getVirtualTableForTraitImpl(impl)
 
         val type = getProperReturnType(function.returnType)
         val functionIndex = trait.functions.indexOfFirst { it.name == node.function }
@@ -521,11 +515,14 @@ class LLVMCodeAdaptationProcess(
         return assignment
     }
 
-    fun getProperReturnType(returnType: Type): LLVMType {
-        return when (val type = returnType.asLLVM()) {
-            is LLVMType.Struct -> LLVMType.Pointer(type)
-            is LLVMType.Array -> LLVMType.Pointer(type.type)
-            else -> type
+    fun getProperReturnType(returnType: Type): LLVMType =
+        getProperReturnType(returnType.asLLVM())
+
+    fun getProperReturnType(returnType: LLVMType): LLVMType {
+        return when (returnType) {
+            is LLVMType.Struct -> LLVMType.Pointer(returnType)
+            is LLVMType.Array -> LLVMType.Pointer(returnType.type)
+            else -> returnType
         }
     }
 
@@ -541,24 +538,22 @@ class LLVMCodeAdaptationProcess(
             ))
     }
 
-    fun getTraitImpl(trait: String, struct: String): MemoryUnit.Unsized {
-        val value =
-            signatures.traitImpls.find { it.trait == trait && it.struct == struct } ?: error("Trait impl not found ${signatures.traitImpls}")
-        if (value.module != module) {
+    fun getVirtualTableForTraitImpl(impl: SignatureTraitImpl): MemoryUnit.Unsized {
+        if (impl.module != module) {
             traitObjectsImpl.add(
-                "@trait_${value.index} = external constant <{ i16, i16, ${
-                    value.types.joinToString(
+                "@trait_${impl.index} = external constant <{ i16, i16, ${
+                    impl.types.joinToString(
                         ", "
                     ) { "ptr" }
                 } }>"
             )
         }
         return MemoryUnit.Unsized(
-            register = value.index,
+            register = impl.index ?: error("Trait index not found"),
             type = LLVMType.Dynamic(listOf(
                 LLVMType.I16,
                 LLVMType.I16,
-            ).plus(value.types.map { LLVMType.Ptr }))
+            ).plus(impl.types.map { LLVMType.Ptr }))
         )
     }
 

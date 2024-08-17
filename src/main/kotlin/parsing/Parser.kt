@@ -406,10 +406,8 @@ class Parser(private val tokens: TokenStream) {
 
     fun parseTraitImplementation(): Either<ParsingError, TraitImplNode> {
         val token = consume(TokenKind.MAKE).unwrap()
-        val obj = parseIdentifier()
-        if (obj.isLeft()) {
-            return Either.Left(obj.getLeft())
-        }
+        val type = parseTypeOrNull()
+            ?: return Either.Left(ParsingError.UnexpectedToken(peek()))
         consume(TokenKind.INTO).ifLeft {
             return Either.Left(it)
         }
@@ -433,7 +431,7 @@ class Parser(private val tokens: TokenStream) {
         }
 
         return Either.Right(TraitImplNode(
-            `object` = obj.unwrap(),
+            type = type,
             trait = trait.unwrap(),
             functions = functions
         ))

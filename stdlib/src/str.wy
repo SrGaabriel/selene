@@ -1,0 +1,10 @@
+
+trait CharArray(
+    length() :: int32
+)
+
+make string into CharArray {
+    func length(self) :: int32 {
+        return 0;
+    }
+}
