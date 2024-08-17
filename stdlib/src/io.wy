@@ -1,3 +1,7 @@
+trait Legible(
+    text() :: string
+)
+
 intrinsic func printf (message: any) {}
 
 intrinsic func println (message: any) {}

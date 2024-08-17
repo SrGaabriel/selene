@@ -5,7 +5,6 @@ import me.gabriel.gwydion.lexing.TokenKind
 import me.gabriel.gwydion.parsing.CallNode
 import me.gabriel.gwydion.parsing.SyntaxTreeNode
 import me.gabriel.gwydion.parsing.Type
-import me.gabriel.gwydion.parsing.VariableReferenceNode
 
 sealed class AnalysisError(val message: String, val node: SyntaxTreeNode) {
     class InvalidOperation(node: SyntaxTreeNode, leftType: Type, operator: TokenKind, rightType: Type) : AnalysisError(
@@ -23,8 +22,8 @@ sealed class AnalysisError(val message: String, val node: SyntaxTreeNode) {
         node
     )
 
-    class UndefinedTrait(node: SyntaxTreeNode, name: String) : AnalysisError(
-        "undefined trait: $name",
+    class TraitForFunctionNotFound(node: SyntaxTreeNode, name: String, function: String) : AnalysisError(
+        "unknown trait: func `$function` for variable $name could not be found",
         node
     )
 

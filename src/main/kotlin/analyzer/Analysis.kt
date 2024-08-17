@@ -8,7 +8,6 @@ import me.gabriel.gwydion.signature.SignatureTrait
 import me.gabriel.gwydion.signature.SignatureTraitImpl
 import me.gabriel.gwydion.signature.Signatures
 import me.gabriel.gwydion.util.Either
-import kotlin.math.sign
 
 class AnalysisResult(
     val errors: List<AnalysisError>
@@ -64,7 +63,7 @@ tailrec fun getExpressionType(
                 variable = node.trait,
                 signatures = signatures,
                 call = node.function
-            ) ?: return Either.Left(AnalysisError.UndefinedTrait(node, node.trait))
+            ) ?: return Either.Left(AnalysisError.TraitForFunctionNotFound(node, node.trait, node.function))
             Either.Right(function.returnType)
         }
         is StructAccessNode -> {

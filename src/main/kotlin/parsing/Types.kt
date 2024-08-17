@@ -10,31 +10,47 @@ sealed class Type(
     val signature: kotlin.String = id
 ) {
     data object Any : Type("any")
+    @Serializable
     data object Int8 : Type("int8")
+    @Serializable
     data object Int16 : Type("int16")
     @Serializable
     data object Int32 : Type("int32")
+    @Serializable
     data object Int64 : Type("int64")
+    @Serializable
     data object UInt8 : Type("uint8")
+    @Serializable
     data object UInt16 : Type("uint16")
+    @Serializable
     data object UInt32 : Type("uint32")
+    @Serializable
     data object UInt64 : Type("uint64")
+    @Serializable
     data object Float32 : Type("float32")
+    @Serializable
     data object Float64 : Type("float64")
+    @Serializable
     data object String : Type("string")
+    @Serializable
     data object Self: Type("self")
+    @Serializable
     data object Void : Type("void")
+    @Serializable
     data object Boolean : Type("bool")
     data object Unknown : Type("unknown")
     data class UnknownReference(val reference: kotlin.String, val mutable: kotlin.Boolean): Type("unknown", reference)
+    @Serializable
     data class DynamicArray(
         val type: Type,
     ): Type("fixed array", "${type.signature}[]")
+    @Serializable
     data class FixedArray(
         val type: Type,
         val length: Int
     ): Type("fixed array", "${type.signature}[$length]")
 
+    @Serializable
     data class Struct(
         val identifier: kotlin.String,
         val fields: Map<kotlin.String, Type>,

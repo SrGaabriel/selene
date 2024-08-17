@@ -153,10 +153,11 @@ class LLVMCodeAdaptationProcess(
         }
 
         val type = getProperReturnType(functionSymbol)
+        val reg = assembler.nextRegister()
         val assignment = if (store) {
             // Todo: review
             MemoryUnit.Sized(
-                register = assembler.nextRegister(),
+                register = reg,
                 type = type,
                 size = type.size
             )
