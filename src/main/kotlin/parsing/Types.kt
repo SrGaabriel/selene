@@ -3,7 +3,7 @@ package me.gabriel.gwydion.parsing
 import me.gabriel.gwydion.lexing.Token
 import me.gabriel.gwydion.lexing.TokenKind
 
-sealed class Type(val id: kotlin.String) {
+sealed class Type(val id: kotlin.String, val signature: kotlin.String = id) {
     data object Any : Type("any")
     data object Int8 : Type("int8")
     data object Int16 : Type("int16")
@@ -20,26 +20,26 @@ sealed class Type(val id: kotlin.String) {
     data object Void : Type("void")
     data object Boolean : Type("bool")
     data object Unknown : Type("unknown")
-    data class UnknownReference(val reference: kotlin.String, val mutable: kotlin.Boolean): Type("unknown")
+    data class UnknownReference(val reference: kotlin.String, val mutable: kotlin.Boolean): Type("unknown", reference)
     data class DynamicArray(
         val type: Type,
-    ): Type("fixed array")
+    ): Type("fixed array", type.signature)
     data class FixedArray(
         val type: Type,
         val length: Int
-    ): Type("fixed array")
+    ): Type("fixed array", type.signature)
 
     data class Struct(
         val identifier: kotlin.String,
         val fields: Map<kotlin.String, Type>,
         val mutable: kotlin.Boolean,
         val traits: MutableList<Trait> = mutableListOf()
-    ): Type("struct")
+    ): Type("struct", identifier)
 
     data class Trait(
         val identifier: kotlin.String,
         val functions: List<TraitFunctionNode>
-    ): Type("trait")
+    ): Type("trait", identifier)
 
     override fun toString(): kotlin.String = id
 }

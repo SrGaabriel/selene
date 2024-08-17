@@ -1,6 +1,8 @@
 package me.gabriel.gwydion
 
 import com.github.ajalt.mordant.rendering.TextColors
+import kotlinx.serialization.decodeFromString
+import kotlinx.serialization.json.Json
 import me.gabriel.gwydion.analyzer.CumulativeSemanticAnalyzer
 import me.gabriel.gwydion.compiler.ProgramMemoryRepository
 import me.gabriel.gwydion.compiler.llvm.LLVMCodeAdapter
@@ -14,11 +16,18 @@ import me.gabriel.gwydion.log.MordantLogger
 import me.gabriel.gwydion.parsing.Parser
 import me.gabriel.gwydion.parsing.SyntaxTree
 import me.gabriel.gwydion.reader.AmbiguousSourceReader
+import me.gabriel.gwydion.signature.SignatureHandler
+import me.gabriel.gwydion.signature.Signatures
 import me.gabriel.gwydion.util.findRowOfIndex
 import me.gabriel.gwydion.util.replaceAtIndex
 import me.gabriel.gwydion.util.trimIndentReturningWidth
 import java.io.File
 import java.time.Instant
+import kotlin.math.sign
+
+private val json = Json {
+    encodeDefaults = false
+}
 
 fun main(args: Array<String>) {
     val logger = MordantLogger()
@@ -31,6 +40,14 @@ fun main(args: Array<String>) {
     }
     val sourcePath = args[0]
     val name = args.getOrNull(1) ?: "program"
+    val signatureHandler = SignatureHandler(logger, json)
+    val signaturesFile = args.getOrNull(2)?.let { File(it) } ?: File("signatures.json")
+    signaturesFile.createNewFile()
+    signaturesFile.writeText(signaturesFile.readText().ifEmpty { "{}" })
+    val signatures = signaturesFile.let {
+        signatureHandler.parseSignature(it)
+    }
+
     val folder = File(sourcePath)
     println(folder.absolutePath)
     if (!folder.exists() || folder.isFile) {
@@ -49,7 +66,6 @@ fun main(args: Array<String>) {
         PrintlnFunction(),
         ReadlineFunction()
     )
-
     if (!isStdlib) {
         logger.log(LogLevel.INFO) { +"Linking the stdlib symbols..." }
 
@@ -62,8 +78,10 @@ fun main(args: Array<String>) {
         val stdlibMemory = ProgramMemoryRepository()
         val stdlibTree = parse(logger, stdlibText, stdlibMemory) ?: return
         llvmCodeAdapter.generate(
+            "stdlib",
             stdlibTree,
             stdlibMemory,
+            Signatures(mutableListOf()),
             compileIntrinsics = true
         )
         println("Symbols: ${stdlibMemory.root.symbols} Memory: ${stdlibMemory.root.memory}")
@@ -82,7 +100,8 @@ fun main(args: Array<String>) {
     logger.log(LogLevel.INFO) { +"Memory analysis took ${memoryDelay}ms" }
 
     val generationStart = Instant.now()
-    val generated = llvmCodeAdapter.generate(tree, memory, isStdlib)
+    println("Ain $signatures")
+    val generated = llvmCodeAdapter.generate(name, tree, memory, signatures, isStdlib)
     val generationEnd = Instant.now()
     val generationDelay = generationEnd.toEpochMilli() - generationStart.toEpochMilli()
     logger.log(LogLevel.INFO) { +"Code generation took ${generationDelay}ms" }
@@ -95,6 +114,10 @@ fun main(args: Array<String>) {
     val executionEnd = Instant.now()
     val executionDelay = executionEnd.toEpochMilli() - compilingStart.toEpochMilli()
     logger.log(LogLevel.INFO) { +"Compiling took ${executionDelay}ms" }
+    signatureHandler.appendSignatureToFile(
+        signaturesFile,
+        signatures
+    )
 
     logger.log(LogLevel.INFO) { +"The total time to generate and compile the code was ${executionDelay + generationDelay + memoryDelay}ms" }
     return

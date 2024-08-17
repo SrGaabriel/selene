@@ -1,22 +1,6 @@
-data Map(
-    foo: int32
-)
-
-trait Fooable(
-    fooat() :: int32
-)
-
 func main() {
     println("Hello, World!");
     mut p := @Point(6, 4);
-    map := @Map(20);
     println(p.x);
-    println(p.y);
-    println(map.fooat());
-}
-
-make Map into Fooable {
-    func fooat(self) :: int32 {
-        return self.foo;
-    }
+    println(p.area());
 }

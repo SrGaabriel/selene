@@ -1,9 +1,16 @@
 package me.gabriel.gwydion.compiler
 
 import me.gabriel.gwydion.parsing.SyntaxTree
+import me.gabriel.gwydion.signature.Signatures
 
 interface CodeGenerator {
-    fun generate(tree: SyntaxTree, memory: ProgramMemoryRepository, compileIntrinsics: Boolean): String
+    fun generate(
+        module: String,
+        tree: SyntaxTree,
+        memory: ProgramMemoryRepository,
+        signatures: Signatures,
+        compileIntrinsics: Boolean
+    ): String
 
     fun addStdlibDependency(dependency: String)
 

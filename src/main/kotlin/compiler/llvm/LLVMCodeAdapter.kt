@@ -4,6 +4,7 @@ import me.gabriel.gwydion.compiler.CodeGenerator
 import me.gabriel.gwydion.compiler.ProgramMemoryRepository
 import me.gabriel.gwydion.compiler.IntrinsicFunction
 import me.gabriel.gwydion.parsing.SyntaxTree
+import me.gabriel.gwydion.signature.Signatures
 import java.io.File
 
 class LLVMCodeAdapter: CodeGenerator {
@@ -11,11 +12,13 @@ class LLVMCodeAdapter: CodeGenerator {
     private val stdlibDependencies = mutableListOf<String>()
 
     override fun generate(
+        module: String,
         tree: SyntaxTree,
         memory: ProgramMemoryRepository,
+        signatures: Signatures,
         compileIntrinsics: Boolean
     ): String {
-        val process = LLVMCodeAdaptationProcess(tree, memory, intrinsics, stdlibDependencies, compileIntrinsics)
+        val process = LLVMCodeAdaptationProcess(module, intrinsics, signatures, stdlibDependencies, compileIntrinsics)
         process.acceptNode(memory.root, tree.root)
         process.setup()
         process.finish()

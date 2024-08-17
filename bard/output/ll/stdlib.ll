@@ -1,4 +1,4 @@
-            @trait_2 = private unnamed_addr constant <{ i16, i16, ptr, ptr }> <{
+            @trait_2 = unnamed_addr constant <{ i16, i16, ptr, ptr }> <{
                 i16 8,
                 i16 8,
                 ptr @Point_area, 

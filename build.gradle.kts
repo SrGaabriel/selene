@@ -2,8 +2,9 @@ import com.github.jengelman.gradle.plugins.shadow.tasks.ShadowJar
 
 plugins {
     application
-    kotlin("jvm") version "1.9.23"
-    id("com.github.johnrengelman.shadow") version "8.1.1"
+    alias(libs.plugins.kotlin.jvm)
+    alias(libs.plugins.kotlinx.serialization)
+    alias(libs.plugins.shadow)
 }
 
 group = "me.gabriel.gwydion"
@@ -16,6 +17,7 @@ repositories {
 dependencies {
     implementation(project(":llvm"))
     implementation(libs.mordant)
+    implementation(libs.kotlinx.serialization.json)
 }
 
 application {

@@ -9,6 +9,8 @@ import me.gabriel.gwydion.llvm.LLVMCodeAssembler
 import me.gabriel.gwydion.llvm.LLVMCodeGenerator
 import me.gabriel.gwydion.llvm.struct.*
 import me.gabriel.gwydion.parsing.*
+import me.gabriel.gwydion.signature.*
+import kotlin.math.sign
 
 /*
  * I decided to use exceptions instead of errors because the exceptions should be caught in
@@ -16,9 +18,9 @@ import me.gabriel.gwydion.parsing.*
  * when there shouldn't be any errors in the first place.
  */
 class LLVMCodeAdaptationProcess(
-    private val tree: SyntaxTree,
-    private val repository: ProgramMemoryRepository,
+    private val module: String,
     private val intrinsics: List<IntrinsicFunction>,
+    private val signatures: Signatures,
     private val stdlibDependencies: List<String>,
     private val compileIntrinsics: Boolean
 ) {
@@ -405,24 +407,26 @@ class LLVMCodeAdaptationProcess(
     }
 
     fun generateTrait(block: MemoryBlock, node: TraitNode): MemoryUnit {
-        return block.memory.allocate(
-            name = node.name,
-            unit = MemoryUnit.Unsized(
-                register = assembler.nextRegister(),
-                type = LLVMType.Dynamic(listOf(
-                    LLVMType.I16,
-                    LLVMType.I16,
-                ).plus(node.functions.map { LLVMType.Ptr }))
-            )
-        )
+        return NullMemoryUnit
     }
 
     fun generateTraitImpl(block: MemoryBlock, node: TraitImplNode): MemoryUnit {
-        val trait = block.figureOutMemory(node.trait) ?: error("Trait ${node.trait} not found")
         val struct = block.figureOutSymbol(node.`object`) as? Type.Struct ?: error("Struct ${node.`object`} not found")
 
+        val trait = MemoryUnit.Unsized(
+            register = assembler.nextRegister(),
+            type = LLVMType.Dynamic(listOf(
+                LLVMType.I16,
+                LLVMType.I16,
+            ).plus(node.functions.map { LLVMType.Ptr }))
+        )
+        block.memory.allocate(
+            name = "${node.trait}_trait_${node.`object`}",
+            unit = trait
+        )
+
         registerTraitObject(
-            traitMem = trait as MemoryUnit.Unsized,
+            traitMem = trait,
             structName = struct.identifier,
             functions = node.functions.map { it.name }
         )
@@ -441,6 +445,18 @@ class LLVMCodeAdaptationProcess(
             ), self = struct)
         }
 
+        println("Delicia ${signatures.traitImpls}")
+        signatures.traitImpls.add(
+            SignatureTraitImpl(
+                trait = node.trait,
+                struct = struct.identifier,
+                index = trait.register,
+                module = module,
+                types = node.functions.map { it.returnType.asLLVM().llvm },
+            )
+        )
+        println("Delicia ${signatures.traitImpls}")
+
         return NullMemoryUnit
     }
 
@@ -450,8 +466,9 @@ class LLVMCodeAdaptationProcess(
             variable = node.trait,
             call = node.function
         ) ?: error("Trait for ${node.trait} not found")
+        val struct = block.figureOutSymbol(node.trait) as? Type.Struct ?: error("Struct ${node.trait} not found")
+        val virtualTable = getTraitImpl(trait.identifier, struct.identifier)
 
-        val virtualTable = block.figureOutMemory(trait.identifier) ?: error("Trait ${trait.identifier} not found")
         val type = getProperReturnType(function.returnType)
         val functionIndex = trait.functions.indexOfFirst { it.name == node.function }
 
@@ -506,5 +523,24 @@ class LLVMCodeAdaptationProcess(
                 alignment = 8,
                 functions = functions
             ))
+    }
+
+    fun getTraitImpl(trait: String, struct: String): MemoryUnit.Unsized {
+        val value =
+            signatures.traitImpls.find { it.trait == trait && it.struct == struct } ?: error("Trait impl not found ${signatures.traitImpls}")
+        assembler.addDependency(
+            "@trait_${value.index} = external constant <{ i16, i16, ${
+                value.types.joinToString(
+                    ", "
+                ) { "ptr" }
+            } }>"
+        )
+        return MemoryUnit.Unsized(
+            register = value.index,
+            type = LLVMType.Dynamic(listOf(
+                LLVMType.I16,
+                LLVMType.I16,
+            ).plus(value.types.map { LLVMType.Ptr }))
+        )
     }
 }

@@ -4,7 +4,8 @@ import me.gabriel.gwydion.parsing.SyntaxTreeNode
 import me.gabriel.gwydion.parsing.Type
 
 class SymbolTable {
-    private val symbols = mutableMapOf<String, Type>()
+    @PublishedApi
+    internal val symbols = mutableMapOf<String, Type>()
     private val definitions = mutableMapOf<String, SyntaxTreeNode>()
 
     fun declare(name: String, type: Type) {
@@ -37,6 +38,10 @@ class SymbolTable {
         other.definitions.forEach { (name, node) ->
             define(name, node)
         }
+    }
+
+    inline fun <reified T : Type> filterIsInstance(): Collection<T> {
+        return symbols.values.filterIsInstance<T>()
     }
 
     override fun toString(): String = symbols.toString()
