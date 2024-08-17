@@ -1,7 +1,8 @@
 use serde::Deserialize;
-use std::fs;
+use std::{fs, thread};
 use std::path::{Path, PathBuf};
 use std::process::{Command, Stdio};
+use std::time::Duration;
 
 fn main() {
     let binding = std::env::current_dir().expect("Failed to get current directory");
@@ -10,6 +11,14 @@ fn main() {
 
     if !gwydion_jar.exists() {
         return;
+    }
+
+    // delete output folder (current directory / output)
+    let output_dir = binding.join("output");
+    if output_dir.exists() {
+        remove_dir_all_retry(&output_dir, 3, 100).expect("Failed to remove output directory");
+    } else {
+        println!("Output directory does not exist");
     }
 
     let bard_dir = project_root.join("bard");
@@ -97,4 +106,31 @@ fn parse_properties(module_root: &Path) -> ModuleProperties {
     let toml_path = module_root.join("module.toml");
     let toml_str = fs::read_to_string(&toml_path).expect("Failed to read module.toml");
     toml::from_str(&toml_str).expect("Failed to parse module.toml")
+}
+
+fn remove_dir_all_retry<P: AsRef<Path>>(path: P, retries: u32, delay_ms: u64) -> std::io::Result<()> {
+    for _ in 0..retries {
+        match fs::remove_dir_all(&path) {
+            Ok(_) => {
+                if !path.as_ref().exists() {
+                    return Ok(());
+                }
+            }
+            Err(err) => {
+                // Handle the specific error if needed
+                eprintln!("Failed to remove directory: {}", err);
+            }
+        }
+
+        // Wait for the specified duration before retrying
+        thread::sleep(Duration::from_millis(delay_ms));
+    }
+
+    // Final attempt outside of the loop
+    fs::remove_dir_all(&path)?;
+    if path.as_ref().exists() {
+        Err(std::io::Error::new(std::io::ErrorKind::Other, "Directory still exists after maximum retries"))
+    } else {
+        Ok(())
+    }
 }

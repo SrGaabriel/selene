@@ -462,7 +462,6 @@ class LLVMCodeAdaptationProcess(
             ), self = struct)
         }
 
-        println("addeddd")
         signatures.traitImpls.add(
             SignatureTraitImpl(
                 trait = node.trait,

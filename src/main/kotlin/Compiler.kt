@@ -40,7 +40,7 @@ fun main(args: Array<String>) {
     }
     val sourcePath = args[0]
     val name = args.getOrNull(1) ?: "program"
-    val signatureHandler = SignatureHandler(logger, json)
+    val signatureHandler = SignatureHandler(name, logger, json)
     val signaturesFile = args.getOrNull(2)?.let { File(it) } ?: File("signatures.json")
     signaturesFile.createNewFile()
     signaturesFile.writeText(signaturesFile.readText().ifEmpty { "{}" })
@@ -80,7 +80,7 @@ fun main(args: Array<String>) {
             "stdlib",
             stdlibTree,
             stdlibMemory,
-            Signatures(mutableListOf()),
+            Signatures(),
             compileIntrinsics = true
         )
         memory.merge(stdlibMemory)

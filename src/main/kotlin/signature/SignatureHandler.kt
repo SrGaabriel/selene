@@ -10,13 +10,14 @@ import me.gabriel.gwydion.parsing.Type
 import java.io.File
 
 class SignatureHandler(
+    val module: String,
     val logger: MordantLogger,
     val json: Json
 ) {
     fun parseSignature(file: File): Signatures {
         if (!file.exists()) {
             logger.log(LogLevel.ERROR) { +"Signature file does not exist" }
-            return Signatures(mutableListOf())
+            return Signatures()
         }
 
         logger.log(LogLevel.INFO) { +"Parsing signature file" }
@@ -24,6 +25,7 @@ class SignatureHandler(
         logger.log(LogLevel.INFO) { +"Parsed ${signatures.traitImpls.size} trait implsl" }
         return signatures
     }
+
 
 //    fun generateSignature(table: SymbolTable): Signatures {
 //        logger.log(LogLevel.INFO) { +"Generating signature file" }
@@ -51,9 +53,11 @@ class SignatureHandler(
     fun appendSignatureToFile(file: File, signatures: Signatures) {
         logger.log(LogLevel.INFO) { +"Appending signature to file" }
         val currentContent = if (file.exists()) {
-            json.decodeFromString<Signatures>(file.readText())
+            json.decodeFromString<Signatures>(file.readText()).filter {
+                it.module == module
+            }
         } else {
-            Signatures(mutableListOf())
+            Signatures()
         }
         val newContent = currentContent + signatures
         file.writeText(json.encodeToString(newContent))

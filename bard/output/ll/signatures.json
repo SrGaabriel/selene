@@ -1,1 +1,1 @@
-{"trait_impls":[{"struct":"Point","trait":"Shape","index":2,"module":"stdlib","types":["i32","i32"]},{"struct":"Point","trait":"Shape","index":2,"module":"stdlib","types":["i32","i32"]}]}
+{"trait_impls":[{"struct":"Point","trait":"Shape","index":2,"module":"stdlib","types":["i32","i32"]}]}
