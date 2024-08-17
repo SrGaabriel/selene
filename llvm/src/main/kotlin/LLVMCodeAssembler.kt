@@ -410,7 +410,7 @@ class LLVMCodeAssembler(val generator: ILLVMCodeGenerator): ILLVMCodeAssembler {
         }
     }
 
-    override fun nextRegister(): Int = (register++ * 2)
+    override fun nextRegister(): Int = register++
 
     override fun nextLabel(): String = "label${label++}"
 }

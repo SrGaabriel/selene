@@ -1,10 +1,14 @@
-            @trait_-203836479 = unnamed_addr constant <{ i16, i16, ptr, ptr }> <{
-                i16 8,
-                i16 8,
-                ptr @Point_area, 
-ptr @Point_perimeter
-            }>, align 8
-@trait_-1363293935 = unnamed_addr constant <{ i16, i16, ptr }> <{
+@trait_-836034636 = unnamed_addr constant <{ i16, i16, ptr }> <{
+    i16 8,
+    i16 8,
+    ptr @int32_text
+}>, align 8
+@trait_-2004395752 = unnamed_addr constant <{ i16, i16, ptr }> <{
+    i16 8,
+    i16 8,
+    ptr @string_text
+}>, align 8
+@trait_-1530583709 = unnamed_addr constant <{ i16, i16, ptr }> <{
     i16 8,
     i16 8,
     ptr @string_length
@@ -95,26 +99,27 @@ declare i32 @putchar(i32)
 declare i32 @printf(i8*, ...)
 define i32 @string_length(i8** %0) {
 entry:
-%2 = call i32 @str_length(i8** %0)
-ret i32 %2
+%1 = call i32 @str_length(i8** %0)
+ret i32 %1
 }
-%Point = type { i32, i32 }
-define i32 @Point_area(%Point* %6) {
+define i8* @string_text(i8** %2) {
 entry:
-%8 = getelementptr inbounds %Point, %Point* %6, i32 0, i32 0
-%10 = load i32, i32* %8
-%12 = getelementptr inbounds %Point, %Point* %6, i32 0, i32 1
-%14 = load i32, i32* %12
-%16 = mul i32 %10, %14
-ret i32 %16
+ret i8** %2
 }
-define i32 @Point_perimeter(%Point* %18) {
+define i8* @int32_text(i32* %3) {
 entry:
-%20 = getelementptr inbounds %Point, %Point* %18, i32 0, i32 0
-%22 = load i32, i32* %20
-%24 = getelementptr inbounds %Point, %Point* %18, i32 0, i32 1
-%26 = load i32, i32* %24
-%28 = add i32 %22, %26
-%30 = mul i32 2, %28
-ret i32 %30
+%4 = alloca [6 x i8], align 1
+%5 = getelementptr inbounds [6 x i8], [6 x i8]* %4, i32 0, i32 0
+store i8 105, i8* %5
+%6 = getelementptr inbounds [6 x i8], [6 x i8]* %4, i32 0, i32 1
+store i8 110, i8* %6
+%7 = getelementptr inbounds [6 x i8], [6 x i8]* %4, i32 0, i32 2
+store i8 116, i8* %7
+%8 = getelementptr inbounds [6 x i8], [6 x i8]* %4, i32 0, i32 3
+store i8 51, i8* %8
+%9 = getelementptr inbounds [6 x i8], [6 x i8]* %4, i32 0, i32 4
+store i8 50, i8* %9
+%10 = getelementptr inbounds [6 x i8], [6 x i8]* %4, i32 0, i32 5
+store i8 0, i8* %10
+ret i8* %5
 }
