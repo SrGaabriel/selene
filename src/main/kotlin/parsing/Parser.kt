@@ -795,10 +795,11 @@ class Parser(private val tokens: TokenStream) {
                 node
             }
             TokenKind.SELF -> {
-                if (peekNext().kind !== TokenKind.DOT) {
-                    return Either.Left(ParsingError.UnexpectedToken(peek()))
+                position++
+                if (peek().kind !== TokenKind.DOT) {
+                    return Either.Right(VariableReferenceNode("self", tokens[position - 1]))
                 }
-                position += 2
+                position++
                 val field = parseIdentifier()
                 Either.Right(StructAccessNode(
                     struct = "self",

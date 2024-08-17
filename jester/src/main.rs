@@ -96,13 +96,6 @@ pub struct ModuleProperties{
 }
 
 fn parse_properties(module_root: &Path) -> ModuleProperties {
-    // Now we just need to read and parse module_root/module.toml
-    // print files under module_root
-    for entry in fs::read_dir(module_root).expect("Failed to read directory") {
-        let entry = entry.expect("Failed to read entry");
-        println!("{:?}", entry.path());
-    }
-
     let toml_path = module_root.join("module.toml");
     let toml_str = fs::read_to_string(&toml_path).expect("Failed to read module.toml");
     toml::from_str(&toml_str).expect("Failed to parse module.toml")

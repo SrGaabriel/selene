@@ -4,6 +4,7 @@ import com.github.ajalt.mordant.rendering.TextColors
 import kotlinx.serialization.decodeFromString
 import kotlinx.serialization.json.Json
 import me.gabriel.gwydion.analyzer.CumulativeSemanticAnalyzer
+import me.gabriel.gwydion.compiler.ArrayLengthFunction
 import me.gabriel.gwydion.compiler.ProgramMemoryRepository
 import me.gabriel.gwydion.compiler.llvm.LLVMCodeAdapter
 import me.gabriel.gwydion.compiler.PrintlnFunction
@@ -30,6 +31,7 @@ private val json = Json {
 }
 
 fun main(args: Array<String>) {
+    println("Gwydion Compiler")
     val logger = MordantLogger()
 
     val isStdlib = args.contains("--internal-compile-stdlib")
@@ -63,7 +65,8 @@ fun main(args: Array<String>) {
     val llvmCodeAdapter = LLVMCodeAdapter()
     llvmCodeAdapter.registerIntrinsicFunction(
         PrintlnFunction(),
-        ReadlineFunction()
+        ReadlineFunction(),
+        ArrayLengthFunction()
     )
     if (!isStdlib) {
         logger.log(LogLevel.INFO) { +"Linking the stdlib symbols..." }

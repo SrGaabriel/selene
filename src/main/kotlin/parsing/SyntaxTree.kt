@@ -76,6 +76,8 @@ class AssignmentNode(
     start: Token
 ) : TypedSyntaxTreeNode(start, expression.end, type) {
     override fun getChildren(): List<SyntaxTreeNode> = listOf(expression)
+
+    override fun toString(): String = "AssignmentNode(name='$name', expression=$expression, mutable=$mutable)"
 }
 
 class BinaryOperatorNode(
@@ -237,6 +239,8 @@ class InstantiationNode(
     val arguments: List<SyntaxTreeNode>,
 ) : SyntaxTreeNode(null, null) {
     override fun getChildren(): List<SyntaxTreeNode> = arguments
+
+    override fun toString(): String = "InstantiationNode(name='$name', arguments=$arguments)"
 }
 
 class StructAccessNode(

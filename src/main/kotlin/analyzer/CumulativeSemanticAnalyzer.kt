@@ -133,9 +133,7 @@ class CumulativeSemanticAnalyzer(
                 } else {
                     node.type
                 }
-                if (node.mutable && type !is Type.Struct) {
-                    errors.add(AnalysisError.TypeCannotBeMutable(node, type))
-                } else if (node.mutable && type is Type.Struct) {
+                if (node.mutable && type is Type.Struct) {
                     block.symbols.declare(node.name, type.copy(mutable = true))
                 } else {
                     block.symbols.declare(node.name, type)
@@ -235,7 +233,7 @@ class CumulativeSemanticAnalyzer(
             }
 
             is VariableReferenceNode -> {
-                val symbol = block.figureOutSymbol(node.name)
+                val symbol = if (node.name == "self") block.self else block.figureOutSymbol(node.name)
                 if (symbol == null) {
                     errors.add(AnalysisError.UndefinedVariable(node, node.name, block))
                 }

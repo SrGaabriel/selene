@@ -143,7 +143,7 @@ class LLVMCodeAdaptationProcess(
         block: MemoryBlock,
         node: CallNode,
         store: Boolean
-    ): MemoryUnit {
+    ): Value {
         val functionSymbol = block.figureOutSymbol(
             node.name
         ) ?: error("Function ${node.name} not found in block ${block.name}")
@@ -174,7 +174,7 @@ class LLVMCodeAdaptationProcess(
                 return assignment
             } else {
                 assembler.instruct(call)
-                return NullMemoryUnit
+                return LLVMConstant(call, type)
             }
         }
         assembler.callFunction(
@@ -332,7 +332,7 @@ class LLVMCodeAdaptationProcess(
     }
 
     fun generateReturn(block: MemoryBlock, node: ReturnNode): NullMemoryUnit {
-        val expression = acceptNode(block, node.expression)
+        val expression = acceptNode(block, node.expression, store = true)
         assembler.returnValue(expression.type, expression)
         return NullMemoryUnit
     }
@@ -476,7 +476,6 @@ class LLVMCodeAdaptationProcess(
             signatures = signatures,
             call = node.function
         ) ?: error("Trait for ${node.trait} not found")
-        val struct = block.figureOutSymbol(node.trait) as? Type.Struct ?: error("Struct ${node.trait} not found")
         val virtualTable = getVirtualTableForTraitImpl(impl)
 
         val type = getProperReturnType(function.returnType)
