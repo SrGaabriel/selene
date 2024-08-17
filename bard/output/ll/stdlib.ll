@@ -1,4 +1,4 @@
-            @trait_2 = unnamed_addr constant <{ i16, i16, ptr, ptr }> <{
+            @trait_-1391584027 = unnamed_addr constant <{ i16, i16, ptr, ptr }> <{
                 i16 8,
                 i16 8,
                 ptr @Point_area, 
@@ -65,22 +65,22 @@ entry:
 declare i32 @putchar(i32)
 declare i32 @printf(i8*, ...)
 %Point = type { i32, i32 }
-define i32 @Point_area(%Point* %4) {
+define i32 @Point_area(%Point* %2) {
 entry:
-%6 = getelementptr inbounds %Point, %Point* %4, i32 0, i32 0
-%8 = load i32, i32* %6
-%10 = getelementptr inbounds %Point, %Point* %4, i32 0, i32 1
-%12 = load i32, i32* %10
-%14 = mul i32 %8, %12
-ret i32 %14
+%4 = getelementptr inbounds %Point, %Point* %2, i32 0, i32 0
+%6 = load i32, i32* %4
+%8 = getelementptr inbounds %Point, %Point* %2, i32 0, i32 1
+%10 = load i32, i32* %8
+%12 = mul i32 %6, %10
+ret i32 %12
 }
-define i32 @Point_perimeter(%Point* %16) {
+define i32 @Point_perimeter(%Point* %14) {
 entry:
-%18 = getelementptr inbounds %Point, %Point* %16, i32 0, i32 0
-%20 = load i32, i32* %18
-%22 = getelementptr inbounds %Point, %Point* %16, i32 0, i32 1
-%24 = load i32, i32* %22
-%26 = add i32 %20, %24
-%28 = mul i32 2, %26
-ret i32 %28
+%16 = getelementptr inbounds %Point, %Point* %14, i32 0, i32 0
+%18 = load i32, i32* %16
+%20 = getelementptr inbounds %Point, %Point* %14, i32 0, i32 1
+%22 = load i32, i32* %20
+%24 = add i32 %18, %22
+%26 = mul i32 2, %24
+ret i32 %26
 }

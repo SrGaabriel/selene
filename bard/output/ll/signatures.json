@@ -1,1 +1,23 @@
-{"trait_impls":[{"struct":"Point","trait":"Shape","index":2,"module":"stdlib","types":["i32","i32"]}]}
+{
+  "trait_impls": [
+    {
+      "struct": "Point",
+      "trait": "Shape",
+      "index": -1391584027,
+      "module": "stdlib",
+      "types": [
+        "i32",
+        "i32"
+      ]
+    },
+    {
+      "struct": "Map",
+      "trait": "Fooable",
+      "index": 748586900,
+      "module": "bard",
+      "types": [
+        "i32"
+      ]
+    }
+  ]
+}

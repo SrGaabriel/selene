@@ -12,6 +12,7 @@ import me.gabriel.gwydion.llvm.struct.*
 import me.gabriel.gwydion.parsing.*
 import me.gabriel.gwydion.signature.*
 import kotlin.math.sign
+import kotlin.random.Random
 
 /*
  * I decided to use exceptions instead of errors because the exceptions should be caught in
@@ -431,7 +432,7 @@ class LLVMCodeAdaptationProcess(
         val struct = block.figureOutSymbol(node.`object`) as? Type.Struct ?: error("Struct ${node.`object`} not found")
 
         val trait = MemoryUnit.Unsized(
-            register = assembler.nextRegister(),
+            register = Random.nextInt(),
             type = LLVMType.Dynamic(listOf(
                 LLVMType.I16,
                 LLVMType.I16,
@@ -543,13 +544,15 @@ class LLVMCodeAdaptationProcess(
     fun getTraitImpl(trait: String, struct: String): MemoryUnit.Unsized {
         val value =
             signatures.traitImpls.find { it.trait == trait && it.struct == struct } ?: error("Trait impl not found ${signatures.traitImpls}")
-        traitObjectsImpl.add(
-            "@trait_${value.index} = external constant <{ i16, i16, ${
-                value.types.joinToString(
-                    ", "
-                ) { "ptr" }
-            } }>"
-        )
+        if (value.module != module) {
+            traitObjectsImpl.add(
+                "@trait_${value.index} = external constant <{ i16, i16, ${
+                    value.types.joinToString(
+                        ", "
+                    ) { "ptr" }
+                } }>"
+            )
+        }
         return MemoryUnit.Unsized(
             register = value.index,
             type = LLVMType.Dynamic(listOf(
