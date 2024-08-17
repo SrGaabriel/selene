@@ -9,10 +9,10 @@ trait Shape(
 )
 
 make Point into Shape {
-    func area() :: int32 {
-        return 4;
+    func area(self) :: int32 {
+        return self.x * self.y;
     }
-    func perimeter() :: int32 {
-        return 2;
+    func perimeter(self) :: int32 {
+        return 2 * (self.x + self.y);
     }
 }

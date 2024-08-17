@@ -83,9 +83,12 @@ class LLVMCodeAssembler(val generator: ILLVMCodeGenerator): ILLVMCodeAssembler {
         instruct("}")
     }
 
-    override fun addNumber(type: LLVMType, left: Value, right: Value): MemoryUnit {
+    override fun addNumber(type: LLVMType, left: Value, right: Value): MemoryUnit =
+        binaryOp(type, left, BinaryOp.Addition, right)
+
+    override fun binaryOp(type: LLVMType, left: Value, op: BinaryOp, right: Value): MemoryUnit {
         val register = nextRegister()
-        saveToRegister(register, generator.addNumber(type, left, right))
+        saveToRegister(register, generator.binaryOp(left, op, right, type))
         return MemoryUnit.Sized(
             register = register,
             type = type,

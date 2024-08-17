@@ -65,11 +65,22 @@ entry:
 declare i32 @putchar(i32)
 declare i32 @printf(i8*, ...)
 %Point = type { i32, i32 }
-define i32 @Point_area() {
+define i32 @Point_area(%Point* %4) {
 entry:
-ret i32 4
+%6 = getelementptr inbounds %Point, %Point* %4, i32 0, i32 0
+%8 = load i32, i32* %6
+%10 = getelementptr inbounds %Point, %Point* %4, i32 0, i32 1
+%12 = load i32, i32* %10
+%14 = mul i32 %8, %12
+ret i32 %14
 }
-define i32 @Point_perimeter() {
+define i32 @Point_perimeter(%Point* %16) {
 entry:
-ret i32 2
+%18 = getelementptr inbounds %Point, %Point* %16, i32 0, i32 0
+%20 = load i32, i32* %18
+%22 = getelementptr inbounds %Point, %Point* %16, i32 0, i32 1
+%24 = load i32, i32* %22
+%26 = add i32 %20, %24
+%28 = mul i32 2, %26
+ret i32 %28
 }

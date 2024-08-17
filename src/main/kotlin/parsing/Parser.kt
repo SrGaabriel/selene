@@ -604,15 +604,7 @@ class Parser(private val tokens: TokenStream) {
                 ))
             }
             TokenKind.SELF -> {
-                if (peekNext().kind !== TokenKind.DOT) {
-                    return Either.Left(ParsingError.UnexpectedToken(token))
-                }
-                position += 2
-                val field = parseIdentifier()
-                Either.Right(StructAccessNode(
-                    struct = "self",
-                    field = field.unwrap(),
-                ))
+                parseNumericExpression()
             }
             TokenKind.IDENTIFIER -> {
                 when (peekNext().kind) {
@@ -652,7 +644,6 @@ class Parser(private val tokens: TokenStream) {
                         ))
                     }
                     else -> {
-                        println("Unexpected token: ${peekNext()}")
                         parseNumericExpression()
                     }
                 }
@@ -743,7 +734,6 @@ class Parser(private val tokens: TokenStream) {
             if (expression.isLeft()) {
                 return Either.Left(expression.getLeft())
             }
-            println("Expression: ${expression.unwrap()} Due to ${a}")
             parameters.add(expression.getRight())
             if (peek().kind == TokenKind.COMMA) {
                 position++
@@ -805,6 +795,17 @@ class Parser(private val tokens: TokenStream) {
                     return Either.Left(it)
                 }
                 node
+            }
+            TokenKind.SELF -> {
+                if (peekNext().kind !== TokenKind.DOT) {
+                    return Either.Left(ParsingError.UnexpectedToken(peek()))
+                }
+                position += 2
+                val field = parseIdentifier()
+                Either.Right(StructAccessNode(
+                    struct = "self",
+                    field = field.unwrap(),
+                ))
             }
             TokenKind.NUMBER -> {
                 val token = consume()

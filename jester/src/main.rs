@@ -13,7 +13,6 @@ fn main() {
     }
 
     let bard_dir = project_root.join("bard");
-    let _ = fs::remove_file(bard_dir.join("output").join("ll").join("signatures.json"));
     let stdlib = project_root.join("stdlib");
     let stdlib_props = parse_properties(&stdlib);
     compile_project_sources(&stdlib_props, &stdlib, project_root, true);

@@ -1,3 +1,4 @@
+@trait_2 = external constant <{ i16, i16, ptr, ptr }>
 @format_b = private unnamed_addr constant [3 x i8] c"%d\00"
 @format_n = private unnamed_addr constant [3 x i8] c"%d\00"
 @format_s = private unnamed_addr constant [3 x i8] c"%s\00"
@@ -10,7 +11,6 @@ declare void @println_str(i8*)
 declare i8* @test()
 declare void @memset(i8*, i32, i32)
 declare i8* @malloc(i32)
-@trait_2 = external constant <{ i16, i16, ptr, ptr }>
 define void @main() {
 entry:
 %0 = alloca [14 x i8], align 1
@@ -47,15 +47,22 @@ call void @println_str(i8* %2)
 call void @memset(i8* %30, i32 0, i32 8)
 %32 = bitcast i8* %30 to %Point*
 %34 = getelementptr inbounds %Point, %Point* %32, i32 0, i32 0
-store i32 6, i32* %34
+store i32 24, i32* %34
 %36 = getelementptr inbounds %Point, %Point* %32, i32 0, i32 1
 store i32 4, i32* %36
 %38 = getelementptr inbounds %Point, %Point* %32, i32 0, i32 0
 %40 = load i32, i32* %38
 call void @println_i32(i32 %40)
-%42 = getelementptr inbounds <{i16, i16, ptr, ptr}>, ptr @trait_2, i32 0, i32 2
-%44 = load ptr, ptr %42
-%46 = call i32 %44(%Point* %32)
-call void @println_i32(i32 %46)
+%42 = getelementptr inbounds %Point, %Point* %32, i32 0, i32 1
+%44 = load i32, i32* %42
+call void @println_i32(i32 %44)
+%46 = getelementptr inbounds <{i16, i16, ptr, ptr}>, ptr @trait_2, i32 0, i32 2
+%48 = load ptr, ptr %46
+%50 = call i32 %48(%Point* %32)
+call void @println_i32(i32 %50)
+%52 = getelementptr inbounds <{i16, i16, ptr, ptr}>, ptr @trait_2, i32 0, i32 3
+%54 = load ptr, ptr %52
+%56 = call i32 %54(%Point* %32)
+call void @println_i32(i32 %56)
 ret void
 }

@@ -5,6 +5,7 @@ import me.gabriel.gwydion.analyzer.getExpressionType
 import me.gabriel.gwydion.compiler.MemoryBlock
 import me.gabriel.gwydion.compiler.ProgramMemoryRepository
 import me.gabriel.gwydion.compiler.IntrinsicFunction
+import me.gabriel.gwydion.lexing.TokenKind
 import me.gabriel.gwydion.llvm.LLVMCodeAssembler
 import me.gabriel.gwydion.llvm.LLVMCodeGenerator
 import me.gabriel.gwydion.llvm.struct.*
@@ -28,6 +29,7 @@ class LLVMCodeAdaptationProcess(
     private val assembler = LLVMCodeAssembler(llvmGenerator)
 
     private val traitObjects = mutableMapOf<MemoryUnit.Unsized, MutableList<TraitObject>>()
+    private val traitObjectsImpl = mutableSetOf<String>()
 
     fun setup() {
         val dependencies = mutableSetOf<String>()
@@ -48,6 +50,9 @@ class LLVMCodeAdaptationProcess(
         dependencies.add("@format_s = private unnamed_addr constant [3 x i8] c\"%s\\00\"")
         dependencies.add("@format_n = private unnamed_addr constant [3 x i8] c\"%d\\00\"")
         dependencies.add("@format_b = private unnamed_addr constant [3 x i8] c\"%d\\00\"")
+        traitObjectsImpl.forEach {
+            dependencies.add(it)
+        }
 
         (assembler.generator.getGeneratedDependencies() + dependencies).forEach {
             assembler.addDependency(it)
@@ -256,6 +261,7 @@ class LLVMCodeAdaptationProcess(
         if (typeResult.isLeft()) error("Couldn't figure out binary operation type")
 
         val type = typeResult.unwrap()
+        val op = getBinaryOp(node.operator)
         if (type == Type.String) {
             val left = acceptNode(block, node.left) as MemoryUnit.Sized
             val right = acceptNode(block, node.right) as MemoryUnit.Sized
@@ -271,6 +277,17 @@ class LLVMCodeAdaptationProcess(
                 destination = resultString
             )
             return resultString
+        }
+        if (type == Type.Int32) {
+            val left = acceptNode(block, node.left)
+            val right = acceptNode(block, node.right)
+            val result = assembler.binaryOp(
+                type = LLVMType.I32,
+                left = left,
+                op = op,
+                right = right
+            )
+            return result
         }
         return NullMemoryUnit
     }
@@ -445,7 +462,7 @@ class LLVMCodeAdaptationProcess(
             ), self = struct)
         }
 
-        println("Delicia ${signatures.traitImpls}")
+        println("addeddd")
         signatures.traitImpls.add(
             SignatureTraitImpl(
                 trait = node.trait,
@@ -455,7 +472,6 @@ class LLVMCodeAdaptationProcess(
                 types = node.functions.map { it.returnType.asLLVM().llvm },
             )
         )
-        println("Delicia ${signatures.traitImpls}")
 
         return NullMemoryUnit
     }
@@ -528,7 +544,7 @@ class LLVMCodeAdaptationProcess(
     fun getTraitImpl(trait: String, struct: String): MemoryUnit.Unsized {
         val value =
             signatures.traitImpls.find { it.trait == trait && it.struct == struct } ?: error("Trait impl not found ${signatures.traitImpls}")
-        assembler.addDependency(
+        traitObjectsImpl.add(
             "@trait_${value.index} = external constant <{ i16, i16, ${
                 value.types.joinToString(
                     ", "
@@ -542,5 +558,15 @@ class LLVMCodeAdaptationProcess(
                 LLVMType.I16,
             ).plus(value.types.map { LLVMType.Ptr }))
         )
+    }
+
+    fun getBinaryOp(kind: TokenKind): BinaryOp {
+        return when (kind) {
+            TokenKind.PLUS -> BinaryOp.Addition
+            TokenKind.MINUS -> BinaryOp.Subtraction
+            TokenKind.TIMES -> BinaryOp.Multiplication
+            TokenKind.DIVIDE -> BinaryOp.Division
+            else -> error("Binary operation not supported")
+        }
     }
 }

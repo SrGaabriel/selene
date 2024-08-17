@@ -49,7 +49,6 @@ fun main(args: Array<String>) {
     }
 
     val folder = File(sourcePath)
-    println(folder.absolutePath)
     if (!folder.exists() || folder.isFile) {
         logger.log(LogLevel.ERROR) { +"The folder does not exist" }
         return
@@ -84,14 +83,12 @@ fun main(args: Array<String>) {
             Signatures(mutableListOf()),
             compileIntrinsics = true
         )
-        println("Symbols: ${stdlibMemory.root.symbols} Memory: ${stdlibMemory.root.memory}")
         memory.merge(stdlibMemory)
         StdlibLinker.link(
             stdlibTree,
             llvmCodeAdapter
         )
     }
-    println("Symbols: ${memory.root.symbols} Memory: ${memory.root.memory}")
 
     val sources = File(folder, "src")
     val tree = parse(logger, sourceReader.read(sources), memory) ?: return
@@ -100,7 +97,6 @@ fun main(args: Array<String>) {
     logger.log(LogLevel.INFO) { +"Memory analysis took ${memoryDelay}ms" }
 
     val generationStart = Instant.now()
-    println("Ain $signatures")
     val generated = llvmCodeAdapter.generate(name, tree, memory, signatures, isStdlib)
     val generationEnd = Instant.now()
     val generationDelay = generationEnd.toEpochMilli() - generationStart.toEpochMilli()

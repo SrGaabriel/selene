@@ -1,6 +1,9 @@
 func main() {
     println("Hello, World!");
-    mut p := @Point(6, 4);
+    mut p := @Point(24, 4);
     println(p.x);
+    println(p.y);
     println(p.area());
+    println(p.perimeter());
 }
+

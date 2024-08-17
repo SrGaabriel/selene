@@ -19,10 +19,6 @@ class LLVMCodeGenerator: ILLVMCodeGenerator {
         return "call void @memset(i8* ${value.llvm()}, i32 0, i32 ${size})"
     }
 
-    override fun addition(left: Value, right: Value, type: LLVMType): String {
-        return "add $type %${left.llvm()}, %${right.llvm()}"
-    }
-
     override fun cast(value: Value, type: LLVMType): String {
         return "bitcast ${value.type.llvm} ${value.llvm()} to ${type.llvm}"
     }
@@ -134,8 +130,8 @@ class LLVMCodeGenerator: ILLVMCodeGenerator {
         """.trimIndent()
     }
 
-    override fun addNumber(type: LLVMType, left: Value, right: Value): String {
-        return "add ${type.llvm} ${left.llvm()}, ${right.llvm()}"
+    override fun binaryOp(left: Value, op: BinaryOp, right: Value, type: LLVMType): String {
+        return "${op.llvm} ${type.llvm} ${left.llvm()}, ${right.llvm()}"
     }
 
     override fun storage(value: Value, address: MemoryUnit): String {

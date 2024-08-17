@@ -88,6 +88,8 @@ class BinaryOperatorNode(
     val right: SyntaxTreeNode,
 ) : SyntaxTreeNode(left.start, right.end) {
     override fun getChildren(): List<SyntaxTreeNode> = listOf(left, right)
+
+    override fun toString(): String = "BinaryOperatorNode(left=$left operator=$operator right=$right)"
 }
 
 class EqualsNode(

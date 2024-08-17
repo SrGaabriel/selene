@@ -9,7 +9,7 @@ interface ILLVMCodeGenerator {
 
     fun heapMemoryDefinition(size: Int, value: Value): String
 
-    fun addition(left: Value, right: Value, type: LLVMType): String
+    fun binaryOp(left: Value, op: BinaryOp, right: Value, type: LLVMType): String
 
     fun cast(value: Value, type: LLVMType): String
 
@@ -44,8 +44,6 @@ interface ILLVMCodeGenerator {
     fun createBranch(label: String): String
 
     fun unconditionalBranchTo(label: String): String
-
-    fun addNumber(type: LLVMType, left: Value, right: Value): String
 
     fun storage(value: Value, address: MemoryUnit): String
 

@@ -1,5 +1,6 @@
 package me.gabriel.gwydion.llvm
 
+import me.gabriel.gwydion.llvm.struct.BinaryOp
 import me.gabriel.gwydion.llvm.struct.LLVMType
 import me.gabriel.gwydion.llvm.struct.MemoryUnit
 import me.gabriel.gwydion.llvm.struct.Value
@@ -105,6 +106,13 @@ interface ILLVMCodeAssembler {
     fun addNumber(
         type: LLVMType,
         left: Value,
+        right: Value
+    ): MemoryUnit
+
+    fun binaryOp(
+        type: LLVMType,
+        left: Value,
+        op: BinaryOp,
         right: Value
     ): MemoryUnit
 
