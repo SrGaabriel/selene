@@ -58,6 +58,15 @@ tailrec fun getExpressionType(
         }
         is DataStructureNode -> Either.Right(block.figureOutSymbol(node.name) ?: return Either.Left(AnalysisError.UndefinedDataStructure(node, node.name)))
         is TraitFunctionCallNode -> {
+            val symbol = block.figureOutSymbol(node.trait)
+            if (symbol is Type.Trait) {
+                val function = symbol.functions.firstOrNull { it.name == node.function }
+                if (function != null) {
+                    return Either.Right(function.returnType)
+                }
+                return Either.Left(AnalysisError.TraitForFunctionNotFound(node, node.trait, node.function))
+            }
+
             val (_, _, function) = figureOutTraitForVariable(
                 block = block,
                 variable = node.trait,
@@ -91,9 +100,10 @@ fun inferCallType(block: MemoryBlock, node: CallNode): Type {
 
 data class TraitFunctionMetadata(
     val trait: SignatureTrait,
-    val impl: SignatureTraitImpl,
+    val impl: SignatureTraitImpl?,
     val function: SignatureFunction,
-    val type: Type
+    val returnType: Type,
+    val variableType: Type
 )
 
 fun figureOutTraitForVariable(
@@ -105,11 +115,14 @@ fun figureOutTraitForVariable(
     val resolvedVariable = block.figureOutSymbol(variable) ?: return null
 
     return signatures.traits.firstNotNullOfOrNull { trait ->
-        val impl = trait.impls.firstOrNull { it.struct == resolvedVariable.signature }
-        if (impl != null) {
+        val impl = if (resolvedVariable !is Type.Trait) trait.impls.firstOrNull {
+            it.struct == resolvedVariable.signature
+        } else null
+
+        if (impl != null || resolvedVariable is Type.Trait) {
             val function = trait.functions.firstOrNull { it.name == call }
             if (function != null) {
-                return TraitFunctionMetadata(trait, impl, function, function.returnType)
+                return TraitFunctionMetadata(trait, impl, function, function.returnType, resolvedVariable)
             }
         }
         null

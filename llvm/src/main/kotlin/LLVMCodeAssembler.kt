@@ -114,6 +114,9 @@ class LLVMCodeAssembler(val generator: ILLVMCodeGenerator): ILLVMCodeAssembler {
                     alignment = unit.type.defaultAlignment
                 ))
             }
+            is MemoryUnit.TraitData -> {
+                error("Trait data cannot be allocated dynamically")
+            }
             NullMemoryUnit -> error("Tried to store null memory unit")
         }
     }
@@ -146,7 +149,7 @@ class LLVMCodeAssembler(val generator: ILLVMCodeGenerator): ILLVMCodeAssembler {
     override fun createVirtualTable(name: String, functions: List<LLVMType.Function>): MemoryUnit {
         val unit = MemoryUnit.Unsized(
             register = nextRegister(),
-            type = LLVMType.Trait(name, functions)
+            type = LLVMType.Trait(name, functions.size)
         )
         instruct("%$name = ${generator.virtualTableDeclaration(name, functions)}")
         return unit
@@ -221,7 +224,7 @@ class LLVMCodeAssembler(val generator: ILLVMCodeGenerator): ILLVMCodeAssembler {
 
     override fun getElementFromVirtualTable(
         table: String,
-        tableType: LLVMType.Dynamic,
+        tableType: LLVMType,
         type: LLVMType,
         index: Value,
         total: Boolean

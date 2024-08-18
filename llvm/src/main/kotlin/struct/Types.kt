@@ -29,7 +29,7 @@ sealed class LLVMType(
 
     data class Trait(
         val name: String,
-        val functions: List<Function>
+        val functions: Int
     ) : LLVMType("%$name", 8, 0)
 
     data class Dynamic(

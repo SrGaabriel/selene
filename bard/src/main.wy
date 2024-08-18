@@ -8,32 +8,30 @@ trait Fooable(
 
 make Map into Fooable {
     func fooat(self) :: int32 {
+        println("Map");
         return self.foo;
     }
 }
 
 make string into Fooable {
     func fooat(self) :: int32 {
-        println("-=-=-=-=");
-        println(self);
-        println("-=-=-=-=");
-        return 42;
+        println("string");
+        return arraylen(self);
     }
 }
 
 func main() {
-    printf("Enter a word: ");
-    typed := readln();
-    if typed == "luck" {
-        println("You are lucky!");
-    } else {
-        println("You are not lucky!");
-    }
+    map := @Map(720);
+    txt := "wowo";
+    print_fooable(txt);
+    print_fooable(map);
+}
 
-    println("Hello, World!");
-    println(arraylen(typed));
-    println(typed.length());
-    println("Above is length of string");
-    map := @Map(42);
-    println(map.fooat());
+func print_fooable(daddy: Fooable) {
+    a := daddy.fooat();
+    println(a);
+}
+
+func do_something(foo: Fooable) {
+    println(foo.fooat());
 }

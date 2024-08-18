@@ -332,6 +332,12 @@ class CumulativeSemanticAnalyzer(
         if (required is Type.Struct && provided is Type.Struct) {
             return required.id == provided.id && !(required.mutable && !provided.mutable) && required.fields == provided.fields
         }
+        if (required is Type.Trait && provided !is Type.Trait) {
+            val traitSignature = signatures.traits.find { it.name == required.identifier } ?: return false
+            return traitSignature.impls.any {
+                it.struct == provided.signature
+            }
+        }
         return required == provided
     }
 

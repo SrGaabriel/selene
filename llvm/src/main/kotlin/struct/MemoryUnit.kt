@@ -24,6 +24,13 @@ sealed class MemoryUnit(
 
     class Unsized(register: Int, type: LLVMType) : MemoryUnit(register, type)
 
+    class TraitData(
+        val vtable: MemoryUnit,
+        val data: MemoryUnit,
+        override val type: LLVMType.Trait,
+        var loadedData: MemoryUnit? = null
+    ) : MemoryUnit(vtable.register, type)
+
     override fun llvm(): String = "%$register"
 }
 

@@ -79,7 +79,7 @@ class LLVMCodeGenerator: ILLVMCodeGenerator {
         return "getelementptr inbounds ${originalType.llvm}, ${pointerType.llvm} ${struct.llvm()}, i32 ${index.llvm()}"
     }
 
-    override fun virtualTableReading(table: String, tableType: LLVMType.Dynamic, index: Value): String {
+    override fun virtualTableReading(table: String, tableType: LLVMType, index: Value): String {
         return "getelementptr inbounds ${tableType.llvm}, ptr $table, i32 0, i32 ${index.llvm()}"
     }
 

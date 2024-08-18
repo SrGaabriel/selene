@@ -50,7 +50,7 @@ interface ILLVMCodeAssembler {
 
     fun getElementFromVirtualTable(
         table: String,
-        tableType: LLVMType.Dynamic,
+        tableType: LLVMType,
         type: LLVMType,
         index: Value,
         total: Boolean = true

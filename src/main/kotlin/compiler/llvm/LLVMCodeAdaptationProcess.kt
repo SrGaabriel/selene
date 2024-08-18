@@ -10,7 +10,10 @@ import me.gabriel.gwydion.llvm.LLVMCodeGenerator
 import me.gabriel.gwydion.llvm.struct.*
 import me.gabriel.gwydion.parsing.*
 import me.gabriel.gwydion.signature.*
+import kotlin.math.absoluteValue
+import kotlin.math.exp
 import kotlin.random.Random
+import kotlin.random.nextUInt
 
 /*
  * I decided to use exceptions instead of errors because the exceptions should be caught in
@@ -109,19 +112,44 @@ class LLVMCodeAdaptationProcess(
     fun generateFunction(block: MemoryBlock, node: FunctionNode, self: Type?): NullMemoryUnit {
         if (node.modifiers.contains(Modifiers.INTRINSIC)) return NullMemoryUnit
 
-        val parameters = node.parameters.map {
-            val type = if (it.type !== Type.Self) getProperReturnType(it.type) else self?.asLLVM()?.let { LLVMType.Pointer(it) } ?: error("Self type not found")
+        val parameters = mutableListOf<MemoryUnit>()
+        node.parameters.forEach { param ->
+            if (param.type is Type.Trait) {
+                val vtable = MemoryUnit.Unsized(
+                    register = assembler.nextRegister(),
+                    type = LLVMType.Ptr
+                )
+                val data = MemoryUnit.Unsized(
+                    register = assembler.nextRegister(),
+                    type = LLVMType.Ptr
+                )
+                val trait = MemoryUnit.TraitData(
+                    vtable = vtable,
+                    data = data,
+                    type = LLVMType.Trait(name = node.name, functions = (param.type as Type.Trait).functions.size)
+                )
+                block.memory.allocate(param.name, trait)
+                block.symbols.declare(
+                    name = param.name,
+                    type = param.type
+                )
+                parameters.add(vtable)
+                parameters.add(data)
+                return@forEach
+            }
+            val type = if (param.type !== Type.Self) getProperReturnType(param.type) else self?.asLLVM()?.let { LLVMType.Pointer(it) } ?: error("Self type not found")
+
             val unit = MemoryUnit.Sized(
                 register = assembler.nextRegister(),
                 type = type,
                 size = type.size
             )
             block.symbols.declare(
-                name = it.name,
-                type = it.type
+                name = param.name,
+                type = param.type
             )
-            block.memory.allocate(it.name, unit)
-            unit
+            block.memory.allocate(param.name, unit)
+            parameters.add(unit)
         }
         val properReturnType = getProperReturnType(node.returnType)
 
@@ -148,8 +176,34 @@ class LLVMCodeAdaptationProcess(
             node.name
         ) ?: error("Function ${node.name} not found in block ${block.name}")
 
-        val arguments = node.arguments.map {
-            acceptNode(block, it, true)
+        val functionDefinition = block.figureOutDefinition(node.name) as? FunctionNode
+            ?: error("Function ${node.name} not found in block ${block.name}")
+        val arguments = mutableListOf<Value>()
+        node.arguments.forEachIndexed { index, arg ->
+            val result = acceptNode(block, arg, true)
+
+            // the below would work, but what if our type is a struct and the function expects a trait?
+            val functionTypeEquivalent = functionDefinition.parameters[index].type
+            if (result is MemoryUnit.TraitData && functionTypeEquivalent is Type.Trait) {
+                arguments.add(result.vtable)
+                arguments.add(result.loadedData ?: error("TraitData was not loaded"))
+            } else if (functionTypeEquivalent is Type.Trait) {
+                val trait = signatures.traits.firstOrNull {
+                    it.name == functionTypeEquivalent.identifier
+                } ?: error("Trait ${functionTypeEquivalent.identifier} not found in signatures")
+
+                val type = getExpressionType(block, arg, signatures).unwrap()
+                if (type is Type.Trait) error("TraitData was not generated from a trait")
+                val impl = trait.impls.firstOrNull {
+                    println("Struct: ${it.struct}")
+                    println("Type: $type")
+                    it.struct == type.signature
+                } ?: error("Trait implementation for ${getExpressionType(block, arg, signatures).unwrap().signature} not found in signatures")
+                arguments.add(LLVMConstant("@${TraitObject.PREFIX}${impl.index}", LLVMType.Ptr))
+                arguments.add(result)
+            } else {
+                arguments.add(result)
+            }
         }
 
         val type = getProperReturnType(functionSymbol)
@@ -252,6 +306,12 @@ class LLVMCodeAdaptationProcess(
     fun generateVariableReference(block: MemoryBlock, node: VariableReferenceNode): MemoryUnit {
         val reference = block.figureOutMemory(node.name)
             ?: error("Reference ${node.name} could not be found")
+
+        if (reference is MemoryUnit.TraitData) {
+            if (reference.loadedData == null) {
+                reference.loadedData = assembler.loadPointer(reference.data)
+            }
+        }
 
         return reference
     }
@@ -429,7 +489,7 @@ class LLVMCodeAdaptationProcess(
 
     fun generateTraitImpl(block: MemoryBlock, node: TraitImplNode): MemoryUnit {
         val trait = MemoryUnit.Unsized(
-            register = Random.nextInt(),
+            register = Random.nextInt().absoluteValue, // Here we'll use absolute value instead of UInt to prevent potential overflow/compatibility issues
             type = LLVMType.Dynamic(listOf(
                 LLVMType.I16,
                 LLVMType.I16,
@@ -471,23 +531,39 @@ class LLVMCodeAdaptationProcess(
     }
 
     fun generateTraitCall(block: MemoryBlock, node: TraitFunctionCallNode, store: Boolean): MemoryUnit {
-        val (trait, impl, function) = figureOutTraitForVariable(
+        val (trait, impl, function, _, variableType) = figureOutTraitForVariable(
             block = block,
             variable = node.trait,
             signatures = signatures,
             call = node.function
         ) ?: error("Trait for ${node.trait} not found")
-        val virtualTable = getVirtualTableForTraitImpl(impl)
 
         val type = getProperReturnType(function.returnType)
         val functionIndex = trait.functions.indexOfFirst { it.name == node.function }
 
-        val traitImplPointer = assembler.getElementFromVirtualTable(
-            table = '@' + TraitObject.PREFIX + virtualTable.register,
-            tableType = virtualTable.type as LLVMType.Dynamic,
-            type = LLVMType.Ptr,
-            index = LLVMConstant(functionIndex + 2, LLVMType.I32),
-        )
+        val traitImplPointer = if (impl != null) {
+            // We have the struct!
+            val virtualTable = getVirtualTableForTraitImpl(impl)
+            assembler.getElementFromVirtualTable(
+                table = '@' + TraitObject.PREFIX + virtualTable.register,
+                tableType = virtualTable.type as LLVMType.Dynamic,
+                type = LLVMType.Ptr,
+                index = LLVMConstant(functionIndex + 2, LLVMType.I32),
+            )
+        } else {
+            // We need to dynamically call it
+            val memory = block.figureOutMemory(node.trait) as? MemoryUnit.TraitData ?: error("Trait ${node.trait} not found")
+
+            assembler.getElementFromVirtualTable(
+                table = '%' + memory.vtable.register.toString(),
+                tableType = LLVMType.Dynamic(listOf(
+                    LLVMType.I16,
+                    LLVMType.I16,
+                ).plus(trait.functions.map { LLVMType.Ptr })),
+                type = LLVMType.Ptr,
+                index = LLVMConstant(functionIndex + 2, LLVMType.I32),
+            )
+        }
         val loadedFunction = assembler.loadPointer(traitImplPointer)
 
         val assignment = if (store) {
@@ -498,12 +574,19 @@ class LLVMCodeAdaptationProcess(
             )
         } else NullMemoryUnit
 
-        val arguments = node.arguments.map {
-            acceptNode(block, it)
-        }.toMutableList()
+        val arguments = mutableListOf<Value>()
+        node.arguments.map {
+            val result = acceptNode(block, it)
+            arguments.add(result)
+        }
 
         val variableMemory = block.figureOutMemory(node.trait) ?: error("Variable for trait ${node.trait} not found")
-        arguments.add(0, variableMemory)
+        if (variableType !is Type.Trait) {
+            arguments.add(0, variableMemory)
+        } else {
+            val traitMemory = variableMemory as? MemoryUnit.TraitData ?: error("Trait memory not found")
+            arguments.add(0, traitMemory.data)
+        }
 
         assembler.callFunction(
             name = loadedFunction.register.toString(),

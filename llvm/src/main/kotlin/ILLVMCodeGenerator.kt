@@ -33,7 +33,7 @@ interface ILLVMCodeGenerator {
 
     fun unsafeSubElementAddressDirectReading(struct: Value, index: Value): String
 
-    fun virtualTableReading(table: String, tableType: LLVMType.Dynamic, index: Value): String
+    fun virtualTableReading(table: String, tableType: LLVMType, index: Value): String
 
     fun getGeneratedDependencies(): Set<String>
 
