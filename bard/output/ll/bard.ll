@@ -1,14 +1,14 @@
-@trait_1657488998 = unnamed_addr constant <{ i16, i16, ptr }> <{
+@trait_1384585177 = unnamed_addr constant <{ i16, i16, ptr }> <{
     i16 8,
     i16 8,
     ptr @string_fooat
 }>, align 8
-@trait_758049232 = unnamed_addr constant <{ i16, i16, ptr }> <{
+@trait_841991528 = unnamed_addr constant <{ i16, i16, ptr }> <{
     i16 8,
     i16 8,
     ptr @Map_fooat
 }>, align 8
-@trait_133080845 = external constant <{ i16, i16, ptr }>
+@trait_1752161064 = external constant <{ i16, i16, ptr }>
 @format_f = private unnamed_addr constant [3 x i8] c"%f\00"
 @format_n = private unnamed_addr constant [3 x i8] c"%d\00"
 @format_s = private unnamed_addr constant [3 x i8] c"%s\00"
@@ -45,10 +45,10 @@ ret i32 %9
 }
 define i32 @string_fooat(i8** %10) {
 entry:
-%11 = getelementptr inbounds <{i16, i16, ptr}>, ptr @trait_133080845, i32 0, i32 2
+%11 = getelementptr inbounds <{i16, i16, ptr}>, ptr @trait_1752161064, i32 0, i32 2
 %12 = load ptr, ptr %11
 %13 = call i32 %12(i8** %10)
-%14 = getelementptr inbounds <{i16, i16, ptr}>, ptr @trait_133080845, i32 0, i32 2
+%14 = getelementptr inbounds <{i16, i16, ptr}>, ptr @trait_1752161064, i32 0, i32 2
 %15 = load ptr, ptr %14
 %16 = call i32 %15(i8** %10)
 %17 = add i32 %16, 3
@@ -73,8 +73,8 @@ store i8 111, i8* %25
 %26 = getelementptr inbounds [5 x i8], [5 x i8]* %21, i32 0, i32 4
 store i8 0, i8* %26
 %27 = call i32 @test()
-call i1 @print_fooable(ptr @trait_1657488998, i8* %22)
-call i1 @print_fooable(ptr @trait_758049232, %Map* %19)
+call i1 @print_fooable(ptr @trait_1384585177, i8* %22)
+call i1 @print_fooable(ptr @trait_841991528, %Map* %19)
 ret void
 }
 define i32 @test() {

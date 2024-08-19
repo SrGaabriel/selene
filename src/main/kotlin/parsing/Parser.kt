@@ -728,11 +728,7 @@ class Parser(private val tokens: TokenStream) {
     }
 
     fun parseTerm(): Either<ParsingError, SyntaxTreeNode> {
-        println("Init =-=-=-")
         var left = parseFactor()
-        println("Results =-=-=-")
-        println("Left: ${left.getRightOrNull()}")
-        println("End =-=-=-")
         if (left.isLeft()) {
             return Either.Left(left.getLeft())
         }
@@ -752,20 +748,16 @@ class Parser(private val tokens: TokenStream) {
 
     fun parseFactor(): Either<ParsingError, SyntaxTreeNode> {
         val token = tokens[position]
-        println("Called: ${token}")
-        println("Next: ${peekNext()}")
         return when (token.kind) {
             TokenKind.OPENING_PARENTHESES -> {
                 position++
                 val node = parseExpression()
-                println("Bounce: ${node.getRightOrNull()}")
                 consume(TokenKind.CLOSING_PARENTHESES).ifLeft {
                     return Either.Left(it)
                 }
                 node
             }
             TokenKind.IDENTIFIER, TokenKind.SELF -> {
-                println("Arrived!!! ${token} to ${peekNext()}")
                 when (peekNext().kind) {
                     TokenKind.OPENING_PARENTHESES -> {
                         position++
