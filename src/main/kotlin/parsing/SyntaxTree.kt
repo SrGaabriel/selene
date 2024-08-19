@@ -19,7 +19,7 @@ sealed class SyntaxTreeNode(
 sealed class TypedSyntaxTreeNode(
     start: Token?,
     end: Token?,
-    var type: Type
+    open var type: Type
 ) : SyntaxTreeNode(start, end)
 
 sealed class SizedSyntaxTreeNode(
@@ -132,8 +132,9 @@ class VariableReferenceNode(
 }
 
 class NumberNode(
-    val value: String,
-    type: Type,
+    var value: String,
+    val explicit: Boolean,
+    override var type: Type,
     start: Token
 ) : SizedSyntaxTreeNode(start, start, type) {
     override val size: Int = value.length // todo: fix

@@ -805,7 +805,7 @@ class Parser(private val tokens: TokenStream) {
             }
             TokenKind.NUMBER -> {
                 val token = consume()
-                Either.Right(NumberNode(token.value, Type.Int32, token))
+                Either.Right(NumberNode(token.value, false, Type.Int32, token))
             }
             TokenKind.IDENTIFIER -> consume().let { Either.Right(VariableReferenceNode(it.value, it)) }
             else -> Either.Left(ParsingError.UnexpectedToken(tokens[position]))

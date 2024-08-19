@@ -24,15 +24,20 @@ fn main() {
     let bard_dir = project_root.join("bard");
     let stdlib = project_root.join("stdlib");
     let stdlib_props = parse_properties(&stdlib);
-    compile_project_sources(&stdlib_props, &stdlib, project_root, true);
+    let stdlib_result = compile(&stdlib_props.name, &stdlib, project_root, true);
+    if !stdlib_result {
+        eprintln!("Failed to compile stdlib");
+        return;
+    }
+
     let bard_props = parse_properties(&bard_dir);
-    compile_project_sources(&bard_props, &bard_dir, project_root, false);
+    let bard_result = compile(&bard_props.name, &bard_dir, project_root, false);
+    if !bard_result {
+        eprintln!("Failed to compile project");
+        return;
+    }
 
     link_files(project_root);
-}
-
-fn compile_project_sources(props: &ModuleProperties, source_root: &Path, project_root: &Path, is_stdlib: bool) {
-    compile(&props.name, &source_root, is_stdlib, project_root);
 }
 
 fn link_files(project_root: &Path) {
@@ -66,7 +71,7 @@ fn link_files(project_root: &Path) {
     }
 }
 
-fn compile(name: &String, file: &Path, is_stdlib: bool, project_root: &Path) {
+fn compile(name: &String, file: &Path, project_root: &Path, is_stdlib: bool) -> bool {
     println!("Compiling {:?}", file);
     let gwydion_jar = project_root.join("build/libs/gwydion.jar");
 
@@ -88,6 +93,8 @@ fn compile(name: &String, file: &Path, is_stdlib: bool, project_root: &Path) {
     let output = command.output().expect("Failed to execute java process");
     output.stdout.iter().for_each(|b| print!("{}", *b as char));
     output.stderr.iter().for_each(|b| eprint!("{}", *b as char));
+
+    return output.status.success();
 }
 
 #[derive(Deserialize)]

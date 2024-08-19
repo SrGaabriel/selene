@@ -73,7 +73,7 @@ sealed class AnalysisError(val message: String, val node: SyntaxTreeNode) {
     )
 
     class WrongArgumentTypeForInstantiation(node: SyntaxTreeNode, expected: Type, actual: Type) : AnalysisError(
-        "wrong argument type for instantiation: expected $expected, got $actual",
+        "wrong argument type for instantiation: expected ${expected.id}, got ${actual.id}",
         node
     )
 

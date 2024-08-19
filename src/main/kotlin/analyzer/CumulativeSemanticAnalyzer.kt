@@ -9,6 +9,7 @@ import me.gabriel.gwydion.signature.SignatureTrait
 import me.gabriel.gwydion.signature.SignatureTraitImpl
 import me.gabriel.gwydion.signature.Signatures
 import me.gabriel.gwydion.util.Either
+import me.gabriel.gwydion.util.castToType
 
 class CumulativeSemanticAnalyzer(
     private val tree: SyntaxTree,
@@ -263,17 +264,26 @@ class CumulativeSemanticAnalyzer(
                 }
 
                 definition.parameters.forEachIndexed { index, parameter ->
-                    val argumentType = getExpressionType(block, node.arguments[index], signatures)
-                    if (argumentType is Either.Left) {
-                        errors.add(argumentType.value)
+                    val paramNode = node.arguments[index]
+                    val argumentTypeResult = getExpressionType(block, paramNode, signatures)
+                    if (argumentTypeResult is Either.Left) {
+                        errors.add(argumentTypeResult.value)
                         return
                     }
-                    if (!doTypesMatch(parameter.type, argumentType.unwrap())) {
+                    var argumentType = argumentTypeResult.unwrap()
+                    // This means we can afford to cast the number to the expected type
+                    if (paramNode is NumberNode && !paramNode.explicit) {
+                        argumentType = definition.parameters[index].type
+                        paramNode.type = argumentType
+                        paramNode.value = paramNode.value.castToType(argumentType)
+                    }
+
+                    if (!doTypesMatch(parameter.type, argumentType)) {
                         errors.add(
                             AnalysisError.WrongArgumentTypeForFunctionCall(
                                 node,
                                 parameter.type,
-                                argumentType.unwrap()
+                                argumentType
                             )
                         )
                     }
@@ -316,7 +326,6 @@ class CumulativeSemanticAnalyzer(
                 }
                 block
             }
-
             is ReturnNode -> {
                 val result = getExpressionType(block, node.expression, signatures)
                 if (result is Either.Left) {

@@ -12,6 +12,9 @@ sealed class LLVMType(
     data object I32 : LLVMType("i32", 4, 4)
     data object I64 : LLVMType("i64", 8, 8)
 
+    data object F32 : LLVMType("float", 4, 4)
+    data object F64 : LLVMType("double", 8, 8)
+
     data class Array(val type: LLVMType, val length: Int) : LLVMType("[$length x ${type.llvm}]", type.defaultAlignment, type.size * length)
 
     data object Ptr : LLVMType("ptr", 1, 1)

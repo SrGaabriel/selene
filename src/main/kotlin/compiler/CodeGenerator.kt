@@ -1,5 +1,6 @@
 package me.gabriel.gwydion.compiler
 
+import me.gabriel.gwydion.intrinsics.IntrinsicFunction
 import me.gabriel.gwydion.parsing.SyntaxTree
 import me.gabriel.gwydion.signature.Signatures
 

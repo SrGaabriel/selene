@@ -131,7 +131,12 @@ class LLVMCodeGenerator: ILLVMCodeGenerator {
     }
 
     override fun binaryOp(left: Value, op: BinaryOp, right: Value, type: LLVMType): String {
-        return "${op.llvm} ${type.llvm} ${left.llvm()}, ${right.llvm()}"
+        val opLlvm = if (type == LLVMType.F32 || type == LLVMType.F64) {
+            op.floatLlvm
+        } else {
+            op.llvm
+        }
+        return "$opLlvm ${type.llvm} ${left.llvm()}, ${right.llvm()}"
     }
 
     override fun storage(value: Value, address: MemoryUnit): String {

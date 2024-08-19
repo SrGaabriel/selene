@@ -1,43 +1,5 @@
-data Map(
-    foo: int32
-)
-
-trait Fooable(
-    fooat() :: int32
-)
-
-make Map into Fooable {
-    func fooat(self) :: int32 {
-        println("Map");
-        return self.foo;
-    }
-}
-
-make string into Fooable {
-    func fooat(self) :: int32 {
-        b := self.length();
-        return b;
-    }
-}
-
 func main() {
-    map := @Map(720);
-    txt := "wowo";
-    test();
-    print_fooable(txt);
-    print_fooable(map);
-}
-
-func test() :: int32 {
-    a := 5;
-    return a;
-}
-
-func print_fooable(daddy: Fooable) {
-    a := daddy.fooat();
-    println(a);
-}
-
-func do_something(foo: Fooable) {
-    println(foo.fooat());
+    a := cos(2);
+    b := sin(2);
+    println(a * b);
 }

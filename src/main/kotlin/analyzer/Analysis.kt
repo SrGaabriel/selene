@@ -8,6 +8,7 @@ import me.gabriel.gwydion.signature.SignatureTrait
 import me.gabriel.gwydion.signature.SignatureTraitImpl
 import me.gabriel.gwydion.signature.Signatures
 import me.gabriel.gwydion.util.Either
+import kotlin.math.absoluteValue
 
 class AnalysisResult(
     val errors: List<AnalysisError>
@@ -20,6 +21,7 @@ tailrec fun getExpressionType(
 ): Either<AnalysisError, out Type> {
     return when (node) {
         is VariableReferenceNode -> {
+            (2).absoluteValue
             if (node.name == "self") {
                 return Either.Right(block.self ?: return Either.Left(AnalysisError.UndefinedVariable(node, node.name, block)))
             }

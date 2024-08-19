@@ -3,17 +3,16 @@ package me.gabriel.gwydion.compiler.llvm
 import me.gabriel.gwydion.analyzer.figureOutTraitForVariable
 import me.gabriel.gwydion.analyzer.getExpressionType
 import me.gabriel.gwydion.compiler.MemoryBlock
-import me.gabriel.gwydion.compiler.IntrinsicFunction
+import me.gabriel.gwydion.intrinsics.IntrinsicFunction
 import me.gabriel.gwydion.lexing.TokenKind
 import me.gabriel.gwydion.llvm.LLVMCodeAssembler
 import me.gabriel.gwydion.llvm.LLVMCodeGenerator
 import me.gabriel.gwydion.llvm.struct.*
 import me.gabriel.gwydion.parsing.*
 import me.gabriel.gwydion.signature.*
+import me.gabriel.gwydion.util.castToType
 import kotlin.math.absoluteValue
-import kotlin.math.exp
 import kotlin.random.Random
-import kotlin.random.nextUInt
 
 /*
  * I decided to use exceptions instead of errors because the exceptions should be caught in
@@ -51,7 +50,7 @@ class LLVMCodeAdaptationProcess(
         }
         dependencies.add("@format_s = private unnamed_addr constant [3 x i8] c\"%s\\00\"")
         dependencies.add("@format_n = private unnamed_addr constant [3 x i8] c\"%d\\00\"")
-        dependencies.add("@format_b = private unnamed_addr constant [3 x i8] c\"%d\\00\"")
+        dependencies.add("@format_f = private unnamed_addr constant [3 x i8] c\"%f\\00\"")
         traitObjectsImpl.forEach {
             dependencies.add(it)
         }
@@ -181,6 +180,9 @@ class LLVMCodeAdaptationProcess(
         val arguments = mutableListOf<Value>()
         node.arguments.forEachIndexed { index, arg ->
             val result = acceptNode(block, arg, true)
+            if (result is NullMemoryUnit || result.type is LLVMType.Void) {
+                error("Argument $arg is void")
+            }
 
             // the below would work, but what if our type is a struct and the function expects a trait?
             val functionTypeEquivalent = functionDefinition.parameters[index].type
@@ -290,8 +292,8 @@ class LLVMCodeAdaptationProcess(
         if (store) {
             val addition = assembler.addNumber(
                 type = type,
-                left = LLVMConstant(node.value.toInt(), type),
-                right = LLVMConstant(0, type)
+                left = LLVMConstant(node.value, type),
+                right = LLVMConstant("0".castToType(node.type), type)
             )
             return addition
         }
@@ -336,18 +338,15 @@ class LLVMCodeAdaptationProcess(
             )
             return resultString
         }
-        if (type == Type.Int32) {
-            val left = acceptNode(block, node.left)
-            val right = acceptNode(block, node.right)
-            val result = assembler.binaryOp(
-                type = LLVMType.I32,
-                left = left,
-                op = op,
-                right = right
-            )
-            return result
-        }
-        return NullMemoryUnit
+        val left = acceptNode(block, node.left)
+        val right = acceptNode(block, node.right)
+        val result = assembler.binaryOp(
+            type = type.asLLVM(),
+            left = left,
+            op = op,
+            right = right
+        )
+        return result
     }
 
     fun generateIf(block: MemoryBlock, node: IfNode): NullMemoryUnit {

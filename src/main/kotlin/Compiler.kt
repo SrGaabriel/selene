@@ -1,14 +1,14 @@
 package me.gabriel.gwydion
 
 import com.github.ajalt.mordant.rendering.TextColors
-import kotlinx.serialization.decodeFromString
 import kotlinx.serialization.json.Json
 import me.gabriel.gwydion.analyzer.CumulativeSemanticAnalyzer
-import me.gabriel.gwydion.compiler.ArrayLengthFunction
+import me.gabriel.gwydion.intrinsics.ArrayLengthFunction
 import me.gabriel.gwydion.compiler.ProgramMemoryRepository
 import me.gabriel.gwydion.compiler.llvm.LLVMCodeAdapter
-import me.gabriel.gwydion.compiler.PrintlnFunction
-import me.gabriel.gwydion.compiler.ReadlineFunction
+import me.gabriel.gwydion.intrinsics.INTRINSICS
+import me.gabriel.gwydion.intrinsics.PrintlnFunction
+import me.gabriel.gwydion.intrinsics.ReadlineFunction
 import me.gabriel.gwydion.lexing.lexers.StringLexer
 import me.gabriel.gwydion.link.StdlibLinker
 import me.gabriel.gwydion.log.GwydionLogger
@@ -16,7 +16,6 @@ import me.gabriel.gwydion.log.LogLevel
 import me.gabriel.gwydion.log.MordantLogger
 import me.gabriel.gwydion.parsing.Parser
 import me.gabriel.gwydion.parsing.SyntaxTree
-import me.gabriel.gwydion.parsing.SyntaxTreeNode
 import me.gabriel.gwydion.reader.AmbiguousSourceReader
 import me.gabriel.gwydion.signature.SignatureHandler
 import me.gabriel.gwydion.signature.Signatures
@@ -25,7 +24,7 @@ import me.gabriel.gwydion.util.replaceAtIndex
 import me.gabriel.gwydion.util.trimIndentReturningWidth
 import java.io.File
 import java.time.Instant
-import kotlin.math.sign
+import kotlin.system.exitProcess
 
 private val json = Json {
     encodeDefaults = false
@@ -39,7 +38,7 @@ fun main(args: Array<String>) {
     val toolchain = File(System.getProperty("user.home"), ".gwydion")
     if (args.isEmpty()) {
         logger.log(LogLevel.ERROR) { +"The argument should be the path to the file to compile" }
-        return
+        exitProcess(1)
     }
     val sourcePath = args[0]
     val name = args.getOrNull(1) ?: "program"
@@ -54,7 +53,7 @@ fun main(args: Array<String>) {
     val folder = File(sourcePath)
     if (!folder.exists() || folder.isFile) {
         logger.log(LogLevel.ERROR) { +"The folder does not exist" }
-        return
+        exitProcess(1)
     }
 
     val currentFolder = File("").absolutePath
@@ -64,23 +63,19 @@ fun main(args: Array<String>) {
     val sourceReader = AmbiguousSourceReader(logger)
     val memoryStart = Instant.now()
     val llvmCodeAdapter = LLVMCodeAdapter()
-    llvmCodeAdapter.registerIntrinsicFunction(
-        PrintlnFunction(),
-        ReadlineFunction(),
-        ArrayLengthFunction()
-    )
+    llvmCodeAdapter.registerIntrinsicFunction(*INTRINSICS)
     if (!isStdlib) {
         logger.log(LogLevel.INFO) { +"Linking the stdlib symbols..." }
 
         val stdlib = File(toolchain, "stdlib/src")
         if (!stdlib.exists()) {
             logger.log(LogLevel.ERROR) { +"The stdlib folder does not exist" }
-            return
+            exitProcess(1)
         }
         val stdlibText = sourceReader.read(stdlib)
         val stdlibMemory = ProgramMemoryRepository()
         val stdlibSignatures = Signatures()
-        val stdlibTree = parse(logger, stdlibText, stdlibMemory, stdlibSignatures) ?: return
+        val stdlibTree = parse(logger, stdlibText, stdlibMemory, stdlibSignatures) ?: exitProcess(1)
         llvmCodeAdapter.generate(
             "stdlib",
             stdlibTree,
@@ -96,7 +91,7 @@ fun main(args: Array<String>) {
     }
 
     val sources = File(folder, "src")
-    val tree = parse(logger, sourceReader.read(sources), memory, signatures) ?: return
+    val tree = parse(logger, sourceReader.read(sources), memory, signatures) ?: exitProcess(1)
     val memoryEnd = Instant.now()
     val memoryDelay = memoryEnd.toEpochMilli() - memoryStart.toEpochMilli()
     logger.log(LogLevel.INFO) { +"Memory analysis took ${memoryDelay}ms" }
@@ -121,7 +116,7 @@ fun main(args: Array<String>) {
     )
 
     logger.log(LogLevel.INFO) { +"The total time to generate and compile the code was ${executionDelay + generationDelay + memoryDelay}ms" }
-    return
+    exitProcess(0)
 }
 
 fun parse(logger: GwydionLogger, text: String, memory: ProgramMemoryRepository, signatures: Signatures): SyntaxTree? {
@@ -140,7 +135,7 @@ fun parse(logger: GwydionLogger, text: String, memory: ProgramMemoryRepository, 
             + "| row: ${replaceAtIndex(contentTrim, newRelativeIndex, 1, color(contentTrim[newRelativeIndex].toString(), TextColors.red))}"
             + ("| pos: " + " ".repeat(rowInfo.relativeIndex - trimWidth) + "^")
         }
-        return null
+        exitProcess(1)
     }
     val tokenStream = result.getRight()
     logger.log(LogLevel.DEBUG) { +"The lexing was successful with ${tokenStream.count()} tokens!" }
@@ -158,7 +153,7 @@ fun parse(logger: GwydionLogger, text: String, memory: ProgramMemoryRepository, 
             + "| row: ${contentTrim.replace(error.token.value, color(error.token.value, TextColors.red))}"
             + ("| pos: " + " ".repeat(rowInfo.relativeIndex - trimWidth) + "^".repeat(error.token.value.length))
         }
-        return null
+        exitProcess(1)
     } else {
         logger.log(LogLevel.DEBUG) { +"The parsing was successful!" }
     }
@@ -174,7 +169,7 @@ fun parse(logger: GwydionLogger, text: String, memory: ProgramMemoryRepository, 
                 + "${bold("[semantic]")} ${error.message}"
             }
         }
-        return null
+        exitProcess(1)
     }
     val end = Instant.now()
     logger.log(LogLevel.INFO) { +"Compilation finished in ${end.toEpochMilli() - start.toEpochMilli()}ms" }
