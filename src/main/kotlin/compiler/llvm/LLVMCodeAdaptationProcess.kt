@@ -208,8 +208,7 @@ class LLVMCodeAdaptationProcess(
 
         val type = getProperReturnType(functionSymbol)
         val reg = assembler.nextRegister()
-        val assignment = if (store) {
-            // Todo: review
+        val assignment = if (type != LLVMType.Void) {
             MemoryUnit.Sized(
                 register = reg,
                 type = type,
@@ -224,7 +223,7 @@ class LLVMCodeAdaptationProcess(
                 types = node.arguments.map { getExpressionType(block, it, signatures).let { it.getRightOrNull() ?: error(it.getLeft().message) } },
                 arguments = arguments.joinToString(", ") { "${it.type.llvm} ${it.llvm()}" }
             )
-            if (store) {
+            if (type != LLVMType.Void) {
                 assembler.saveToRegister(assignment.register, call)
                 return assignment
             } else {
@@ -563,7 +562,7 @@ class LLVMCodeAdaptationProcess(
         }
         val loadedFunction = assembler.loadPointer(traitImplPointer)
 
-        val assignment = if (store) {
+        val assignment = if (type != LLVMType.Void) {
             MemoryUnit.Sized(
                 register = assembler.nextRegister(),
                 type = type,

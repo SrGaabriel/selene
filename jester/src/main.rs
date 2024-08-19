@@ -41,7 +41,7 @@ fn main() {
 }
 
 fn link_files(project_root: &Path) {
-    let output_dir = project_root.join("bard\\output\\ll");
+    let output_dir = project_root.join("bard/output/ll");
 
     let files: Vec<PathBuf> = fs::read_dir(&output_dir)
         .unwrap_or_else(|_| panic!("Failed to read directory: {:?}", output_dir))
@@ -59,8 +59,11 @@ fn link_files(project_root: &Path) {
     } else {
         "output"
     };
-    command.arg("-o").arg(project_root.join(format!("bard/output/{}", output_filename)));
+    command
+        .arg("-o")
+        .arg(project_root.join(format!("bard/output/{}", output_filename)));
     command.args(&files);
+    command.arg("-lm");
     command.current_dir(&output_dir);
     command.stdout(Stdio::inherit());
     command.stderr(Stdio::inherit());
