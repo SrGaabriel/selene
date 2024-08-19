@@ -16,6 +16,7 @@ import me.gabriel.gwydion.log.LogLevel
 import me.gabriel.gwydion.log.MordantLogger
 import me.gabriel.gwydion.parsing.Parser
 import me.gabriel.gwydion.parsing.SyntaxTree
+import me.gabriel.gwydion.parsing.SyntaxTreeNode
 import me.gabriel.gwydion.reader.AmbiguousSourceReader
 import me.gabriel.gwydion.signature.SignatureHandler
 import me.gabriel.gwydion.signature.Signatures

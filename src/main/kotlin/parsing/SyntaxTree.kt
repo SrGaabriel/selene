@@ -160,6 +160,8 @@ class BooleanNode(
     start: Token
 ) : TypedSyntaxTreeNode(start, start, Type.Boolean) {
     override fun getChildren(): List<SyntaxTreeNode> = emptyList()
+
+    override fun toString(): String = "BooleanNode(value=$value)"
 }
 
 class IfNode(
@@ -169,6 +171,8 @@ class IfNode(
     start: Token
 ) : SyntaxTreeNode(start, body.end) {
     override fun getChildren(): List<SyntaxTreeNode> = listOfNotNull(condition, body, elseBody)
+
+    override fun toString(): String = "IfNode(condition=$condition, body=$body, elseBody=$elseBody)"
 }
 
 class ArrayNode(
@@ -178,6 +182,8 @@ class ArrayNode(
     end: Token
 ) : SyntaxTreeNode(start, end) {
     override fun getChildren(): List<SyntaxTreeNode> = elements
+
+    override fun toString(): String = "ArrayNode(elements=$elements, dynamic=$dynamic)"
 }
 
 class ArrayAccessNode(
@@ -187,6 +193,8 @@ class ArrayAccessNode(
     end: Token
 ) : SyntaxTreeNode(start, end) {
     override fun getChildren(): List<SyntaxTreeNode> = listOf(index)
+
+    override fun toString(): String = "ArrayAccessNode(identifier='$identifier', index=$index)"
 }
 
 class DataStructureNode(
@@ -196,6 +204,8 @@ class DataStructureNode(
     end: Token
 ) : SyntaxTreeNode(start, end) {
     override fun getChildren(): List<SyntaxTreeNode> = fields
+
+    override fun toString(): String = "DataStructureNode(name='$name', fields=$fields)"
 }
 
 class DataFieldNode(
@@ -205,6 +215,8 @@ class DataFieldNode(
     end: Token
 ) : SyntaxTreeNode(start, end) {
     override fun getChildren(): List<SyntaxTreeNode> = listOf()
+
+    override fun toString(): String = "DataFieldNode(name='$name', type=$type)"
 }
 
 class TraitNode(
@@ -214,6 +226,8 @@ class TraitNode(
     end: Token
 ) : SyntaxTreeNode(start, end) {
     override fun getChildren(): List<SyntaxTreeNode> = functions
+
+    override fun toString(): String = "TraitNode(name='$name', functions=$functions)"
 }
 
 class TraitFunctionNode(
@@ -222,6 +236,8 @@ class TraitFunctionNode(
     val parameters: List<ParameterNode>,
 ) : SyntaxTreeNode(null, null) {
     override fun getChildren(): List<SyntaxTreeNode> = parameters
+
+    override fun toString(): String = "TraitFunctionNode(name='$name', returnType=$returnType, parameters=$parameters)"
 }
 
 class TraitImplNode(
@@ -259,6 +275,8 @@ class MutationNode(
     start: Token
 ) : SyntaxTreeNode(start, expression.end) {
     override fun getChildren(): List<SyntaxTreeNode> = listOf(expression)
+
+    override fun toString(): String = "MutationNode(struct='$struct', field='$field', expression=$expression)"
 }
 
 class TraitFunctionCallNode(
@@ -267,4 +285,6 @@ class TraitFunctionCallNode(
     val arguments: List<SyntaxTreeNode>,
 ) : SyntaxTreeNode(null, null) {
     override fun getChildren(): List<SyntaxTreeNode> = arguments
+
+    override fun toString(): String = "TraitFunctionCallNode(trait='$trait', function='$function', arguments=$arguments)"
 }

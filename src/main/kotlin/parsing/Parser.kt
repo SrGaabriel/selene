@@ -601,10 +601,7 @@ class Parser(private val tokens: TokenStream) {
                     arguments = arguments.unwrap()
                 ))
             }
-            TokenKind.SELF -> {
-                parseNumericExpression()
-            }
-            TokenKind.IDENTIFIER -> {
+            TokenKind.IDENTIFIER, TokenKind.SELF -> {
                 when (peekNext().kind) {
                     TokenKind.OPENING_PARENTHESES -> {
                         position++

@@ -58,7 +58,7 @@ tailrec fun getExpressionType(
         }
         is DataStructureNode -> Either.Right(block.figureOutSymbol(node.name) ?: return Either.Left(AnalysisError.UndefinedDataStructure(node, node.name)))
         is TraitFunctionCallNode -> {
-            val symbol = block.figureOutSymbol(node.trait)
+            val symbol = if (node.trait != "self") block.figureOutSymbol(node.trait) else block.self
             if (symbol is Type.Trait) {
                 val function = symbol.functions.firstOrNull { it.name == node.function }
                 if (function != null) {
@@ -112,7 +112,7 @@ fun figureOutTraitForVariable(
     signatures: Signatures,
     call: String
 ): TraitFunctionMetadata? {
-    val resolvedVariable = block.figureOutSymbol(variable) ?: return null
+    val resolvedVariable = (if (variable != "self") block.figureOutSymbol(variable) else block.self) ?: return null
 
     return signatures.traits.firstNotNullOfOrNull { trait ->
         val impl = if (resolvedVariable !is Type.Trait) trait.impls.firstOrNull {

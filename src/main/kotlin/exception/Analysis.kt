@@ -20,7 +20,7 @@ sealed class AnalysisError(val message: String, val node: SyntaxTreeNode) {
     class UndefinedVariable(node: SyntaxTreeNode, name: String, block: MemoryBlock) : AnalysisError(
         "undefined variable: $name in block ${block.name}",
         node
-    )
+    ) { init { error(".") } }
 
     class TraitForFunctionNotFound(node: SyntaxTreeNode, name: String, function: String) : AnalysisError(
         "unknown trait: func `$function` for variable $name could not be found",
@@ -59,6 +59,16 @@ sealed class AnalysisError(val message: String, val node: SyntaxTreeNode) {
 
     class MissingArgumentsForInstantiation(node: SyntaxTreeNode, name: String) : AnalysisError(
         "missing arguments for instantiation of $name",
+        node
+    )
+
+    class MissingReturnStatement(node: SyntaxTreeNode) : AnalysisError(
+        "missing return statement",
+        node
+    )
+
+    class ReturnOutsideFunction(node: SyntaxTreeNode) : AnalysisError(
+        "return statement outside function",
         node
     )
 

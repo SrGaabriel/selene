@@ -59,7 +59,6 @@ class CumulativeSemanticAnalyzer(
                 )
 
                 val traitSignature = signatures.traits.find { it.name == node.trait } ?: error("Trait ${node.trait} not found")
-                println("Adding trait impl for ${node.trait} and ${node.type.signature}")
                 traitSignature.impls.add(
                     SignatureTraitImpl(
                         trait = node.trait,
@@ -78,6 +77,7 @@ class CumulativeSemanticAnalyzer(
                     newBlock.symbols.declare("${node.type.signature}_${it.name}", treatedType)
                     newBlock.symbols.define("${node.type.signature}_${it.name}", it)
                 }
+                node.functions.forEach { findSymbols(it, newBlock) }
                 return newBlock
             }
             is TraitNode -> {
@@ -111,6 +111,7 @@ class CumulativeSemanticAnalyzer(
                 ) ?: node.returnType
                 block.symbols.declare(node.name, node.returnType)
                 block.symbols.define(node.name, node)
+
                 return repository.createBlock(node.name, block)
             }
             is ParameterNode -> {
@@ -174,33 +175,31 @@ class CumulativeSemanticAnalyzer(
                 block
             }
 
+            is AssignmentNode -> {
+                val symbol = block.figureOutSymbol(node.name)
+                if (symbol == null) {
+                    block.symbols.declare(node.name, node.type)
+                    block.symbols.define(node.name, node)
+                }
+                block
+            }
+
             is FunctionNode -> {
                 val functionBlock =
                     block.surfaceSearchChild(node.name) ?: error("Block ${node.name} not found")
                 if (node.modifiers.contains(Modifiers.INTRINSIC)) {
                     return
                 }
+                val returnNode = node.body.getChildren().filter { it is ReturnNode }
+                if (returnNode.isEmpty() && node.returnType != Type.Void) {
+                    errors.add(AnalysisError.MissingReturnStatement(node))
+                    return
+                }
 
-                val returnNode = node.body.getChildren().find { it is ReturnNode }
-                val returnType = if (returnNode != null) {
-                    val result = getExpressionType(functionBlock, (returnNode as ReturnNode).expression, signatures)
-                    if (result is Either.Left) {
-                        errors.add(result.value)
-                        return
-                    }
-                    result.unwrap()
-                } else {
-                    Type.Void
+                if (returnNode.size > 1) {
+                    // TODO: add warning
                 }
-                // If the user is returning an unknown type, we will assume that the function is returning that type
-                val inferredType = if (returnType == Type.Unknown) {
-                    node.returnType
-                } else {
-                    returnType
-                }
-                if (inferredType != node.returnType) {
-                    errors.add(AnalysisError.ReturnTypeMismatch(node, node.returnType, returnType))
-                }
+
                 functionBlock
             }
 
@@ -315,6 +314,35 @@ class CumulativeSemanticAnalyzer(
                     errors.add(AnalysisError.UndefinedField(node, node.field))
                     return
                 }
+                block
+            }
+
+            is ReturnNode -> {
+                val result = getExpressionType(block, node.expression, signatures)
+                if (result is Either.Left) {
+                    errors.add(result.value)
+                    return
+                }
+                if (block.parent == null) {
+                    errors.add(AnalysisError.ReturnOutsideFunction(node))
+                    return
+                }
+                // TODO: remove _trait_ declarations
+//                val expectedReturnType = block.parent.parent.figureOutSymbol(block.parent.name)
+//                    ?: error("Symbol for function ${block.parent.name} not defined")
+//                result.unwrap()
+//                val receivedReturnType = result.unwrap()
+//
+//                // If the user is returning an unknown type, we will assume that the function is returning that type
+//                val inferredType = if (receivedReturnType == Type.Unknown) {
+//                    expectedReturnType
+//                } else {
+//                    receivedReturnType
+//                }
+//                if (!doTypesMatch(expectedReturnType, inferredType)) {
+//                    errors.add(AnalysisError.ReturnTypeMismatch(node, expectedReturnType, inferredType))
+//                    return
+//                }
                 block
             }
 

@@ -15,16 +15,22 @@ make Map into Fooable {
 
 make string into Fooable {
     func fooat(self) :: int32 {
-        println("string");
-        return arraylen(self);
+        b := self.length();
+        return b;
     }
 }
 
 func main() {
     map := @Map(720);
     txt := "wowo";
+    test();
     print_fooable(txt);
     print_fooable(map);
+}
+
+func test() :: int32 {
+    a := 5;
+    return a;
 }
 
 func print_fooable(daddy: Fooable) {

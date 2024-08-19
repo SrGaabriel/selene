@@ -195,8 +195,6 @@ class LLVMCodeAdaptationProcess(
                 val type = getExpressionType(block, arg, signatures).unwrap()
                 if (type is Type.Trait) error("TraitData was not generated from a trait")
                 val impl = trait.impls.firstOrNull {
-                    println("Struct: ${it.struct}")
-                    println("Type: $type")
                     it.struct == type.signature
                 } ?: error("Trait implementation for ${getExpressionType(block, arg, signatures).unwrap().signature} not found in signatures")
                 arguments.add(LLVMConstant("@${TraitObject.PREFIX}${impl.index}", LLVMType.Ptr))
