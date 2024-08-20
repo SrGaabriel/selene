@@ -3,6 +3,7 @@ package me.gabriel.gwydion
 import com.github.ajalt.mordant.rendering.TextColors
 import kotlinx.serialization.json.Json
 import me.gabriel.gwydion.analyzer.CumulativeSemanticAnalyzer
+import me.gabriel.gwydion.cli.CommandHandler
 import me.gabriel.gwydion.intrinsics.ArrayLengthFunction
 import me.gabriel.gwydion.compiler.ProgramMemoryRepository
 import me.gabriel.gwydion.compiler.llvm.LLVMCodeAdapter
@@ -33,9 +34,9 @@ private val json = Json {
 fun main(args: Array<String>) {
     println("Gwydion Compiler")
     val logger = MordantLogger()
+    val cli = CommandHandler(args)
 
-    val isStdlib = args.contains("--internal-compile-stdlib")
-    val toolchain = File(System.getProperty("user.home"), ".gwydion")
+    val isStdlib = cli.option("internal-stdlib")
     if (args.isEmpty()) {
         logger.log(LogLevel.ERROR) { +"The argument should be the path to the file to compile" }
         exitProcess(1)
@@ -64,31 +65,6 @@ fun main(args: Array<String>) {
     val memoryStart = Instant.now()
     val llvmCodeAdapter = LLVMCodeAdapter()
     llvmCodeAdapter.registerIntrinsicFunction(*INTRINSICS)
-    if (!isStdlib) {
-        logger.log(LogLevel.INFO) { +"Linking the stdlib symbols..." }
-
-        val stdlib = File(toolchain, "stdlib/src")
-        if (!stdlib.exists()) {
-            logger.log(LogLevel.ERROR) { +"The stdlib folder does not exist" }
-            exitProcess(1)
-        }
-        val stdlibText = sourceReader.read(stdlib)
-        val stdlibMemory = ProgramMemoryRepository()
-        val stdlibSignatures = Signatures()
-        val stdlibTree = parse(logger, stdlibText, stdlibMemory, stdlibSignatures) ?: exitProcess(1)
-        llvmCodeAdapter.generate(
-            "stdlib",
-            stdlibTree,
-            stdlibMemory,
-            stdlibSignatures,
-            compileIntrinsics = true
-        )
-        memory.merge(stdlibMemory)
-        StdlibLinker.link(
-            stdlibTree,
-            llvmCodeAdapter
-        )
-    }
 
     val sources = File(folder, "src")
     val tree = parse(logger, sourceReader.read(sources), memory, signatures) ?: exitProcess(1)

@@ -90,7 +90,7 @@ fn compile(name: &String, file: &Path, project_root: &Path, is_stdlib: bool) -> 
         .current_dir(&output_dir);
 
     if is_stdlib {
-        command.arg("--internal-compile-stdlib");
+        command.arg("--internal-stdlib");
     }
 
     let output = command.output().expect("Failed to execute java process");

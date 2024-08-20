@@ -113,6 +113,12 @@ class CumulativeSemanticAnalyzer(
                 block.symbols.declare(node.name, node.returnType)
                 block.symbols.define(node.name, node)
 
+                signatures.functions.add(SignatureFunction(
+                    name = node.name,
+                    returnType = node.returnType,
+                    parameters = node.parameters.map { it.type }
+                ))
+
                 return repository.createBlock(node.name, block)
             }
             is ParameterNode -> {
@@ -241,52 +247,21 @@ class CumulativeSemanticAnalyzer(
             }
 
             is CallNode -> {
-                val function: Type? = block.figureOutSymbol(node.name)
                 val definition = block.figureOutDefinition(node.name) as FunctionNode?
-                if (function == null || definition == null) {
+                val signature = signatures.functions
+                    .find { it.name == node.name }
+
+                val (returnType, expectedParameters) = if (definition != null) {
+                    definition.returnType to definition.parameters.map { it.type }
+                } else if (signature != null) {
+                    signature.returnType to signature.parameters
+                } else {
                     errors.add(AnalysisError.UndefinedFunction(node, block))
                     return
                 }
-                if (function != definition.returnType) {
-                    errors.add(AnalysisError.ReturnTypeMismatch(node, definition.returnType, function))
+
+                if (!checkFunctionCall(node, returnType, expectedParameters, block)) {
                     return
-                }
-
-                if (node.arguments.size != definition.parameters.size) {
-                    errors.add(
-                        AnalysisError.MissingArgumentsForFunctionCall(
-                            node,
-                            definition.parameters.size,
-                            node.arguments.size
-                        )
-                    )
-                    return
-                }
-
-                definition.parameters.forEachIndexed { index, parameter ->
-                    val paramNode = node.arguments[index]
-                    val argumentTypeResult = getExpressionType(block, paramNode, signatures)
-                    if (argumentTypeResult is Either.Left) {
-                        errors.add(argumentTypeResult.value)
-                        return
-                    }
-                    var argumentType = argumentTypeResult.unwrap()
-                    // This means we can afford to cast the number to the expected type
-                    if (paramNode is NumberNode && !paramNode.explicit) {
-                        argumentType = definition.parameters[index].type
-                        paramNode.type = argumentType
-                        paramNode.value = paramNode.value.castToType(argumentType)
-                    }
-
-                    if (!doTypesMatch(parameter.type, argumentType)) {
-                        errors.add(
-                            AnalysisError.WrongArgumentTypeForFunctionCall(
-                                node,
-                                parameter.type,
-                                argumentType
-                            )
-                        )
-                    }
                 }
                 block
             }
@@ -408,5 +383,51 @@ class CumulativeSemanticAnalyzer(
             }
             else -> return type
         }
+    }
+
+    fun checkFunctionCall(
+        node: CallNode,
+        returnType: Type,
+        expectedParameters: List<Type>,
+        block: MemoryBlock
+    ): Boolean {
+        if (node.arguments.size != expectedParameters.size) {
+            errors.add(
+                AnalysisError.MissingArgumentsForFunctionCall(
+                    node,
+                    expectedParameters.size,
+                    node.arguments.size
+                )
+            )
+            return false
+        }
+
+        expectedParameters.forEachIndexed { index, parameter ->
+            val paramNode = node.arguments[index]
+            val argumentTypeResult = getExpressionType(block, paramNode, signatures)
+            if (argumentTypeResult is Either.Left) {
+                errors.add(argumentTypeResult.value)
+                return false
+            }
+            var argumentType = argumentTypeResult.unwrap()
+            // This means we can afford to cast the number to the expected type
+            if (paramNode is NumberNode && !paramNode.explicit) {
+                argumentType = expectedParameters[index]
+                paramNode.type = argumentType
+                paramNode.value = paramNode.value.castToType(argumentType)
+            }
+
+            if (!doTypesMatch(parameter, argumentType)) {
+                errors.add(
+                    AnalysisError.WrongArgumentTypeForFunctionCall(
+                        node,
+                        parameter,
+                        argumentType
+                    )
+                )
+                return false
+            }
+        }
+        return true
     }
 }

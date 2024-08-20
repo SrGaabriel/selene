@@ -9,6 +9,7 @@ sealed class Type(
     val id: kotlin.String,
     val signature: kotlin.String = id
 ) {
+    @Serializable
     data object Any : Type("any")
     @Serializable
     data object Int8 : Type("int8")
@@ -39,6 +40,7 @@ sealed class Type(
     @Serializable
     data object Boolean : Type("bool")
     data object Unknown : Type("unknown")
+    @Serializable
     data class UnknownReference(val reference: kotlin.String, val mutable: kotlin.Boolean): Type("unknown", reference)
     @Serializable
     data class DynamicArray(

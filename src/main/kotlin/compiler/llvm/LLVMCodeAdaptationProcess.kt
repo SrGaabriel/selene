@@ -171,12 +171,12 @@ class LLVMCodeAdaptationProcess(
         node: CallNode,
         store: Boolean
     ): Value {
-        val functionSymbol = block.figureOutSymbol(
-            node.name
-        ) ?: error("Function ${node.name} not found in block ${block.name}")
-
-        val functionDefinition = block.figureOutDefinition(node.name) as? FunctionNode
+        val (expectedParameters, functionSymbol) = ((block.figureOutDefinition(node.name) as? FunctionNode)
+            ?.let { it.parameters.map { it.type } to it.returnType })
+            ?: signatures.functions.find { it.name == node.name }
+            ?.let { it.parameters to it.returnType }
             ?: error("Function ${node.name} not found in block ${block.name}")
+
         val arguments = mutableListOf<Value>()
         node.arguments.forEachIndexed { index, arg ->
             val result = acceptNode(block, arg, true)
@@ -185,7 +185,7 @@ class LLVMCodeAdaptationProcess(
             }
 
             // the below would work, but what if our type is a struct and the function expects a trait?
-            val functionTypeEquivalent = functionDefinition.parameters[index].type
+            val functionTypeEquivalent = expectedParameters[index]
             if (result is MemoryUnit.TraitData && functionTypeEquivalent is Type.Trait) {
                 arguments.add(result.vtable)
                 arguments.add(result.loadedData ?: error("TraitData was not loaded"))

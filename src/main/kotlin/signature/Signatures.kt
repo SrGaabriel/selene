@@ -1,11 +1,11 @@
 package me.gabriel.gwydion.signature
 
-import kotlinx.serialization.SerialName
 import kotlinx.serialization.Serializable
 import me.gabriel.gwydion.parsing.Type
 
 @Serializable
 data class Signatures(
+    val functions: MutableSet<SignatureFunction> = mutableSetOf(),
     val traits: MutableSet<SignatureTrait> = mutableSetOf()
 ) {
     operator fun plus(other: Signatures): Signatures {
@@ -18,13 +18,9 @@ data class Signatures(
                 newTraits.add(trait)
             }
         }
-        return Signatures(newTraits)
-    }
-
-    inline fun filterTraits(predicate: (SignatureTrait) -> Boolean): Signatures {
-        return Signatures(
-            traits = traits.filter(predicate).toMutableSet()
-        )
+        val newFunctions = functions.toMutableSet()
+        newFunctions.addAll(other.functions)
+        return Signatures(newFunctions, newTraits)
     }
 }
 

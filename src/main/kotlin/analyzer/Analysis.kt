@@ -38,7 +38,7 @@ tailrec fun getExpressionType(
         }
         is TypedSyntaxTreeNode -> Either.Right(node.type)
         is BinaryOperatorNode -> getExpressionType(block, node.left, signatures)
-        is CallNode -> Either.Right(inferCallType(block, node))
+        is CallNode -> Either.Right(inferCallType(block, signatures, node))
         is EqualsNode -> Either.Right(Type.Boolean)
         is ArrayNode -> getExpressionType(block, node.elements.first(), signatures).let {
             it.mapRight {
@@ -95,9 +95,16 @@ tailrec fun getExpressionType(
     }
 }
 
-fun inferCallType(block: MemoryBlock, node: CallNode): Type {
-    val function = block.figureOutSymbol(node.name) ?: return Type.Unknown
-    return function
+fun inferCallType(
+    block: MemoryBlock,
+    signatures: Signatures,
+    node: CallNode
+): Type {
+    val function = signatures.functions.firstOrNull { it.name == node.name }
+    if (function != null) {
+        return function.returnType
+    }
+    return block.figureOutSymbol(node.name) ?: Type.Unknown
 }
 
 data class TraitFunctionMetadata(
