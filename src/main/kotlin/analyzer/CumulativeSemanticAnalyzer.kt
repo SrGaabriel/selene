@@ -115,7 +115,6 @@ class CumulativeSemanticAnalyzer(
                 block.symbols.declare(node.name, node.returnType)
                 block.symbols.define(node.name, node)
 
-                println("Registering ${node.name} with ${node.returnType}")
                 signatures.functions.add(SignatureFunction(
                     name = node.name,
                     returnType = node.returnType,
@@ -197,6 +196,13 @@ class CumulativeSemanticAnalyzer(
                     block.symbols.declare(node.name, node.type)
                     block.symbols.define(node.name, node)
                 }
+                block
+            }
+
+            is ForNode -> {
+                block.symbols.declare(node.variable, Type.Int32)
+                println("Declaring ${node.variable} in block ${block.name}")
+
                 block
             }
 

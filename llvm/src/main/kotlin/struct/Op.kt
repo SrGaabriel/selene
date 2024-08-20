@@ -5,4 +5,5 @@ enum class BinaryOp(val llvm: String, val floatLlvm: String) {
     Subtraction("sub", "fsub"),
     Multiplication("mul", "fmul"),
     Division("sdiv", "fdiv"),
+    LessThan("slt", "olt"),
 }

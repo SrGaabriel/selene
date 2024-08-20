@@ -12,6 +12,7 @@ import me.gabriel.gwydion.parsing.*
 import me.gabriel.gwydion.signature.*
 import me.gabriel.gwydion.util.castToType
 import kotlin.math.absoluteValue
+import kotlin.math.exp
 import kotlin.random.Random
 
 /*
@@ -100,6 +101,7 @@ class LLVMCodeAdaptationProcess(
         is TraitNode -> generateTrait(block, node)
         is TraitImplNode -> generateTraitImpl(block, node)
         is TraitFunctionCallNode -> generateTraitCall(block, node, store)
+        is ForNode -> generateFor(block, node)
         else -> error("Node $node not supported")
     }
 
@@ -112,6 +114,9 @@ class LLVMCodeAdaptationProcess(
         if (node.modifiers.contains(Modifiers.INTRINSIC)) return NullMemoryUnit
 
         val parameters = mutableListOf<MemoryUnit>()
+        println("Function name: ${node.name}")
+        val block = block.surfaceSearchChild(node.blockName)
+            ?: error("Block ${node.name} not found in block ${block.name}")
         node.parameters.forEach { param ->
             if (param.type is Type.Trait) {
                 val vtable = MemoryUnit.Unsized(
@@ -522,6 +527,7 @@ class LLVMCodeAdaptationProcess(
             )
             acceptNode(traitBlock, it.copy(
                 name = "${node.type.signature}_${it.name}",
+                blockName = it.name,
                 parameters = it.parameters
             ), self = node.type)
         }
@@ -595,6 +601,57 @@ class LLVMCodeAdaptationProcess(
         )
 
         return assignment
+    }
+
+    fun generateFor(block: MemoryBlock, node: ForNode): NullMemoryUnit {
+        val type = Type.Int32
+        val llvmType = type.asLLVM()
+        val allocation = assembler.allocateStackMemory(
+            type = llvmType,
+            alignment = 4
+        ) as MemoryUnit.Sized
+
+        assembler.storeTo(
+            value = acceptNode(block, node.iterable.from),
+            address = allocation
+        )
+        val end = acceptNode(block, node.iterable.to)
+
+        val conditionLabel = assembler.nextLabel()
+        assembler.unconditionalBranchTo(conditionLabel)
+
+        assembler.createBranch(conditionLabel)
+        val loaded = assembler.loadPointer(allocation)
+        val comparison = assembler.booleanInverseComparison(
+            value = loaded,
+            expected = end
+        )
+        val bodyLabel = assembler.nextLabel()
+        val endLabel = assembler.nextLabel()
+        assembler.conditionalBranch(comparison, bodyLabel, endLabel)
+
+        assembler.createBranch(bodyLabel)
+        val loadedBodyValue = assembler.loadPointer(allocation)
+        block.memory.allocate(node.variable, loadedBodyValue)
+        block.symbols.declare(
+            name = node.variable,
+            type = type
+        )
+        acceptNode(block, node.body)
+        val next = assembler.addNumber(
+            type = llvmType,
+            left = loaded,
+            right = LLVMConstant(1, llvmType)
+        )
+        assembler.storeTo(
+            value = next,
+            address = allocation
+        )
+        assembler.unconditionalBranchTo(conditionLabel)
+
+        assembler.createBranch(endLabel)
+
+        return NullMemoryUnit
     }
 
     fun getProperReturnType(returnType: Type): LLVMType =

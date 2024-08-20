@@ -26,6 +26,11 @@ func main() {
     test();
     print_fooable(txt);
     print_fooable(map);
+
+    println(txt.length());
+    for i in 0..(txt.length()) {
+        println(i);
+    }
 }
 
 func test() :: int32 {

@@ -49,6 +49,7 @@ data class FunctionNode(
     val parameters: List<ParameterNode>,
     val body: BlockNode,
     val modifiers: MutableList<Modifiers>,
+    val blockName: String = name
 ) : SyntaxTreeNode(null, body.end) {
     override fun getChildren(): List<SyntaxTreeNode> = parameters + body
 }
@@ -289,4 +290,24 @@ class TraitFunctionCallNode(
     override fun getChildren(): List<SyntaxTreeNode> = arguments
 
     override fun toString(): String = "TraitFunctionCallNode(trait='$trait', function='$function', arguments=$arguments)"
+}
+
+class ForNode(
+    val variable: String,
+    val iterable: RangeNode, // todo: change to SyntaxTreeNode
+    val body: BlockNode,
+    start: Token
+) : SyntaxTreeNode(start, body.end) {
+    override fun getChildren(): List<SyntaxTreeNode> = listOf(iterable, body)
+
+    override fun toString(): String = "ForNode(variable='$variable', iterable=$iterable, body=$body)"
+}
+
+class RangeNode(
+    val from: SyntaxTreeNode,
+    val to: SyntaxTreeNode,
+) : SyntaxTreeNode(from.start, to.end) {
+    override fun getChildren(): List<SyntaxTreeNode> = listOf(from, to)
+
+    override fun toString(): String = "RangeNode(from=$from, to=$to)"
 }

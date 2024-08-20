@@ -20,7 +20,6 @@ class StringLexer(private val data: String): Lexer {
                 '(' -> tokens.add(Token(TokenKind.OPENING_PARENTHESES, "(", position)).also { position++ }
                 ')' -> tokens.add(Token(TokenKind.CLOSING_PARENTHESES, ")", position)).also { position++ }
                 ',' -> tokens.add(Token(TokenKind.COMMA, ",", position)).also { position++ }
-                '.' -> tokens.add(Token(TokenKind.DOT, ".", position)).also { position++ }
                 '[' -> tokens.add(Token(TokenKind.OPENING_BRACKETS, "[", position)).also { position++ }
                 ']' -> tokens.add(Token(TokenKind.CLOSING_BRACKETS, "]", position)).also { position++ }
                 '@' -> tokens.add(Token(TokenKind.INSTANTIATION, "@", position)).also { position++ }
@@ -32,6 +31,13 @@ class StringLexer(private val data: String): Lexer {
                         return Either.Left(identifier.getLeft())
                     }
                     tokens.add(identifier.getRight())
+                }
+                '.' -> {
+                    if (data[position + 1] == '.') {
+                        tokens.add(Token(TokenKind.RANGE, "..", position)).also { position += 2 }
+                    } else {
+                        tokens.add(Token(TokenKind.DOT, ".", position)).also { position++ }
+                    }
                 }
                 ':' -> {
                     if (data[position + 1] == '=') {
@@ -116,6 +122,8 @@ class StringLexer(private val data: String): Lexer {
             "float32" -> Either.Right(Token(TokenKind.FLOAT32_TYPE, value, start))
             "float64" -> Either.Right(Token(TokenKind.FLOAT64_TYPE, value, start))
             "intrinsic" -> Either.Right(Token(TokenKind.INTRINSIC, value, start))
+            "for" -> Either.Right(Token(TokenKind.FOR, value, start))
+            "in" -> Either.Right(Token(TokenKind.IN, value, start))
             "data" -> Either.Right(Token(TokenKind.DATA, value, start))
             "trait" -> Either.Right(Token(TokenKind.TRAIT, value, start))
             "make" -> Either.Right(Token(TokenKind.MAKE, value, start))

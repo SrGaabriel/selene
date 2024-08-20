@@ -136,8 +136,6 @@ interface ILLVMCodeAssembler {
 
     fun isTrue(value: Value): MemoryUnit
 
-    fun isNotTrue(value: Value): MemoryUnit
-
     fun isFalse(value: Value): MemoryUnit
 
     fun nextRegister(): Int

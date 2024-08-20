@@ -63,7 +63,11 @@ fn link_files(project_root: &Path) {
         .arg("-o")
         .arg(project_root.join(format!("bard/output/{}", output_filename)));
     command.args(&files);
-    command.arg("-lm");
+
+    if !cfg!(windows) {
+        command.arg("-lm");
+    }
+
     command.current_dir(&output_dir);
     command.stdout(Stdio::inherit());
     command.stderr(Stdio::inherit());

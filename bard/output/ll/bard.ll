@@ -1,14 +1,14 @@
-@trait_1985727056 = unnamed_addr constant <{ i16, i16, ptr }> <{
+@trait_745172384 = unnamed_addr constant <{ i16, i16, ptr }> <{
     i16 8,
     i16 8,
     ptr @string_fooat
 }>, align 8
-@trait_1082795390 = unnamed_addr constant <{ i16, i16, ptr }> <{
+@trait_532330330 = unnamed_addr constant <{ i16, i16, ptr }> <{
     i16 8,
     i16 8,
     ptr @Map_fooat
 }>, align 8
-@trait_939766503 = external constant <{ i16, i16, ptr }>
+@trait_260692249 = external constant <{ i16, i16, ptr }>
 @format_f = private unnamed_addr constant [3 x i8] c"%f\00"
 @format_n = private unnamed_addr constant [3 x i8] c"%d\00"
 @format_s = private unnamed_addr constant [3 x i8] c"%s\00"
@@ -45,10 +45,10 @@ ret i32 %9
 }
 define i32 @string_fooat(i8** %10) {
 entry:
-%11 = getelementptr inbounds <{i16, i16, ptr}>, ptr @trait_939766503, i32 0, i32 2
+%11 = getelementptr inbounds <{i16, i16, ptr}>, ptr @trait_260692249, i32 0, i32 2
 %12 = load ptr, ptr %11
 %13 = call i32 %12(i8** %10)
-%14 = getelementptr inbounds <{i16, i16, ptr}>, ptr @trait_939766503, i32 0, i32 2
+%14 = getelementptr inbounds <{i16, i16, ptr}>, ptr @trait_260692249, i32 0, i32 2
 %15 = load ptr, ptr %14
 %16 = call i32 %15(i8** %10)
 %17 = add i32 %16, 3
@@ -73,34 +73,55 @@ store i8 111, i8* %25
 %26 = getelementptr inbounds [5 x i8], [5 x i8]* %21, i32 0, i32 4
 store i8 0, i8* %26
 %27 = call i32 @test()
-call i1 @print_fooable(ptr @trait_1985727056, i8* %22)
-call i1 @print_fooable(ptr @trait_1082795390, %Map* %19)
+call i1 @print_fooable(ptr @trait_745172384, i8* %22)
+call i1 @print_fooable(ptr @trait_532330330, %Map* %19)
+%30 = getelementptr inbounds <{i16, i16, ptr}>, ptr @trait_260692249, i32 0, i32 2
+%31 = load ptr, ptr %30
+%32 = call i32 %31(i8* %22)
+call void @println_i32(i32 %32)
+%34 = alloca i32, align 4
+store i32 0, i32* %34
+%35 = getelementptr inbounds <{i16, i16, ptr}>, ptr @trait_260692249, i32 0, i32 2
+%36 = load ptr, ptr %35
+%37 = call i32 %36(i8* %22)
+br label %label0
+label0:
+%39 = load i32, i32* %34
+%40 = icmp ne i32 %39, %37
+br i1 %40, label %label1, label %label2
+label1:
+%41 = load i32, i32* %34
+call void @println_i32(i32 %41)
+%43 = add i32 %39, 1
+store i32 %43, i32* %34
+br label %label0
+label2:
 ret void
 }
 define i32 @test() {
 entry:
-%30 = add i32 5, 0
-ret i32 %30
+%45 = add i32 5, 0
+ret i32 %45
 }
-define void @print_fooable(ptr %31, ptr %32) {
+define void @print_fooable(ptr %46, ptr %47) {
 entry:
-%33 = getelementptr inbounds <{i16, i16, ptr}>, ptr %31, i32 0, i32 2
-%34 = load ptr, ptr %33
-%35 = call i32 %34(ptr %32)
-call void @println_i32(i32 %35)
+%48 = getelementptr inbounds <{i16, i16, ptr}>, ptr %46, i32 0, i32 2
+%49 = load ptr, ptr %48
+%50 = call i32 %49(ptr %47)
+call void @println_i32(i32 %50)
 ret void
 }
-define void @do_something(ptr %37, ptr %38) {
+define void @do_something(ptr %52, ptr %53) {
 entry:
-%39 = getelementptr inbounds <{i16, i16, ptr}>, ptr %37, i32 0, i32 2
-%40 = load ptr, ptr %39
-%41 = call i32 %40(ptr %38)
-call void @println_i32(i32 %41)
-%43 = fadd double 2.0, 0.0
-%44 = call double @cos(double %43)
-%45 = fadd double 2.0, 0.0
-%46 = call double @sin(double %45)
-%47 = fmul double %44, %46
-call void @println_f64(double %47)
+%54 = getelementptr inbounds <{i16, i16, ptr}>, ptr %52, i32 0, i32 2
+%55 = load ptr, ptr %54
+%56 = call i32 %55(ptr %53)
+call void @println_i32(i32 %56)
+%58 = fadd double 2.0, 0.0
+%59 = call double @cos(double %58)
+%60 = fadd double 2.0, 0.0
+%61 = call double @sin(double %60)
+%62 = fmul double %59, %61
+call void @println_f64(double %62)
 ret void
 }

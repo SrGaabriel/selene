@@ -128,6 +128,37 @@ class Parser(private val tokens: TokenStream) {
                 }
                 Either.Right(function.getRight())
             }
+            TokenKind.FOR -> {
+                position++
+                val variable = parseIdentifier()
+                if (variable.isLeft()) {
+                    return Either.Left(variable.getLeft())
+                }
+                consume(TokenKind.IN).ifLeft {
+                    return Either.Left(it)
+                }
+                val initial = parseNumericExpression()
+                if (initial.isLeft()) {
+                    return Either.Left(initial.getLeft())
+                }
+                consume(TokenKind.RANGE).ifLeft {
+                    return Either.Left(it)
+                }
+                val end = parseNumericExpression()
+                if (end.isLeft()) {
+                    return Either.Left(end.getLeft())
+                }
+                val block = parseBlock()
+                if (block.isLeft()) {
+                    return Either.Left(block.getLeft())
+                }
+                Either.Right(ForNode(
+                    variable = variable.unwrap(),
+                    iterable = RangeNode(initial.unwrap(), end.unwrap()),
+                    body = block.unwrap(),
+                    start = token
+                ))
+            }
             TokenKind.MUT -> {
                 position++
                 if (peek().kind != TokenKind.IDENTIFIER) {

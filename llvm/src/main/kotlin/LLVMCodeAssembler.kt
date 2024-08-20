@@ -76,6 +76,7 @@ class LLVMCodeAssembler(val generator: ILLVMCodeGenerator): ILLVMCodeAssembler {
     }
 
     override fun unconditionalBranchTo(label: String) {
+        register++
         instruct(generator.unconditionalBranchTo(label))
     }
 
@@ -344,13 +345,13 @@ class LLVMCodeAssembler(val generator: ILLVMCodeGenerator): ILLVMCodeAssembler {
     override fun isTrue(value: Value): MemoryUnit =
         isBooleanValue(value, expected = true)
 
-    override fun isNotTrue(value: Value): MemoryUnit =
-        isBooleanNotValue(value, expected = false)
-
     override fun isFalse(value: Value): MemoryUnit =
         isBooleanValue(value, expected = false)
 
-    fun isBooleanValue(value: Value, expected: Boolean): MemoryUnit {
+    fun isBooleanValue(value: Value, expected: Boolean): MemoryUnit =
+        booleanComparison(value, LLVMConstant(if (expected) 1 else 0, LLVMType.I1))
+
+    fun booleanComparison(value: Value, expected: Value): MemoryUnit {
         val unit = MemoryUnit.Sized(
             register = nextRegister(),
             type = LLVMType.I1,
@@ -358,12 +359,12 @@ class LLVMCodeAssembler(val generator: ILLVMCodeGenerator): ILLVMCodeAssembler {
         )
         saveToRegister(
             register = unit.register,
-            expression = generator.signedIntegerComparison(value, LLVMConstant(if (expected) 1 else 0, LLVMType.I1))
+            expression = generator.signedIntegerComparison(value, expected)
         )
         return unit
     }
 
-    fun isBooleanNotValue(value: Value, expected: Boolean): MemoryUnit {
+    fun booleanInverseComparison(value: Value, expected: Value): MemoryUnit {
         val unit = MemoryUnit.Sized(
             register = nextRegister(),
             type = LLVMType.I1,
@@ -371,7 +372,7 @@ class LLVMCodeAssembler(val generator: ILLVMCodeGenerator): ILLVMCodeAssembler {
         )
         saveToRegister(
             register = unit.register,
-            expression = generator.signedIntegerNotEqualComparison(value, LLVMConstant(if (expected) 1 else 0, LLVMType.I1))
+            expression = generator.signedIntegerNotEqualComparison(value, expected)
         )
         return unit
     }
@@ -398,6 +399,9 @@ class LLVMCodeAssembler(val generator: ILLVMCodeGenerator): ILLVMCodeAssembler {
                     right = right
                 )
                 return isTrue(comparison)
+            }
+            LLVMType.I8, LLVMType.I16, LLVMType.I32, LLVMType.I64 -> {
+                return booleanComparison(left, right)
             }
             is LLVMType.Pointer -> {
                 if (type.type == LLVMType.I8) {

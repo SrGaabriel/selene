@@ -21,10 +21,10 @@ tailrec fun getExpressionType(
 ): Either<AnalysisError, out Type> {
     return when (node) {
         is VariableReferenceNode -> {
-            (2).absoluteValue
             if (node.name == "self") {
                 return Either.Right(block.self ?: return Either.Left(AnalysisError.UndefinedVariable(node, node.name, block)))
             }
+            println("Searching for ${node.name} in block ${block.name}")
             Either.Right(block.figureOutSymbol(node.name) ?: return Either.Left(AnalysisError.UndefinedVariable(node, node.name, block)))
         }
         is AssignmentNode -> {
