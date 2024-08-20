@@ -3,6 +3,7 @@ package me.gabriel.gwydion.parsing
 import kotlinx.serialization.Serializable
 import me.gabriel.gwydion.lexing.Token
 import me.gabriel.gwydion.lexing.TokenKind
+import me.gabriel.gwydion.signature.SignatureFunction
 
 @Serializable
 sealed class Type(
@@ -40,7 +41,6 @@ sealed class Type(
     @Serializable
     data object Boolean : Type("bool")
     data object Unknown : Type("unknown")
-    @Serializable
     data class UnknownReference(val reference: kotlin.String, val mutable: kotlin.Boolean): Type("unknown", reference)
     @Serializable
     data class DynamicArray(
@@ -59,9 +59,10 @@ sealed class Type(
         val mutable: kotlin.Boolean
     ): Type("struct", identifier)
 
+    @Serializable
     data class Trait(
         val identifier: kotlin.String,
-        val functions: List<TraitFunctionNode>
+        val functions: List<SignatureFunction>
     ): Type("trait", identifier)
 
     override fun toString(): kotlin.String = id

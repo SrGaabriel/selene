@@ -4,14 +4,10 @@ import com.github.ajalt.mordant.rendering.TextColors
 import kotlinx.serialization.json.Json
 import me.gabriel.gwydion.analyzer.CumulativeSemanticAnalyzer
 import me.gabriel.gwydion.cli.CommandHandler
-import me.gabriel.gwydion.intrinsics.ArrayLengthFunction
 import me.gabriel.gwydion.compiler.ProgramMemoryRepository
 import me.gabriel.gwydion.compiler.llvm.LLVMCodeAdapter
 import me.gabriel.gwydion.intrinsics.INTRINSICS
-import me.gabriel.gwydion.intrinsics.PrintlnFunction
-import me.gabriel.gwydion.intrinsics.ReadlineFunction
 import me.gabriel.gwydion.lexing.lexers.StringLexer
-import me.gabriel.gwydion.link.StdlibLinker
 import me.gabriel.gwydion.log.GwydionLogger
 import me.gabriel.gwydion.log.LogLevel
 import me.gabriel.gwydion.log.MordantLogger
@@ -67,7 +63,7 @@ fun main(args: Array<String>) {
     llvmCodeAdapter.registerIntrinsicFunction(*INTRINSICS)
 
     val sources = File(folder, "src")
-    val tree = parse(logger, sourceReader.read(sources), memory, signatures) ?: exitProcess(1)
+    val tree = parse(logger, sourceReader.read(sources), memory, signatures)
     val memoryEnd = Instant.now()
     val memoryDelay = memoryEnd.toEpochMilli() - memoryStart.toEpochMilli()
     logger.log(LogLevel.INFO) { +"Memory analysis took ${memoryDelay}ms" }
@@ -95,7 +91,7 @@ fun main(args: Array<String>) {
     exitProcess(0)
 }
 
-fun parse(logger: GwydionLogger, text: String, memory: ProgramMemoryRepository, signatures: Signatures): SyntaxTree? {
+fun parse(logger: GwydionLogger, text: String, memory: ProgramMemoryRepository, signatures: Signatures): SyntaxTree {
     val start = Instant.now()
     val lexer = StringLexer(text)
     val result = lexer.tokenize()

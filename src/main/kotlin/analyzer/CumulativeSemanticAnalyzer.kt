@@ -82,22 +82,24 @@ class CumulativeSemanticAnalyzer(
                 return newBlock
             }
             is TraitNode -> {
+                val functions = node.functions.map {
+                    SignatureFunction(
+                        name = it.name,
+                        returnType = it.returnType,
+                        parameters = it.parameters.map { it.type }
+                    )
+                }
+
                 block.symbols.define(node.name, node)
                 block.symbols.declare(node.name, Type.Trait(
                     node.name,
-                    node.functions
+                    functions
                 ))
 
                 signatures.traits.add(
                     SignatureTrait(
                         name = node.name,
-                        functions = node.functions.map {
-                            SignatureFunction(
-                                name = it.name,
-                                returnType = it.returnType,
-                                parameters = it.parameters.map { it.type }
-                            )
-                        }
+                        functions = functions
                     )
                 )
             }
@@ -113,10 +115,17 @@ class CumulativeSemanticAnalyzer(
                 block.symbols.declare(node.name, node.returnType)
                 block.symbols.define(node.name, node)
 
+                println("Registering ${node.name} with ${node.returnType}")
                 signatures.functions.add(SignatureFunction(
                     name = node.name,
                     returnType = node.returnType,
-                    parameters = node.parameters.map { it.type }
+                    parameters = node.parameters.map {
+                        handleUnknownReference(
+                            block = block,
+                            node = it,
+                            type = it.type
+                        ) ?: it.type
+                    }
                 ))
 
                 return repository.createBlock(node.name, block)

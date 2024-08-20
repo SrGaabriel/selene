@@ -61,7 +61,7 @@ class LLVMCodeAdaptationProcess(
     }
 
     fun finish() {
-        traitObjects.forEach { (traitMem, traits) ->
+        traitObjects.forEach { (_, traits) ->
             // TODO: fix
             traits.forEach { obj ->
                 assembler.addDependency(assembler.generator.createTraitObject(obj = obj))
@@ -125,7 +125,10 @@ class LLVMCodeAdaptationProcess(
                 val trait = MemoryUnit.TraitData(
                     vtable = vtable,
                     data = data,
-                    type = LLVMType.Trait(name = node.name, functions = (param.type as Type.Trait).functions.size)
+                    type = LLVMType.Trait(
+                        name = node.name,
+                        functions = (param.type as Type.Trait).functions.size
+                    )
                 )
                 block.memory.allocate(param.name, trait)
                 block.symbols.declare(

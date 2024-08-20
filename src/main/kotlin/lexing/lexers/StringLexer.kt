@@ -96,8 +96,7 @@ class StringLexer(private val data: String): Lexer {
         while (position < data.length && (data[position].isLetterOrDigit() || data[position] == '_')) {
             position++
         }
-        val value = data.substring(start, position)
-        return when (value) {
+        return when (val value = data.substring(start, position)) {
             "func" -> Either.Right(Token(TokenKind.FUNCTION, value, start))
             "return" -> Either.Right(Token(TokenKind.RETURN, value, start))
             "string" -> Either.Right(Token(TokenKind.STRING_TYPE, value, start))

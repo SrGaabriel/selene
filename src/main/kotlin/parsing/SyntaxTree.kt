@@ -1,5 +1,6 @@
-package me.gabriel.gwydion.parsing;
+package me.gabriel.gwydion.parsing
 
+import kotlinx.serialization.Serializable
 import me.gabriel.gwydion.lexing.Token
 import me.gabriel.gwydion.lexing.TokenKind
 
