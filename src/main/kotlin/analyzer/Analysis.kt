@@ -10,10 +10,6 @@ import me.gabriel.gwydion.signature.Signatures
 import me.gabriel.gwydion.util.Either
 import kotlin.math.absoluteValue
 
-class AnalysisResult(
-    val errors: List<AnalysisError>
-)
-
 tailrec fun getExpressionType(
     block: MemoryBlock,
     node: SyntaxTreeNode,

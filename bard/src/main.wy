@@ -27,6 +27,8 @@ func main() {
     print_fooable(txt);
     print_fooable(map);
 
+    collect := @Collection(
+
     println(txt.length());
     for i in 0..(txt.length()) {
         println(i);

@@ -3,6 +3,8 @@ package me.gabriel.gwydion.analyzer
 import me.gabriel.gwydion.compiler.MemoryBlock
 import me.gabriel.gwydion.compiler.ProgramMemoryRepository
 import me.gabriel.gwydion.exception.AnalysisError
+import me.gabriel.gwydion.exception.AnalysisResult
+import me.gabriel.gwydion.exception.AnalysisWarning
 import me.gabriel.gwydion.parsing.*
 import me.gabriel.gwydion.signature.SignatureFunction
 import me.gabriel.gwydion.signature.SignatureTrait
@@ -11,12 +13,13 @@ import me.gabriel.gwydion.signature.Signatures
 import me.gabriel.gwydion.util.Either
 import me.gabriel.gwydion.util.castToType
 
-class CumulativeSemanticAnalyzer(
+class CumulativeSemanticAnalysisHandler(
     private val tree: SyntaxTree,
     private val repository: ProgramMemoryRepository,
     private val signatures: Signatures
-): SemanticAnalyzer {
+): SemanticAnalysisHandler {
     private val errors = mutableListOf<AnalysisError>()
+    private val warnings = mutableListOf<AnalysisWarning>()
 
     override fun analyzeTree(): AnalysisResult {
         findSymbols(tree.root, repository.root)
@@ -78,6 +81,8 @@ class CumulativeSemanticAnalyzer(
                     newBlock.symbols.declare("${node.type.signature}_${it.name}", treatedType)
                     newBlock.symbols.define("${node.type.signature}_${it.name}", it)
                 }
+                println("Parsing functions for impl ${node.type}")
+                println(node.functions)
                 node.functions.forEach { findSymbols(it, newBlock) }
                 return newBlock
             }
@@ -127,9 +132,12 @@ class CumulativeSemanticAnalyzer(
                     }
                 ))
 
-                return repository.createBlock(node.name, block)
+                val block = repository.createBlock(node.name, block)
+                node.parameters.forEach { findSymbols(it, block) }
+                return block
             }
             is ParameterNode -> {
+                println("Parsing parameter: ${node.name}")
                 node.type = handleUnknownReference(
                     block = block,
                     node = node,
@@ -139,6 +147,7 @@ class CumulativeSemanticAnalyzer(
                     errors.add(AnalysisError.UnknownType(node, node.type))
                     return null
                 }
+                println("Declaring ${node.name} in block ${block.name} as ${node.type}")
                 block.symbols.declare(node.name, node.type)
                 node.getChildren().forEach { findSymbols(it, block) }
             }
@@ -220,6 +229,7 @@ class CumulativeSemanticAnalyzer(
 
                 if (returnNode.size > 1) {
                     // TODO: add warning
+
                 }
 
                 functionBlock
@@ -242,13 +252,13 @@ class CumulativeSemanticAnalyzer(
                 traitBlock
             }
             is MutationNode -> {
-                val variable = block.figureOutSymbol(node.struct)
-                if (variable == null) {
+                val struct = block.figureOutSymbol(node.struct)
+                if (struct == null) {
                     errors.add(AnalysisError.UndefinedVariable(node, node.struct, block))
                     return
                 }
-                if (variable is Type.Struct && !variable.mutable) {
-                    errors.add(AnalysisError.ImmutableVariableMutation(node, variable.id))
+                if (struct is Type.Struct && !struct.mutable) {
+                    errors.add(AnalysisError.ImmutableVariableMutation(node, struct.identifier))
                 }
                 block
             }

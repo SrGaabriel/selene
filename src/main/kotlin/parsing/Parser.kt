@@ -181,7 +181,7 @@ class Parser(private val tokens: TokenStream) {
                 }
                 Either.Right(AssignmentNode(identifier.unwrap(), expression.getRight(), true, Type.Unknown, token))
             }
-            TokenKind.IDENTIFIER -> {
+            TokenKind.IDENTIFIER, TokenKind.SELF -> {
                 position++
                 val peek = peek()
                 // todo: improve this if-else-if-else-if-else shit
@@ -544,11 +544,13 @@ class Parser(private val tokens: TokenStream) {
     }
 
     fun parseParameter(token: Token): Either<ParsingError, ParameterNode> {
-        if (token.kind == TokenKind.SELF) {
+        if (token.kind == TokenKind.SELF || (token.kind == TokenKind.MUT && peekNext().kind == TokenKind.SELF)) {
             position++
+            val mutable = token.kind == TokenKind.MUT
+            if (mutable) position ++
             return Either.Right(ParameterNode(
                 name = "self",
-                type = Type.Self,
+                type = Type.Self(mutable = mutable),
                 token = token
             ))
         }
@@ -811,6 +813,9 @@ class Parser(private val tokens: TokenStream) {
                                 return Either.Left(call.getLeft())
                             }
                             return Either.Right(call.unwrap())
+                        }
+                        if (tokens[position + 3].kind == TokenKind.OPENING_BRACKETS) {
+                            error("s")
                         }
                         position += 2
                         val field = parseIdentifier()

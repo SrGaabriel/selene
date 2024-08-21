@@ -6,6 +6,11 @@ import me.gabriel.gwydion.parsing.CallNode
 import me.gabriel.gwydion.parsing.SyntaxTreeNode
 import me.gabriel.gwydion.parsing.Type
 
+data class AnalysisResult(
+    val errors: MutableList<AnalysisError> = mutableListOf(),
+    val warnings: MutableList<AnalysisWarning> = mutableListOf()
+)
+
 sealed class AnalysisError(val message: String, val node: SyntaxTreeNode) {
     class InvalidOperation(node: SyntaxTreeNode, leftType: Type, operator: TokenKind, rightType: Type) : AnalysisError(
         "invalid operation: cannot run $operator on $leftType and $rightType",
@@ -109,6 +114,13 @@ sealed class AnalysisError(val message: String, val node: SyntaxTreeNode) {
 
     class ImmutableVariableMutation(node: SyntaxTreeNode, name: String) : AnalysisError(
         "immutable variable mutation: $name",
+        node
+    )
+}
+
+sealed class AnalysisWarning(val message: String, val node: SyntaxTreeNode) {
+    class UnreachableCode(node: SyntaxTreeNode) : AnalysisWarning(
+        "unreachable code",
         node
     )
 }

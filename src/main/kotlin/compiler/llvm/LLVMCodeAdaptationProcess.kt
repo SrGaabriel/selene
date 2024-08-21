@@ -144,7 +144,7 @@ class LLVMCodeAdaptationProcess(
                 parameters.add(data)
                 return@forEach
             }
-            val type = if (param.type !== Type.Self) getProperReturnType(param.type) else self?.asLLVM()?.let { LLVMType.Pointer(it) } ?: error("Self type not found")
+            val type = if (param.type !is Type.Self) getProperReturnType(param.type) else self?.asLLVM()?.let { LLVMType.Pointer(it) } ?: error("Self type not found")
 
             val unit = MemoryUnit.Sized(
                 register = assembler.nextRegister(),

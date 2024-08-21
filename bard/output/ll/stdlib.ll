@@ -1,14 +1,19 @@
-@trait_1722096866 = unnamed_addr constant <{ i16, i16, ptr }> <{
+@trait_916861860 = unnamed_addr constant <{ i16, i16, ptr }> <{
+    i16 8,
+    i16 8,
+    ptr @Collection_next
+}>, align 8
+@trait_1193581009 = unnamed_addr constant <{ i16, i16, ptr }> <{
     i16 8,
     i16 8,
     ptr @int32_text
 }>, align 8
-@trait_2045591458 = unnamed_addr constant <{ i16, i16, ptr }> <{
+@trait_250454736 = unnamed_addr constant <{ i16, i16, ptr }> <{
     i16 8,
     i16 8,
     ptr @string_text
 }>, align 8
-@trait_260692249 = unnamed_addr constant <{ i16, i16, ptr }> <{
+@trait_1156623101 = unnamed_addr constant <{ i16, i16, ptr }> <{
     i16 8,
     i16 8,
     ptr @string_length
@@ -131,4 +136,20 @@ store i8 50, i8* %9
 %10 = getelementptr inbounds [6 x i8], [6 x i8]* %4, i32 0, i32 5
 store i8 0, i8* %10
 ret i8* %5
+}
+%Collection = type { [5 x i8*], i32 }
+define i8* @Collection_next(%Collection* %12) {
+entry:
+%13 = getelementptr inbounds %Collection, %Collection* %12, i32 0, i32 1
+%14 = load i32, i32* %13
+%15 = add i32 %14, 1
+%16 = getelementptr inbounds %Collection, %Collection* %12, i32 0, i32 1
+store i32 %15, i32* %16
+%17 = getelementptr inbounds %Collection, %Collection* %12, i32 0, i32 0
+%18 = load [5 x ptr], [5 x ptr]* %17
+%19 = getelementptr inbounds %Collection, %Collection* %12, i32 0, i32 1
+%20 = load i32, i32* %19
+%21 = getelementptr inbounds [5 x ptr], [5 x ptr]* %17, i32 0, i32 %20
+%22 = load i8*, i8** %21
+ret i8* %22
 }

@@ -35,7 +35,7 @@ sealed class Type(
     @Serializable
     data object String : Type("string")
     @Serializable
-    data object Self: Type("self")
+    data class Self(val mutable: kotlin.Boolean): Type("self")
     @Serializable
     data object Void : Type("void")
     @Serializable

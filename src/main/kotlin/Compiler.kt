@@ -2,7 +2,7 @@ package me.gabriel.gwydion
 
 import com.github.ajalt.mordant.rendering.TextColors
 import kotlinx.serialization.json.Json
-import me.gabriel.gwydion.analyzer.CumulativeSemanticAnalyzer
+import me.gabriel.gwydion.analyzer.CumulativeSemanticAnalysisHandler
 import me.gabriel.gwydion.cli.CommandHandler
 import me.gabriel.gwydion.compiler.ProgramMemoryRepository
 import me.gabriel.gwydion.compiler.llvm.LLVMCodeAdapter
@@ -130,7 +130,7 @@ fun parse(logger: GwydionLogger, text: String, memory: ProgramMemoryRepository, 
         logger.log(LogLevel.DEBUG) { +"The parsing was successful!" }
     }
 
-    val analyzer = CumulativeSemanticAnalyzer(parsingResult.getRight(), memory, signatures)
+    val analyzer = CumulativeSemanticAnalysisHandler(parsingResult.getRight(), memory, signatures)
     val analysis = analyzer.analyzeTree()
     if (analysis.errors.isNotEmpty()) {
         logger.log(LogLevel.ERROR) {
