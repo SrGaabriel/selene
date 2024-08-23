@@ -4,7 +4,11 @@ import me.gabriel.gwydion.lexing.Token
 import me.gabriel.gwydion.lexing.TokenKind
 
 sealed class ParsingError(val message: String, val token: Token) {
-    class UnexpectedToken(token: Token) : ParsingError("unexpected token: ${token.kind}", token)
+    class UnexpectedToken(token: Token) : ParsingError("unexpected token: ${token.kind}", token) {
+        init {
+            error("a")
+        }
+    }
 
     class IncorrectToken(token: Token, expected: TokenKind) : ParsingError("expected $expected, got ${token.kind}", token)
 
@@ -13,4 +17,6 @@ sealed class ParsingError(val message: String, val token: Token) {
     class UnexpectedIdentifier(token: Token) : ParsingError("unexpected identifier: ${token.value}", token)
 
     class ParameterMissingTypeDeclaration(token: Token) : ParsingError("parameter missing type declaration", token)
+
+    class UnexpectedEndOfInput(token: Token): ParsingError("unexpected end of input", token)
 }

@@ -114,7 +114,6 @@ class LLVMCodeAdaptationProcess(
         if (node.modifiers.contains(Modifiers.INTRINSIC)) return NullMemoryUnit
 
         val parameters = mutableListOf<MemoryUnit>()
-        println("Function name: ${node.name}")
         val block = block.surfaceSearchChild(node.blockName)
             ?: error("Block ${node.name} not found in block ${block.name}")
         node.parameters.forEach { param ->
@@ -144,7 +143,7 @@ class LLVMCodeAdaptationProcess(
                 parameters.add(data)
                 return@forEach
             }
-            val type = if (param.type !is Type.Self) getProperReturnType(param.type) else self?.asLLVM()?.let { LLVMType.Pointer(it) } ?: error("Self type not found")
+            val type = if (param.type.base !is Type.Self) getProperReturnType(param.type) else self?.asLLVM()?.let { LLVMType.Pointer(it) } ?: error("Self type not found")
 
             val unit = MemoryUnit.Sized(
                 register = assembler.nextRegister(),
@@ -328,7 +327,7 @@ class LLVMCodeAdaptationProcess(
         if (typeResult.isLeft()) error("Couldn't figure out binary operation type")
 
         val type = typeResult.unwrap()
-        val op = getBinaryOp(node.operator)
+        val op = getBinaryOp(node.operator.kind)
         if (type == Type.String) {
             val left = acceptNode(block, node.left) as MemoryUnit.Sized
             val right = acceptNode(block, node.right) as MemoryUnit.Sized

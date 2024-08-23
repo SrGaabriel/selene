@@ -9,9 +9,6 @@ class SymbolTable {
     private val definitions = mutableMapOf<String, SyntaxTreeNode>()
 
     fun declare(name: String, type: Type) {
-        if (type == Type.Unknown || type is Type.UnknownReference) {
-            println("Unknown type for $name")
-        }
         symbols[name] = type
     }
 

@@ -137,8 +137,14 @@ fun parse(logger: GwydionLogger, text: String, memory: ProgramMemoryRepository, 
             +"There were ${analysis.errors.size} error(s) during the semantic analysis:"
         }
         analysis.errors.forEachIndexed { _, error ->
+            val position = error.node.mark.position
+            val rowInfo =  findRowOfIndex(text.split("\n"), position) ?: error("Error while finding the line of the error")
+            val (contentTrim, trimWidth) = rowInfo.content.trimIndentReturningWidth()
             logger.log(LogLevel.ERROR) {
                 + "${bold("[semantic]")} ${error.message}"
+                + "|"
+                + "| row: ${contentTrim.replace(error.node.mark.value, color(error.node.mark.value, TextColors.red))}"
+                + ("| pos: " + " ".repeat(rowInfo.relativeIndex - trimWidth) + "^".repeat(error.node.mark.value.length))
             }
         }
         exitProcess(1)

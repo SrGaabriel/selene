@@ -1,58 +1,28 @@
-data Map(
-    foo: int32
-)
-
-trait Fooable(
-    fooat() :: int32
-)
-
-make Map into Fooable {
-    func fooat(self) :: int32 {
-        println("Map");
-        return self.foo;
-    }
-}
-
-make string into Fooable {
-    func fooat(self) :: int32 {
-        b := self.length();
-        return self.length() + 3;
-    }
-}
+data Point(
+    x: int32,
+    y: int32,
+    signed: bool
+);
 
 func main() {
-    map := @Map(720);
-    txt := "wowo";
-    test();
-    print_fooable(txt);
-    print_fooable(map);
-
-    collect := @Collection(
-
-    println(txt.length());
-    array := *[42, 48, 54, 60, 66];
-
-    println("=====");
-    println(arraylen(array));
-    println("=====");
-    for i in 0..4 {
-        println(array[i]);
-    }
+    mut point := new_point();
+    print_point(point);
+    change_point(point);
+    print_point(point);
 }
 
-func test() :: int32 {
-    a := 5;
-    return a;
+func new_point() :: Point {
+    return @Point(100, 400, true);
 }
 
-func print_fooable(daddy: Fooable) {
-    a := daddy.fooat();
-    println(a);
+func change_point(point: mut Point) {
+    point.x = 200;
+    point.y = 800;
+    point.signed = false;
 }
 
-func do_something(foo: Fooable) {
-    println(foo.fooat());
-    a := cos(2);
-    b := sin(2);
-    println(a * b);
+func print_point(point: Point) {
+    println(point.x);
+    println(point.y);
+    println(point.signed);
 }

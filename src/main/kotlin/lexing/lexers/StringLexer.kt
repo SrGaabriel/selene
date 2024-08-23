@@ -72,6 +72,10 @@ class StringLexer(private val data: String): Lexer {
                 '/' -> {
                     if (data[position + 1] == '=') {
                         tokens.add(Token(TokenKind.DIVIDE_ASSIGN, "//", position)).also { position += 2 }
+                    } else if (data[position + 1] == '/') {
+                        while (position < data.length && data[position] != '\n') {
+                            position++
+                        }
                     } else {
                         tokens.add(Token(TokenKind.DIVIDE, "/", position)).also { position++ }
                     }

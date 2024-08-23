@@ -56,7 +56,9 @@ enum class TokenKind {
     INTO,
     SELF,
     MUT,
-    MUTATION
+    MUTATION,
+    EOF,
+    BOF
 }
 
 val TYPE_TOKENS = listOf(

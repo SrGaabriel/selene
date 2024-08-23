@@ -102,8 +102,8 @@ sealed class AnalysisError(val message: String, val node: SyntaxTreeNode) {
         node
     )
 
-    class WrongArgumentTypeForFunctionCall(node: CallNode, expected: Type, actual: Type) : AnalysisError(
-        "wrong argument type for function call: expected $expected, got $actual",
+    class WrongArgumentTypeForFunctionCall(node: SyntaxTreeNode, expected: Type, actual: Type) : AnalysisError(
+        "wrong argument type for function call: expected ${expected.signature}, got ${actual.signature}",
         node
     )
 

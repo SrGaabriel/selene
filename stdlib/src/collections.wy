@@ -9,10 +9,11 @@ data Collection(
 
 make Collection into Iterable {
     func next(mut self) :: string {
-        self.cursor = self.cursor + 1;
-        array := self.array;
-        cursor := self.cursor;
-        element := array[cursor];
-        return element;
+        //self.cursor = self.cursor + 1;
+        //array := self.array;
+        //cursor := self.cursor;
+        //element := array[cursor];
+        //return element;
+        return "hello";
     }
 }

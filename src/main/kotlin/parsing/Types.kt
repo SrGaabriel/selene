@@ -35,7 +35,7 @@ sealed class Type(
     @Serializable
     data object String : Type("string")
     @Serializable
-    data class Self(val mutable: kotlin.Boolean): Type("self")
+    data object Self: Type("self")
     @Serializable
     data object Void : Type("void")
     @Serializable
@@ -55,8 +55,7 @@ sealed class Type(
     @Serializable
     data class Struct(
         val identifier: kotlin.String,
-        val fields: Map<kotlin.String, Type>,
-        val mutable: kotlin.Boolean
+        val fields: Map<kotlin.String, Type>
     ): Type("struct", identifier)
 
     @Serializable
@@ -64,6 +63,17 @@ sealed class Type(
         val identifier: kotlin.String,
         val functions: List<SignatureFunction>
     ): Type("trait", identifier)
+
+    @Serializable
+    data class Mutable(
+        val baseType: Type
+    ): Type("mutate", "mut ${baseType.signature}") {
+        override val base: Type
+            get() = baseType
+    }
+
+    open val base: Type
+        get() = this
 
     override fun toString(): kotlin.String = id
 }
@@ -86,3 +96,9 @@ fun tokenKindToType(token: Token, mutable: Boolean) = when (token.kind) {
     else -> error("Unknown token kind ${token.kind}")
 }
 
+fun Type.isNumeric(): Boolean = when (this) {
+    is Type.Int8, is Type.Int16, is Type.Int32, is Type.Int64,
+    is Type.UInt8, is Type.UInt16, is Type.UInt32, is Type.UInt64,
+    is Type.Float32, is Type.Float64 -> true
+    else -> false
+}

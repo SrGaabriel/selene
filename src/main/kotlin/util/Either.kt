@@ -105,6 +105,10 @@ sealed class Either<Left, Right> private constructor() {
      */
     fun <NewRight> mapRight(transform: (Right) -> NewRight): Either<Left, NewRight> = fold({ Left(it) }, { Right(transform(it)) })
 
+    fun <NewLeft> flatMapLeft(transform: (Left) -> Either<NewLeft, Right>): Either<NewLeft, Right> = fold(transform, { Right(it) })
+
+    fun <NewRight> flatMapRight(transform: (Right) -> Either<Left, NewRight>): Either<Left, NewRight> = fold({ Left(it) }, transform)
+
     /**
      * Returns the result of applying the given [transform] function to an element of this [Either].
      */
@@ -133,6 +137,10 @@ sealed class Either<Left, Right> private constructor() {
      */
     inline fun foldIfLeft(block: (Either<Left, Right>) -> Unit) {
         if (isLeft()) block(this)
+    }
+
+    inline fun <reified NewLeft, reified NewRight> mapInto(): Either<NewLeft, NewRight> {
+        return map({ it as NewLeft }, { it as NewRight })
     }
 
     companion object {

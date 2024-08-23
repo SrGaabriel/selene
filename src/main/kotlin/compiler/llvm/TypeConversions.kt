@@ -18,16 +18,11 @@ fun Type.asLLVM(): LLVMType = when (this) {
         type = this.type.asLLVM(),
         length = this.length
     )
-    is Type.DynamicArray -> LLVMType.Struct(
-        name = "array_${this.type.signature}",
-        fields = mapOf(
-            "data" to LLVMType.Pointer(this.type.asLLVM()),
-            "length" to LLVMType.I32
-        )
-    )
+    is Type.DynamicArray -> LLVMType.Pointer(this.type.asLLVM())
     is Type.Struct -> LLVMType.Struct(
         name = this.identifier,
         fields = this.fields.mapValues { it.value.asLLVM() }
     )
+    is Type.Mutable -> this.baseType.asLLVM()
     else -> error("Unsupported LLVM type $this")
 }

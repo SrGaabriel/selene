@@ -44,7 +44,7 @@ class CumulativeSemanticAnalysisHandler(
             is DataStructureNode -> {
                 block.symbols.declare(
                     node.name,
-                    Type.Struct(node.name, node.fields.associate { it.name to it.type }, false)
+                    Type.Struct(node.name, node.fields.associate { it.name to it.type })
                 )
             }
             is TraitImplNode -> {
@@ -81,8 +81,6 @@ class CumulativeSemanticAnalysisHandler(
                     newBlock.symbols.declare("${node.type.signature}_${it.name}", treatedType)
                     newBlock.symbols.define("${node.type.signature}_${it.name}", it)
                 }
-                println("Parsing functions for impl ${node.type}")
-                println(node.functions)
                 node.functions.forEach { findSymbols(it, newBlock) }
                 return newBlock
             }
@@ -137,7 +135,6 @@ class CumulativeSemanticAnalysisHandler(
                 return block
             }
             is ParameterNode -> {
-                println("Parsing parameter: ${node.name}")
                 node.type = handleUnknownReference(
                     block = block,
                     node = node,
@@ -147,7 +144,6 @@ class CumulativeSemanticAnalysisHandler(
                     errors.add(AnalysisError.UnknownType(node, node.type))
                     return null
                 }
-                println("Declaring ${node.name} in block ${block.name} as ${node.type}")
                 block.symbols.declare(node.name, node.type)
                 node.getChildren().forEach { findSymbols(it, block) }
             }
@@ -159,7 +155,7 @@ class CumulativeSemanticAnalysisHandler(
                     node.type
                 }
                 if (node.mutable && type is Type.Struct) {
-                    block.symbols.declare(node.name, type.copy(mutable = true))
+                    block.symbols.declare(node.name, Type.Mutable(type))
                 } else {
                     block.symbols.declare(node.name, type)
                 }
@@ -194,7 +190,7 @@ class CumulativeSemanticAnalysisHandler(
                 val leftType = getLeftType.unwrap()
                 val rightType = getRightType.unwrap()
                 if (leftType != rightType) {
-                    errors.add(AnalysisError.InvalidOperation(node, leftType, node.operator, rightType))
+                    errors.add(AnalysisError.InvalidOperation(node, leftType, node.operator.kind, rightType))
                 }
                 block
             }
@@ -210,7 +206,6 @@ class CumulativeSemanticAnalysisHandler(
 
             is ForNode -> {
                 block.symbols.declare(node.variable, Type.Int32)
-                println("Declaring ${node.variable} in block ${block.name}")
 
                 block
             }
@@ -257,8 +252,8 @@ class CumulativeSemanticAnalysisHandler(
                     errors.add(AnalysisError.UndefinedVariable(node, node.struct, block))
                     return
                 }
-                if (struct is Type.Struct && !struct.mutable) {
-                    errors.add(AnalysisError.ImmutableVariableMutation(node, struct.identifier))
+                if (struct !is Type.Mutable) {
+                    errors.add(AnalysisError.ImmutableVariableMutation(node, struct.signature))
                 }
                 block
             }
@@ -366,8 +361,12 @@ class CumulativeSemanticAnalysisHandler(
         if (required == Type.Any) {
             return true
         }
-        if (required is Type.Struct && provided is Type.Struct) {
-            return required.id == provided.id && !(required.mutable && !provided.mutable) && required.fields == provided.fields
+        if (required is Type.Mutable || provided is Type.Mutable) {
+            if (provided is Type.Mutable && required !is Type.Mutable) {
+                return doTypesMatch(required, provided.baseType)
+            } else if (provided !is Type.Mutable) {
+                return false
+            }
         }
         if (required is Type.Trait && provided !is Type.Trait) {
             val traitSignature = signatures.traits.find { it.name == required.identifier } ?: return false
@@ -384,16 +383,15 @@ class CumulativeSemanticAnalysisHandler(
         type: Type
     ): Type? {
         when (type) {
+            is Type.Mutable -> {
+                val actualType = handleUnknownReference(block, node, type.baseType) ?: return null
+                return Type.Mutable(actualType)
+            }
             is Type.UnknownReference -> {
                 val actualType = block.figureOutSymbol(type.reference)
                 if (actualType == null || (actualType !is Type.Struct && actualType !is Type.Trait)) {
                     errors.add(AnalysisError.UnknownType(node, type))
                     return null
-                }
-                if (actualType is Type.Struct) {
-                    return actualType.copy(
-                        mutable = type.mutable
-                    )
                 }
                 return actualType
             }
@@ -438,6 +436,14 @@ class CumulativeSemanticAnalysisHandler(
             // This means we can afford to cast the number to the expected type
             if (paramNode is NumberNode && !paramNode.explicit) {
                 argumentType = expectedParameters[index]
+                if (!argumentType.isNumeric()) {
+                    errors.add(AnalysisError.WrongArgumentTypeForFunctionCall(
+                        paramNode,
+                        argumentType,
+                        paramNode.type
+                    ))
+                    return false
+                }
                 paramNode.type = argumentType
                 paramNode.value = paramNode.value.castToType(argumentType)
             }
