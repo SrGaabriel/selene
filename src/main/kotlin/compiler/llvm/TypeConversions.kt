@@ -1,7 +1,6 @@
 package me.gabriel.gwydion.compiler.llvm
 
 import me.gabriel.gwydion.llvm.struct.LLVMType
-import me.gabriel.gwydion.llvm.struct.extractPrimitiveType
 import me.gabriel.gwydion.parsing.Type
 
 fun Type.asLLVM(): LLVMType = when (this) {
@@ -19,7 +18,13 @@ fun Type.asLLVM(): LLVMType = when (this) {
         type = this.type.asLLVM(),
         length = this.length
     )
-    is Type.DynamicArray -> LLVMType.Pointer(this.type.asLLVM())
+    is Type.DynamicArray -> LLVMType.Struct(
+        name = "array_${this.type.signature}",
+        fields = mapOf(
+            "data" to LLVMType.Pointer(this.type.asLLVM()),
+            "length" to LLVMType.I32
+        )
+    )
     is Type.Struct -> LLVMType.Struct(
         name = this.identifier,
         fields = this.fields.mapValues { it.value.asLLVM() }

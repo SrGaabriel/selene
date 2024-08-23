@@ -30,8 +30,13 @@ func main() {
     collect := @Collection(
 
     println(txt.length());
-    for i in 0..(txt.length()) {
-        println(i);
+    array := *[42, 48, 54, 60, 66];
+
+    println("=====");
+    println(arraylen(array));
+    println("=====");
+    for i in 0..4 {
+        println(array[i]);
     }
 }
 

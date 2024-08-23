@@ -39,10 +39,18 @@ class ArrayLengthFunction: IntrinsicFunction(
     }
 
     override fun declarations(): List<String> {
-        return listOf("declare i32 @str_length(i8*)")
+        return listOf(
+            "declare i32 @str_length(i8*)",
+            "declare i32 @array_len(i32*)"
+        )
     }
 
     override fun handleCall(call: CallNode, types: Collection<Type>, arguments: String): String {
-        return "call i32 @str_length(${arguments})"
+        val type = types.firstOrNull()
+        return when (type) {
+            Type.String -> return "call i32 @str_length(${arguments})"
+            is Type.FixedArray -> "add i32 ${type.length}, 0"
+            else -> error("Invalid type for arraylen function")
+        }
     }
 }
