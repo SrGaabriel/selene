@@ -132,7 +132,7 @@ class LLVMCodeAssembler(val generator: ILLVMCodeGenerator): ILLVMCodeAssembler {
         )
 
         when (assignment) {
-            NullMemoryUnit -> instruct(call)
+            NullMemoryUnit -> instruct(call).also { register++ }
             is MemoryUnit -> saveToRegister(assignment.register, call)
             else -> instruct(call)
         }

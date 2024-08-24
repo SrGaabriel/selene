@@ -1,9 +1,21 @@
 func main() {
-    array := *["Gwydion", "Is", "The", "Best!"];
-    collection := @Collection(array, 0);
+    mut array := *["Gwydion", "Is", "The", "Best!"];
+    mut list := @List(array, 4);
 
-    for i in 0..3 {
+    for i in 0..list.size()-1 {
         printf("Next: ");
-        println(collection.next());
+        println(array[i]);
+    }
+
+    println("================");
+
+    list.push("Bard");
+    list.push("Is");
+    list.push("Cool");
+    list.push("Too!");
+
+    for i in 0..list.size-1 {
+        printf("Next: ");
+        println(array[i]);
     }
 }

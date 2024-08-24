@@ -134,6 +134,7 @@ class StringLexer(private val data: String): Lexer {
             "into" -> Either.Right(Token(TokenKind.INTO, value, start))
             "self" -> Either.Right(Token(TokenKind.SELF, value, start))
             "mut" -> Either.Right(Token(TokenKind.MUT, value, start))
+            "void" -> Either.Right(Token(TokenKind.VOID, value, start))
             else -> Either.Right(Token(TokenKind.IDENTIFIER, value, start))
         }
     }

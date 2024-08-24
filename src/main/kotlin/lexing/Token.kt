@@ -1,5 +1,8 @@
 package me.gabriel.gwydion.lexing
 
+import kotlinx.serialization.Serializable
+
+@Serializable
 enum class TokenKind {
     NUMBER,
     PLUS,
@@ -37,6 +40,7 @@ enum class TokenKind {
     ELSE,
     TYPE_DECLARATION,
     RETURN_TYPE_DECLARATION,
+    VOID,
     ANY_TYPE,
     INT8_TYPE,
     INT16_TYPE,
@@ -63,6 +67,7 @@ enum class TokenKind {
 
 val TYPE_TOKENS = listOf(
     TokenKind.ANY_TYPE,
+    TokenKind.VOID,
     TokenKind.INT8_TYPE,
     TokenKind.INT16_TYPE,
     TokenKind.INT32_TYPE,
@@ -78,6 +83,7 @@ val TYPE_TOKENS = listOf(
     TokenKind.IDENTIFIER
 )
 
+@Serializable
 data class Token(
     val kind: TokenKind,
     val value: String,

@@ -26,6 +26,8 @@ class RootNode(private val children: MutableList<SyntaxTreeNode>) : SyntaxTreeNo
     }
 
     override fun getChildren(): List<SyntaxTreeNode> = children
+
+    override fun toString(): String = "RootNode(children=$children)"
 }
 
 class FunctionNode(
@@ -195,6 +197,17 @@ class ArrayAccessNode(
     override fun toString(): String = "ArrayAccessNode(array='$array', index=$index)"
 }
 
+class ArrayAssignmentNode(
+    val array: SyntaxTreeNode,
+    val index: SyntaxTreeNode,
+    val expression: SyntaxTreeNode,
+    mark: Token
+) : SyntaxTreeNode(mark) {
+    override fun getChildren(): List<SyntaxTreeNode> = listOf(index, expression)
+
+    override fun toString(): String = "ArrayAssignmentNode(array='$array', index=$index, expression=$expression)"
+}
+
 class DataStructureNode(
     val name: String,
     val fields: List<DataFieldNode>,
@@ -268,7 +281,7 @@ class StructAccessNode(
 }
 
 class MutationNode(
-    val struct: String,
+    val struct: SyntaxTreeNode,
     val field: String,
     val expression: SyntaxTreeNode,
     mark: Token

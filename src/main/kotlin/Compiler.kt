@@ -1,6 +1,7 @@
 package me.gabriel.gwydion
 
 import com.github.ajalt.mordant.rendering.TextColors
+import kotlinx.serialization.encodeToString
 import kotlinx.serialization.json.Json
 import me.gabriel.gwydion.analyzer.CumulativeSemanticAnalysisHandler
 import me.gabriel.gwydion.cli.CommandHandler
@@ -17,6 +18,7 @@ import me.gabriel.gwydion.reader.AmbiguousSourceReader
 import me.gabriel.gwydion.signature.SignatureHandler
 import me.gabriel.gwydion.signature.Signatures
 import me.gabriel.gwydion.util.findRowOfIndex
+import me.gabriel.gwydion.util.formatAstTree
 import me.gabriel.gwydion.util.replaceAtIndex
 import me.gabriel.gwydion.util.trimIndentReturningWidth
 import java.io.File
@@ -64,6 +66,7 @@ fun main(args: Array<String>) {
 
     val sources = File(folder, "src")
     val tree = parse(logger, sourceReader.read(sources), memory, signatures)
+
     val memoryEnd = Instant.now()
     val memoryDelay = memoryEnd.toEpochMilli() - memoryStart.toEpochMilli()
     logger.log(LogLevel.INFO) { +"Memory analysis took ${memoryDelay}ms" }
@@ -129,6 +132,7 @@ fun parse(logger: GwydionLogger, text: String, memory: ProgramMemoryRepository, 
     } else {
         logger.log(LogLevel.DEBUG) { +"The parsing was successful!" }
     }
+    File("ast").writeText(formatAstTree(parsingResult.unwrap().root))
 
     val analyzer = CumulativeSemanticAnalysisHandler(parsingResult.getRight(), memory, signatures)
     val analysis = analyzer.analyzeTree()

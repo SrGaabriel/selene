@@ -1,16 +1,20 @@
-data Collection(
+trait Collection(
+    size() :: int32,
+    push(value: string) :: void,
+)
+
+data List(
     array: string[*],
-    cursor: int32
+    size: int32
 )
 
-trait Iterable(
-    next() :: string
-)
+make List into Collection {
+    func size(self) :: int32 {
+        return self.size;
+    }
 
-make Collection into Iterable {
-    func next(mut self) :: string {
-        element := self.array[self.cursor];
-        self.cursor = self.cursor + 1;
-        return element;
+    func push(mut self, value: string) {
+        self.array[self.size] = value;
+        self.size = self.size + 1;
     }
 }

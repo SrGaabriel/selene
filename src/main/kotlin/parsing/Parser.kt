@@ -221,23 +221,79 @@ class Parser(private val tokens: TokenStream) {
     }
 
     private fun parseIdentifierStatement(): Either<ParsingError, SyntaxTreeNode> {
-        val identifierToken = consumeToken()
-        return when (peekToken().kind) {
-            TokenKind.DECLARATION -> parseDeclaration(identifierToken).mapInto()
-            TokenKind.PLUS_ASSIGN, TokenKind.MINUS_ASSIGN, TokenKind.TIMES_ASSIGN, TokenKind.DIVIDE_ASSIGN ->
-                parseCompoundAssignment(identifierToken).mapInto()
+        if (peekNextToken().kind == TokenKind.DECLARATION) {
+            return parseDeclaration(consumeToken().value).mapInto()
+        }
 
-            TokenKind.OPENING_PARENTHESES -> parseCallExpression(identifierToken).mapInto()
-            TokenKind.DOT -> parseAccessOrCall(identifierToken)
-            else -> Either.Left(ParsingError.UnexpectedIdentifier(identifierToken))
+        return parseComplexExpression().flatMapRight { expr ->
+            when (peekToken().kind) {
+//                TokenKind.PLUS_ASSIGN, TokenKind.MINUS_ASSIGN, TokenKind.TIMES_ASSIGN, TokenKind.DIVIDE_ASSIGN ->
+//                    parseCompoundAssignment(parseExpression())
+                TokenKind.MUTATION -> {
+                    if (expr is ArrayAccessNode) {
+                        parseArrayMutation(expr)
+                    } else {
+                        parseMutation(expr)
+                    }
+                }
+                TokenKind.SEMICOLON -> {
+                    consumeToken()
+                    Either.Right(expr)
+                }
+                else -> Either.Left(ParsingError.UnexpectedToken(peekToken()))
+            }.mapInto()
         }
     }
 
-    private fun parseDeclaration(identifierToken: Token): Either<ParsingError, AssignmentNode> {
-        consumeToken() // Consume declaration token
+    private fun parseComplexExpression(): Either<ParsingError, SyntaxTreeNode> {
+        var currentNode = parseIdentifierExpression().getRightOrNull()
+            ?: return Either.Left(ParsingError.UnexpectedToken(peekToken()))
+        println("Starto!")
+        while (true) {
+            println("Loopo! ${peekToken().kind} ($currentNode)")
+            when (peekToken().kind) {
+                TokenKind.DOT -> {
+                    consumeToken()
+                    val field = parseIdentifier()
+                    currentNode = field.mapRight { f -> StructAccessNode(currentNode, f.value, f) }.getRightOrNull()
+                        ?: return Either.Left(ParsingError.UnexpectedToken(peekToken()))
+                }
+                TokenKind.OPENING_BRACKETS -> {
+                    val token = peekToken()
+                    val index = parseArrayAccess(currentNode)
+                    currentNode = index.mapRight { i -> ArrayAccessNode(currentNode, i.index, token) }.getRightOrNull()
+                        ?: return Either.Left(ParsingError.UnexpectedToken(peekToken()))
+                }
+                TokenKind.OPENING_PARENTHESES -> {
+                    val params = parseCallParameters()
+                    currentNode = params.mapRight { p -> CallNode(currentNode.toString(), p, currentNode.mark) }.getRightOrNull()
+                        ?: return Either.Left(ParsingError.UnexpectedToken(peekToken()))
+                }
+                else -> return Either.Right<ParsingError, SyntaxTreeNode>(currentNode).also {
+                    println("Endo! ${currentNode}")
+                }
+            }
+        }
+    }
+
+    private fun parseArrayMutation(leftSide: SyntaxTreeNode): Either<ParsingError, ArrayAssignmentNode> {
+        val mutationToken = consumeToken()
+        return parseExpression().flatMapRight { value ->
+            consumeToken(TokenKind.SEMICOLON).mapRight {
+                when (leftSide) {
+                    is ArrayAccessNode -> ArrayAssignmentNode(leftSide.array, leftSide.index, value, mutationToken)
+                    else -> error("Unexpected left side for array mutation: $leftSide")
+                }
+            }
+        }
+    }
+
+    private fun parseDeclaration(name: String): Either<ParsingError, AssignmentNode> {
+        val declaration = consumeToken(TokenKind.DECLARATION)
+        if (declaration is Either.Left) return Either.Left(declaration.value)
         return parseExpression().flatMapRight { expr ->
             consumeToken(TokenKind.SEMICOLON).mapRight {
-                AssignmentNode(identifierToken.value, expr, false, Type.Unknown, identifierToken)
+                AssignmentNode(name, expr, false, Type.Unknown, declaration.unwrap())
             }
         }
     }
@@ -260,24 +316,25 @@ class Parser(private val tokens: TokenStream) {
         }
     }
 
-    private fun parseAccessOrCall(identifierToken: Token): Either<ParsingError, SyntaxTreeNode> {
-        consumeToken(TokenKind.DOT)
-        val member = consumeToken(TokenKind.IDENTIFIER)
-        if (member is Either.Left) return Either.Left(member.value)
-        val memberToken = member.unwrap()
-        return when (peekToken().kind) {
-            TokenKind.MUTATION -> parseMutation(identifierToken.value, memberToken).mapInto()
-            TokenKind.OPENING_PARENTHESES -> TODO("implement struct function call")
-            else -> TODO("implement struct access but iteratively")
-        }
-    }
-
-    private fun parseMutation(struct: String, fieldToken: Token): Either<ParsingError, MutationNode> {
-        val mutationToken = consumeToken()
-        return parseExpression().flatMapRight { expr ->
-            consumeToken(TokenKind.SEMICOLON).mapRight {
-                MutationNode(struct, fieldToken.value, expr, mutationToken)
+    private fun parseMutation(receiver: SyntaxTreeNode): Either<ParsingError, MutationNode> {
+        when (receiver) {
+            is VariableReferenceNode -> {
+                val mutationToken = consumeToken()
+                return parseExpression().flatMapRight { expr ->
+                    consumeToken(TokenKind.SEMICOLON).mapRight {
+                        TODO("Implement variable mutation")
+                    }
+                }
             }
+            is StructAccessNode -> {
+                val mutationToken = consumeToken()
+                return parseExpression().flatMapRight { expr ->
+                    consumeToken(TokenKind.SEMICOLON).mapRight {
+                        MutationNode(receiver, receiver.field, expr, mutationToken)
+                    }
+                }
+            }
+            else -> return Either.Left(ParsingError.UnexpectedToken(receiver.mark))
         }
     }
 
@@ -613,6 +670,7 @@ class Parser(private val tokens: TokenStream) {
     private fun tokenKindToType(token: Token, mutable: Boolean): Type {
         val base = when (token.kind) {
             TokenKind.ANY_TYPE -> Type.Any
+            TokenKind.VOID -> return Type.Void
             TokenKind.INT8_TYPE -> Type.Int8
             TokenKind.INT16_TYPE -> Type.Int16
             TokenKind.INT32_TYPE -> Type.Int32

@@ -95,7 +95,7 @@ sealed class Either<Left, Right> private constructor() {
      * @param transform the function to apply if this is a [Left]
      * @return a new [Either] instance with the transformed value
      */
-    fun <NewLeft> mapLeft(transform: (Left) -> NewLeft): Either<NewLeft, Right> = fold({ Left(transform(it)) }, { Right(it) })
+    inline fun <NewLeft> mapLeft(crossinline transform: (Left) -> NewLeft): Either<NewLeft, Right> = fold({ Left(transform(it)) }, { Right(it) })
 
     /**
      * Maps the right value if it is present.
@@ -103,7 +103,7 @@ sealed class Either<Left, Right> private constructor() {
      * @param transform the function to apply if this is a [Right]
      * @return a new [Either] instance with the transformed value
      */
-    fun <NewRight> mapRight(transform: (Right) -> NewRight): Either<Left, NewRight> = fold({ Left(it) }, { Right(transform(it)) })
+    inline fun <NewRight> mapRight(crossinline transform: (Right) -> NewRight): Either<Left, NewRight> = fold({ Left(it) }, { Right(transform(it)) })
 
     fun <NewLeft> flatMapLeft(transform: (Left) -> Either<NewLeft, Right>): Either<NewLeft, Right> = fold(transform, { Right(it) })
 

@@ -9,7 +9,7 @@ import me.gabriel.gwydion.signature.SignatureTraitImpl
 import me.gabriel.gwydion.signature.Signatures
 import me.gabriel.gwydion.util.Either
 
-tailrec fun getExpressionType(
+fun getExpressionType(
     block: MemoryBlock,
     node: SyntaxTreeNode,
     signatures: Signatures
@@ -43,9 +43,9 @@ tailrec fun getExpressionType(
         is ArrayAccessNode -> {
             val arrayType = getExpressionType(block, node.array, signatures).getRightOrNull()
                 ?: return Either.Left(AnalysisError.UndefinedArray(node, node.array.mark.value))
-            when (arrayType) {
-                is Type.FixedArray -> Either.Right(arrayType.baseType)
-                is Type.DynamicArray -> Either.Right(arrayType.baseType)
+            when (val baseArrayType = arrayType.workingBase()) {
+                is Type.FixedArray -> Either.Right(baseArrayType.baseType)
+                is Type.DynamicArray -> Either.Right(baseArrayType.baseType)
                 else -> Either.Left(AnalysisError.NotAnArray(node, arrayType))
             }
         }
@@ -87,7 +87,7 @@ tailrec fun getExpressionType(
                 block = block,
                 node = node.struct,
                 signatures = signatures
-            ).getRightOrNull() ?: return Either.Left(AnalysisError.UndefinedDataStructure(node, node.struct.mark.value))
+            ).getRightOrNull()?.workingBase() ?: return Either.Left(AnalysisError.UndefinedDataStructure(node, node.struct.mark.value))
 
             when (struct) {
                 is Type.Struct -> {
@@ -131,7 +131,7 @@ fun figureOutTraitForVariable(
 
     return signatures.traits.firstNotNullOfOrNull { trait ->
         val impl = if (resolvedVariable !is Type.Trait) trait.impls.firstOrNull {
-            it.struct == resolvedVariable.signature
+            it.struct == resolvedVariable.workingBase().signature
         } else null
 
         if (impl != null || resolvedVariable is Type.Trait) {

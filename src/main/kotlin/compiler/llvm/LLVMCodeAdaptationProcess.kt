@@ -11,6 +11,7 @@ import me.gabriel.gwydion.llvm.struct.*
 import me.gabriel.gwydion.parsing.*
 import me.gabriel.gwydion.signature.*
 import me.gabriel.gwydion.util.castToType
+import java.sql.Struct
 import kotlin.math.absoluteValue
 import kotlin.random.Random
 
@@ -101,17 +102,18 @@ class LLVMCodeAdaptationProcess(
         is MutationNode -> generateMutation(block, node)
         is TraitNode -> generateTrait(block, node)
         is TraitImplNode -> generateTraitImpl(block, node)
+        is ArrayAssignmentNode -> generateArrayAssignment(block, node)
         is TraitFunctionCallNode -> generateTraitCall(block, node, store)
         is ForNode -> generateFor(block, node)
         else -> error("Node $node not supported")
     }
 
-    fun blockAdaptChildren(block: MemoryBlock, node: SyntaxTreeNode): NullMemoryUnit {
+    private fun blockAdaptChildren(block: MemoryBlock, node: SyntaxTreeNode): NullMemoryUnit {
         node.getChildren().forEach { acceptNode(block, it) }
         return NullMemoryUnit
     }
 
-    fun generateFunction(block: MemoryBlock, node: FunctionNode, self: Type?): NullMemoryUnit {
+    private fun generateFunction(block: MemoryBlock, node: FunctionNode, self: Type?): NullMemoryUnit {
         if (node.modifiers.contains(Modifiers.INTRINSIC)) return NullMemoryUnit
 
         val parameters = mutableListOf<MemoryUnit>()
@@ -174,7 +176,7 @@ class LLVMCodeAdaptationProcess(
         return NullMemoryUnit
     }
 
-    fun generateFunctionCall(
+    private fun generateFunctionCall(
         block: MemoryBlock,
         node: CallNode,
         store: Boolean
@@ -250,7 +252,7 @@ class LLVMCodeAdaptationProcess(
         return assignment
     }
 
-    fun generateAssignment(block: MemoryBlock, node: AssignmentNode): MemoryUnit {
+    private fun generateAssignment(block: MemoryBlock, node: AssignmentNode): MemoryUnit {
         val expression = acceptNode(block, node.expression, true) as? MemoryUnit
             ?: error("Expression ${node.expression} not stored")
 
@@ -263,7 +265,7 @@ class LLVMCodeAdaptationProcess(
         return expression
     }
 
-    fun generateString(block: MemoryBlock, node: StringNode, store: Boolean): Value {
+    private fun generateString(block: MemoryBlock, node: StringNode, store: Boolean): Value {
         val singleSegment = node.segments.singleOrNull()
         if (singleSegment != null && singleSegment is StringNode.Segment.Text) {
             return assembler.buildString(singleSegment.text)
@@ -297,7 +299,7 @@ class LLVMCodeAdaptationProcess(
         return space
     }
 
-    fun generateNumber(block: MemoryBlock, node: NumberNode, store: Boolean): Value {
+    private fun generateNumber(block: MemoryBlock, node: NumberNode, store: Boolean): Value {
         val type = node.type.asLLVM()
         if (store) {
             val addition = assembler.addNumber(
@@ -313,7 +315,7 @@ class LLVMCodeAdaptationProcess(
         )
     }
 
-    fun generateVariableReference(block: MemoryBlock, node: VariableReferenceNode): MemoryUnit {
+    private fun generateVariableReference(block: MemoryBlock, node: VariableReferenceNode): MemoryUnit {
         val reference = block.figureOutMemory(node.name)
             ?: error("Reference ${node.name} could not be found")
 
@@ -326,7 +328,7 @@ class LLVMCodeAdaptationProcess(
         return reference
     }
 
-    fun generateBinaryOperator(block: MemoryBlock, node: BinaryOperatorNode): MemoryUnit {
+    private fun generateBinaryOperator(block: MemoryBlock, node: BinaryOperatorNode): MemoryUnit {
         val typeResult = getExpressionType(block, node.left, signatures)
         if (typeResult.isLeft()) error("Couldn't figure out binary operation type")
 
@@ -359,7 +361,7 @@ class LLVMCodeAdaptationProcess(
         return result
     }
 
-    fun generateIf(block: MemoryBlock, node: IfNode): NullMemoryUnit {
+    private fun generateIf(block: MemoryBlock, node: IfNode): NullMemoryUnit {
         val condition = acceptNode(block, node.condition, true) as MemoryUnit.Sized
         val trueLabel = assembler.nextLabel()
         val falseLabel = assembler.nextLabel()
@@ -379,14 +381,14 @@ class LLVMCodeAdaptationProcess(
         return NullMemoryUnit
     }
 
-    fun generateEquality(block: MemoryBlock, node: EqualsNode): MemoryUnit {
+    private fun generateEquality(block: MemoryBlock, node: EqualsNode): MemoryUnit {
         val left = acceptNode(block, node.left)
         val right = acceptNode(block, node.right)
         val type = getExpressionType(block, node.left, signatures).unwrap()
         return assembler.handleComparison(left, right, type.asLLVM())
     }
 
-    fun generateBoolean(block: MemoryBlock, node: BooleanNode, store: Boolean): Value {
+    private fun generateBoolean(block: MemoryBlock, node: BooleanNode, store: Boolean): Value {
         val type = LLVMType.I1
         if (store) {
             val value = assembler.addNumber(
@@ -399,7 +401,7 @@ class LLVMCodeAdaptationProcess(
         return LLVMConstant(if (node.value) 1 else 0, type)
     }
 
-    fun generateReturn(block: MemoryBlock, node: ReturnNode): NullMemoryUnit {
+    private fun generateReturn(block: MemoryBlock, node: ReturnNode): NullMemoryUnit {
         val expression = acceptNode(block, node.expression, store = true)
         val unit = if (expression.type.extractPrimitiveType() is LLVMType.Array) {
             assembler.getElementFromStructure(
@@ -414,7 +416,7 @@ class LLVMCodeAdaptationProcess(
         return NullMemoryUnit
     }
 
-    fun generateArray(block: MemoryBlock, node: ArrayNode): MemoryUnit {
+    private fun generateArray(block: MemoryBlock, node: ArrayNode): MemoryUnit {
         val arrayType = getExpressionType(block, node, signatures).unwrap().asLLVM()
         val type = arrayType.descendOneLevel()
         return assembler.createArray(
@@ -424,7 +426,7 @@ class LLVMCodeAdaptationProcess(
         )
     }
 
-    fun generateArrayAccess(block: MemoryBlock, node: ArrayAccessNode): MemoryUnit {
+    private fun generateArrayAccess(block: MemoryBlock, node: ArrayAccessNode): MemoryUnit {
         val arrayMemory = acceptNode(block, node.array) as MemoryUnit
         val index = acceptNode(block, node.index)
 
@@ -442,7 +444,7 @@ class LLVMCodeAdaptationProcess(
         return assembler.loadPointer(pointer)
     }
 
-    fun generateDataStruct(block: MemoryBlock, node: DataStructureNode): MemoryUnit {
+    private fun generateDataStruct(block: MemoryBlock, node: DataStructureNode): MemoryUnit {
         val structType = getExpressionType(block, node, signatures).unwrap().asLLVM()
         if (structType !is LLVMType.Struct) error("Struct type not found")
 
@@ -454,7 +456,7 @@ class LLVMCodeAdaptationProcess(
         return NullMemoryUnit
     }
 
-    fun generateInstantiation(block: MemoryBlock, node: InstantiationNode): MemoryUnit {
+    private fun generateInstantiation(block: MemoryBlock, node: InstantiationNode): MemoryUnit {
         val memoryType = block.figureOutMemory(node.name)?.type ?: signatures.structs.find { it.name == node.name }
             ?.let {
                 LLVMType.Struct(it.name, it.fields.mapValues { (_, type) -> getProperReturnType(type.asLLVM()) })
@@ -487,7 +489,7 @@ class LLVMCodeAdaptationProcess(
         return allocation
     }
 
-    fun generateStructAccess(block: MemoryBlock, node: StructAccessNode): MemoryUnit {
+    private fun generateStructAccess(block: MemoryBlock, node: StructAccessNode): MemoryUnit {
         val struct = acceptNode(block, node.struct) as MemoryUnit.Sized
         val pointerType = struct.type as LLVMType.Pointer
         val structType = pointerType.type as LLVMType.Struct
@@ -505,8 +507,12 @@ class LLVMCodeAdaptationProcess(
         }
     }
 
-    fun generateMutation(block: MemoryBlock, node: MutationNode): MemoryUnit {
-        val struct = block.figureOutMemory(node.struct) ?: error("Struct ${node.struct} not found")
+    private fun generateMutation(block: MemoryBlock, node: MutationNode): MemoryUnit {
+        val struct = if (node.struct is StructAccessNode) {
+            acceptNode(block, node.struct.struct) as? MemoryUnit ?: error("Struct ${node.struct.struct} not found")
+        } else {
+            TODO()
+        }
         val pointerType = struct.type as LLVMType.Pointer
         val structType = pointerType.type as LLVMType.Struct
         val index = structType.fields.keys.indexOf(node.field)
@@ -522,11 +528,11 @@ class LLVMCodeAdaptationProcess(
         return NullMemoryUnit
     }
 
-    fun generateTrait(block: MemoryBlock, node: TraitNode): MemoryUnit {
+    private fun generateTrait(block: MemoryBlock, node: TraitNode): MemoryUnit {
         return NullMemoryUnit
     }
 
-    fun generateTraitImpl(block: MemoryBlock, node: TraitImplNode): MemoryUnit {
+    private fun generateTraitImpl(block: MemoryBlock, node: TraitImplNode): MemoryUnit {
         val trait = MemoryUnit.Unsized(
             register = Random.nextInt().absoluteValue, // Here we'll use absolute value instead of UInt to prevent potential overflow/compatibility issues
             type = LLVMType.Dynamic(listOf(
@@ -570,7 +576,7 @@ class LLVMCodeAdaptationProcess(
         return NullMemoryUnit
     }
 
-    fun generateTraitCall(block: MemoryBlock, node: TraitFunctionCallNode, store: Boolean): MemoryUnit {
+    private fun generateTraitCall(block: MemoryBlock, node: TraitFunctionCallNode, store: Boolean): MemoryUnit {
         val (trait, impl, function, _, variableType) = figureOutTraitForVariable(
             block = block,
             variable = node.trait,
@@ -638,7 +644,7 @@ class LLVMCodeAdaptationProcess(
         return assignment
     }
 
-    fun generateFor(block: MemoryBlock, node: ForNode): NullMemoryUnit {
+    private fun generateFor(block: MemoryBlock, node: ForNode): NullMemoryUnit {
         val type = Type.Int32
         val llvmType = type.asLLVM()
         val allocation = assembler.allocateStackMemory(
@@ -689,7 +695,23 @@ class LLVMCodeAdaptationProcess(
         return NullMemoryUnit
     }
 
-    fun registerTraitObject(traitMem: MemoryUnit.Unsized, structName: String, functions: List<String>) {
+    private fun generateArrayAssignment(block: MemoryBlock, node: ArrayAssignmentNode): MemoryUnit {
+        val array = acceptNode(block, node.array) as MemoryUnit
+        val index = acceptNode(block, node.index)
+        val value = acceptNode(block, node.expression)
+
+        val intermediate = (array.type as LLVMType.Pointer).descendOneLevel()
+        val type = intermediate.descendOneLevel()
+        assembler.setStructElementTo(
+            struct = array,
+            value = value,
+            type = if (intermediate is LLVMType.Array) type else LLVMType.Pointer(type),
+            index = index
+        )
+        return NullMemoryUnit
+    }
+
+    private fun registerTraitObject(traitMem: MemoryUnit.Unsized, structName: String, functions: List<String>) {
         // Create new key if trait doesn't exist, otherwise add to the list of functions.
         traitObjects.computeIfAbsent(traitMem) { mutableListOf() }
             .add(TraitObject(
@@ -701,7 +723,7 @@ class LLVMCodeAdaptationProcess(
             ))
     }
 
-    fun getVirtualTableForTraitImpl(impl: SignatureTraitImpl): MemoryUnit.Unsized {
+    private fun getVirtualTableForTraitImpl(impl: SignatureTraitImpl): MemoryUnit.Unsized {
         if (impl.module != module) {
             traitObjectsImpl.add(
                 "@trait_${impl.index} = external constant <{ i16, i16, ${
@@ -720,7 +742,7 @@ class LLVMCodeAdaptationProcess(
         )
     }
 
-    fun passReferenceToArray(array: Value): Value {
+    private fun passReferenceToArray(array: Value): Value {
         val primitive = array.type.extractPrimitiveType()
         if (primitive is LLVMType.Array) {
             return assembler.getElementFromStructure(
@@ -733,7 +755,7 @@ class LLVMCodeAdaptationProcess(
         return array
     }
 
-    fun getBinaryOp(kind: TokenKind): BinaryOp {
+    private fun getBinaryOp(kind: TokenKind): BinaryOp {
         return when (kind) {
             TokenKind.PLUS -> BinaryOp.Addition
             TokenKind.MINUS -> BinaryOp.Subtraction

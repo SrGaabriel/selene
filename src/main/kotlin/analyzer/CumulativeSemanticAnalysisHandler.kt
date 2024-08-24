@@ -153,11 +153,17 @@ class CumulativeSemanticAnalysisHandler(
 
             is AssignmentNode -> {
                 val type = if (node.type == Type.Unknown) {
-                    getExpressionType(block, node.expression, signatures).getRightOrNull() ?: Type.Unknown
+                    val expr = getExpressionType(block, node.expression, signatures)
+                    if (expr is Either.Left) {
+                        errors.add(expr.value)
+                        return null
+                    }
+                    expr.unwrap()
                 } else {
                     node.type
                 }
-                if (node.mutable && type is Type.Struct) {
+                println("Type $type for ${node.expression}")
+                if (node.mutable) {
                     block.symbols.declare(node.name, Type.Mutable(type))
                 } else {
                     block.symbols.declare(node.name, type)
@@ -250,12 +256,12 @@ class CumulativeSemanticAnalysisHandler(
                 traitBlock
             }
             is MutationNode -> {
-                val struct = block.figureOutSymbol(node.struct)
+                val struct = getExpressionType(block, node.struct, signatures).getRightOrNull()
                 if (struct == null) {
-                    errors.add(AnalysisError.UndefinedVariable(node, node.struct, block))
+                    errors.add(AnalysisError.UndefinedVariable(node, node.struct.mark.value, block))
                     return
                 }
-                if (struct !is Type.Mutable) {
+                if (struct !is Type.Mutable && false) { // TODO: implement mut self
                     errors.add(AnalysisError.ImmutableVariableMutation(node, struct.signature))
                 }
                 block
@@ -290,7 +296,7 @@ class CumulativeSemanticAnalysisHandler(
             }
 
             is InstantiationNode -> {
-                val struct = block.figureOutSymbol(node.name)
+                val struct = block.figureOutSymbol(node.name)?.workingBase()
                 val signature = signatures.structs.find { it.name == node.name }
 
                 if (struct == null && signature == null) {
@@ -322,7 +328,7 @@ class CumulativeSemanticAnalysisHandler(
 
             is StructAccessNode -> {
                 if (isNodeSelf(node.struct)) return
-                val struct = getExpressionType(block, node.struct, signatures).getRightOrNull()
+                val struct = getExpressionType(block, node.struct, signatures).getRightOrNull()?.workingBase()
                 if (struct == null) {
                     errors.add(AnalysisError.UndefinedDataStructure(node, node.struct.mark.value))
                     return
@@ -336,6 +342,25 @@ class CumulativeSemanticAnalysisHandler(
                     errors.add(AnalysisError.UndefinedField(node, node.field))
                     return
                 }
+                block
+            }
+            is ArrayAssignmentNode -> {
+                val array = getExpressionType(block, node.array, signatures).getRightOrNull()
+                println(node.array)
+                println("To")
+                println(node.index)
+                println("As")
+                println(node.expression)
+                if (array == null) {
+                    errors.add(AnalysisError.UndefinedVariable(node, node.array.mark.value, block))
+                    return
+                }
+
+                if (array !is Type.Mutable && false) { // TODO: implement mut self
+                    errors.add(AnalysisError.ImmutableVariableMutation(node, array.signature))
+                    return
+                }
+
                 block
             }
             is ReturnNode -> {

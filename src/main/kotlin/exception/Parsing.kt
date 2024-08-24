@@ -4,11 +4,7 @@ import me.gabriel.gwydion.lexing.Token
 import me.gabriel.gwydion.lexing.TokenKind
 
 sealed class ParsingError(val message: String, val token: Token) {
-    class UnexpectedToken(token: Token) : ParsingError("unexpected token: ${token.kind}", token) {
-        init {
-            error("a")
-        }
-    }
+    class UnexpectedToken(token: Token) : ParsingError("unexpected token: ${token.kind}", token)
 
     class IncorrectToken(token: Token, expected: TokenKind) : ParsingError("expected $expected, got ${token.kind}", token)
 

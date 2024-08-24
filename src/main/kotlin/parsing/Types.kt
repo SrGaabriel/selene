@@ -102,3 +102,8 @@ fun Type.isNumeric(): Boolean = when (this) {
     is Type.Float32, is Type.Float64 -> true
     else -> false
 }
+
+fun Type.workingBase(): Type = when (this) {
+    is Type.Mutable -> base.workingBase()
+    else -> this
+}
