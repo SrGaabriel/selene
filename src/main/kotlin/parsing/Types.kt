@@ -44,13 +44,13 @@ sealed class Type(
     data class UnknownReference(val reference: kotlin.String, val mutable: kotlin.Boolean): Type("unknown", reference)
     @Serializable
     data class DynamicArray(
-        val type: Type,
-    ): Type("fixed array", "${type.signature}[]")
+        val baseType: Type,
+    ): Type("fixed array", "${baseType.signature}[]")
     @Serializable
     data class FixedArray(
-        val type: Type,
+        val baseType: Type,
         val length: Int
-    ): Type("fixed array", "${type.signature}[$length]")
+    ): Type("fixed array", "${baseType.signature}[$length]")
 
     @Serializable
     data class Struct(

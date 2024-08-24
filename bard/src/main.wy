@@ -1,25 +1,27 @@
 data Collection(
-    array: int32[7],
+    array: string[7],
     cursor: int32
 )
 
-trait Iterable(
-    next() :: int32
+trait Iterables(
+    next() :: string
 )
 
-make Collection into Iterable {
-    func next(mut self) :: int32 {
+make Collection into Iterables {
+    func next(mut self) :: string {
         element := self.array[self.cursor];
         self.cursor = self.cursor + 1;
         return element;
     }
 }
 
-func main() {
-    primes := [2, 3, 5, 7, 11, 13, 17];
-    coll := @Collection(primes, 0);
+func main(argc: int32, argv: string[*]) {
+    println(argc);
 
-    for i in 0..arraylen(primes)-1 {
+    texts := ["Hello", "World", "Bard", "Programming", "Language", "Is", "Cool"];
+    coll := @Collection(texts, 0);
+
+    for i in 0..arraylen(texts)-1 {
         printf("Now at index: ");
         println(i);
         println(coll.next());

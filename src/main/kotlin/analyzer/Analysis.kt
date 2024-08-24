@@ -8,7 +8,6 @@ import me.gabriel.gwydion.signature.SignatureTrait
 import me.gabriel.gwydion.signature.SignatureTraitImpl
 import me.gabriel.gwydion.signature.Signatures
 import me.gabriel.gwydion.util.Either
-import kotlin.math.absoluteValue
 
 tailrec fun getExpressionType(
     block: MemoryBlock,
@@ -45,8 +44,8 @@ tailrec fun getExpressionType(
             val arrayType = getExpressionType(block, node.array, signatures).getRightOrNull()
                 ?: return Either.Left(AnalysisError.UndefinedArray(node, node.array.mark.value))
             when (arrayType) {
-                is Type.FixedArray -> Either.Right(arrayType.type)
-                is Type.DynamicArray -> Either.Right(arrayType.type)
+                is Type.FixedArray -> Either.Right(arrayType.baseType)
+                is Type.DynamicArray -> Either.Right(arrayType.baseType)
                 else -> Either.Left(AnalysisError.NotAnArray(node, arrayType))
             }
         }

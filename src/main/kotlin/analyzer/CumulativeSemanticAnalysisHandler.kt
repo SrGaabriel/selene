@@ -6,10 +6,7 @@ import me.gabriel.gwydion.exception.AnalysisError
 import me.gabriel.gwydion.exception.AnalysisResult
 import me.gabriel.gwydion.exception.AnalysisWarning
 import me.gabriel.gwydion.parsing.*
-import me.gabriel.gwydion.signature.SignatureFunction
-import me.gabriel.gwydion.signature.SignatureTrait
-import me.gabriel.gwydion.signature.SignatureTraitImpl
-import me.gabriel.gwydion.signature.Signatures
+import me.gabriel.gwydion.signature.*
 import me.gabriel.gwydion.util.Either
 import me.gabriel.gwydion.util.castToType
 
@@ -42,6 +39,12 @@ class CumulativeSemanticAnalysisHandler(
             }
 
             is DataStructureNode -> {
+                signatures.structs.add(
+                    SignatureStruct(
+                        name = node.name,
+                        fields = node.fields.associate { it.name to it.type }
+                    )
+                )
                 block.symbols.declare(
                     node.name,
                     Type.Struct(node.name, node.fields.associate { it.name to it.type })
@@ -396,12 +399,12 @@ class CumulativeSemanticAnalysisHandler(
                 return actualType
             }
             is Type.FixedArray -> {
-                val actualType = handleUnknownReference(block, node, type.type) ?: return null
+                val actualType = handleUnknownReference(block, node, type.baseType) ?: return null
                 return Type.FixedArray(actualType, type.length)
             }
 
             is Type.DynamicArray -> {
-                val actualType = handleUnknownReference(block, node, type.type) ?: return null
+                val actualType = handleUnknownReference(block, node, type.baseType) ?: return null
                 return Type.DynamicArray(actualType)
             }
             else -> return type

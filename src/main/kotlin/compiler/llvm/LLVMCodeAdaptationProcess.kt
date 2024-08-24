@@ -12,7 +12,6 @@ import me.gabriel.gwydion.parsing.*
 import me.gabriel.gwydion.signature.*
 import me.gabriel.gwydion.util.castToType
 import kotlin.math.absoluteValue
-import kotlin.math.exp
 import kotlin.random.Random
 
 /*
@@ -33,20 +32,19 @@ class LLVMCodeAdaptationProcess(
     private val traitObjects = mutableMapOf<MemoryUnit.Unsized, MutableList<TraitObject>>()
     private val traitObjectsImpl = mutableSetOf<String>()
 
+    private val intrinsicDependencies = mutableSetOf<String>()
+
     fun setup() {
         val dependencies = mutableSetOf<String>()
         stdlibDependencies.forEach {
             dependencies.add(it)
         }
-        intrinsics.forEach {
-            if (compileIntrinsics) {
+        if (compileIntrinsics) {
+            intrinsics.forEach {
                 it.dependencies().forEach { dependencies.add(it) }
                 dependencies.add(it.llvmIr())
-            } else {
-                it.declarations().forEach { dependencies.add(it) }
             }
-        }
-        if (!compileIntrinsics) {
+        } else {
             dependencies.add("declare i32 @printf(i8*, ...)")
         }
         dependencies.add("@format_s = private unnamed_addr constant [3 x i8] c\"%s\\00\"")
@@ -62,6 +60,9 @@ class LLVMCodeAdaptationProcess(
     }
 
     fun finish() {
+        intrinsicDependencies.forEach {
+            assembler.addDependency(it)
+        }
         traitObjects.forEach { (_, traits) ->
             // TODO: fix
             traits.forEach { obj ->
@@ -225,6 +226,9 @@ class LLVMCodeAdaptationProcess(
 
         val intrinsic = intrinsics.find { it.name == node.name }
         if (intrinsic != null) {
+            if (!compileIntrinsics)
+                intrinsicDependencies.addAll(intrinsic.declarations())
+
             val call = intrinsic.handleCall(
                 call = node,
                 types = node.arguments.map { getExpressionType(block, it, signatures).let { it.getRightOrNull() ?: error(it.getLeft().message) } },

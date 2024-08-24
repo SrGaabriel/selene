@@ -5,6 +5,7 @@ import me.gabriel.gwydion.parsing.Type
 
 @Serializable
 data class Signatures(
+    val structs: MutableSet<SignatureStruct> = mutableSetOf(),
     val functions: MutableSet<SignatureFunction> = mutableSetOf(),
     val traits: MutableSet<SignatureTrait> = mutableSetOf()
 ) {
@@ -20,9 +21,17 @@ data class Signatures(
         }
         val newFunctions = functions.toMutableSet()
         newFunctions.addAll(other.functions)
-        return Signatures(newFunctions, newTraits)
+        val newStructs = structs.toMutableSet()
+        newStructs.addAll(other.structs)
+        return Signatures(newStructs, newFunctions, newTraits)
     }
 }
+
+@Serializable
+data class SignatureStruct(
+    val name: String,
+    val fields: Map<String, Type>
+)
 
 @Serializable
 data class SignatureTrait(
