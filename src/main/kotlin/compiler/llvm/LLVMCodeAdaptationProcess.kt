@@ -397,7 +397,16 @@ class LLVMCodeAdaptationProcess(
 
     fun generateReturn(block: MemoryBlock, node: ReturnNode): NullMemoryUnit {
         val expression = acceptNode(block, node.expression, store = true)
-        assembler.returnValue(expression.type, expression)
+        val unit = if (expression.type.extractPrimitiveType() is LLVMType.Array) {
+            assembler.getElementFromStructure(
+                struct = expression,
+                type = (expression.type.extractPrimitiveType() as LLVMType.Array).type.extractPrimitiveType(),
+                index = LLVMConstant(0, LLVMType.I32),
+                total = true
+            )
+        } else expression
+
+        assembler.returnValue(getProperReturnType(unit.type), unit)
         return NullMemoryUnit
     }
 
@@ -412,15 +421,19 @@ class LLVMCodeAdaptationProcess(
     }
 
     fun generateArrayAccess(block: MemoryBlock, node: ArrayAccessNode): MemoryUnit {
-        val arrayMemory = block.figureOutMemory(node.identifier) ?: error("Array ${node.identifier} not found")
+        val arrayMemory = acceptNode(block, node.array) as MemoryUnit.Sized
         val index = acceptNode(block, node.index)
 
+        val type = (arrayMemory.type as LLVMType.Pointer).descendOneLevel().descendOneLevel()
         val pointer = assembler.getElementFromStructure(
             struct = arrayMemory,
-            type = arrayMemory.type.descendOneLevel(),
+            type = type,
             index = index,
-            total = false
+            total = true
         )
+        if (type is LLVMType.Array || type is LLVMType.Struct) {
+            return pointer
+        }
         return assembler.loadPointer(pointer)
     }
 
@@ -430,7 +443,7 @@ class LLVMCodeAdaptationProcess(
 
         val struct = assembler.declareStruct(
             name = node.name,
-            fields = node.fields.associate { it.name to it.type.asLLVM() }
+            fields = node.fields.associate { it.name to getProperReturnType(it.type.asLLVM()) }
         )
         block.memory.allocate(node.name, struct)
         return NullMemoryUnit
@@ -438,10 +451,14 @@ class LLVMCodeAdaptationProcess(
 
     fun generateInstantiation(block: MemoryBlock, node: InstantiationNode): MemoryUnit {
         val memory = block.figureOutMemory(node.name) ?: error("Data structure ${node.name} not found")
-        val allocation = assembler.allocateHeapMemoryAndCast(
+        val heap = false
+        val allocation = if (heap) assembler.allocateHeapMemoryAndCast(
             size = node.arguments.sumOf { getExpressionType(block, it, signatures).getRightOrNull()?.asLLVM()?.size ?: 0 },
             type = LLVMType.Pointer(memory.type)
-        )
+        ) else assembler.allocateStackMemory(
+            type = memory.type,
+            alignment = 8
+        ) as MemoryUnit.Sized
 
         node.arguments.forEachIndexed { index, argument ->
             val value = acceptNode(block, argument)
@@ -456,17 +473,21 @@ class LLVMCodeAdaptationProcess(
     }
 
     fun generateStructAccess(block: MemoryBlock, node: StructAccessNode): MemoryUnit {
-        val struct = block.figureOutMemory(node.struct) ?: error("Struct ${node.struct} not found")
+        val struct = acceptNode(block, node.struct) as MemoryUnit.Sized
         val pointerType = struct.type as LLVMType.Pointer
         val structType = pointerType.type as LLVMType.Struct
         val index = structType.fields.keys.indexOf(node.field)
         val type = structType.fields[node.field] ?: error("Field ${node.field} not found in struct ${node.struct}")
+
         val pointer = assembler.getElementFromStructure(
             struct = struct,
             type = type,
             index = LLVMConstant(index, LLVMType.I32),
         )
-        return assembler.loadPointer(pointer)
+        return when (type) {
+            is LLVMType.Array -> pointer
+            else -> assembler.loadPointer(pointer)
+        }
     }
 
     fun generateMutation(block: MemoryBlock, node: MutationNode): MemoryUnit {
@@ -556,7 +577,7 @@ class LLVMCodeAdaptationProcess(
             )
         } else {
             // We need to dynamically call it
-            val memory = block.figureOutMemory(node.trait) as? MemoryUnit.TraitData ?: error("Trait ${node.trait} not found")
+            val memory = acceptNode(block, node.trait, store) as? MemoryUnit.TraitData ?: error("Trait ${node.trait} not found")
 
             assembler.getElementFromVirtualTable(
                 table = '%' + memory.vtable.register.toString(),
@@ -584,7 +605,7 @@ class LLVMCodeAdaptationProcess(
             arguments.add(result)
         }
 
-        val variableMemory = block.figureOutMemory(node.trait) ?: error("Variable for trait ${node.trait} not found")
+        val variableMemory = acceptNode(block, node.trait)
         if (variableType !is Type.Trait) {
             arguments.add(0, variableMemory)
         } else {
@@ -621,10 +642,10 @@ class LLVMCodeAdaptationProcess(
 
         assembler.createBranch(conditionLabel)
         val loaded = assembler.loadPointer(allocation)
-        val comparison = assembler.booleanInverseComparison(
-            value = loaded,
-            expected = end
-        )
+        val comparison = assembler.customComparison(Comparison.Integer.SignedLessThanOrEqual(
+            left = loaded,
+            right = end
+        ))
         val bodyLabel = assembler.nextLabel()
         val endLabel = assembler.nextLabel()
         assembler.conditionalBranch(comparison, bodyLabel, endLabel)
@@ -651,17 +672,6 @@ class LLVMCodeAdaptationProcess(
         assembler.createBranch(endLabel)
 
         return NullMemoryUnit
-    }
-
-    fun getProperReturnType(returnType: Type): LLVMType =
-        getProperReturnType(returnType.asLLVM())
-
-    fun getProperReturnType(returnType: LLVMType): LLVMType {
-        return when (returnType) {
-            is LLVMType.Struct -> LLVMType.Pointer(returnType)
-            is LLVMType.Array -> LLVMType.Pointer(returnType.type)
-            else -> returnType
-        }
     }
 
     fun registerTraitObject(traitMem: MemoryUnit.Unsized, structName: String, functions: List<String>) {

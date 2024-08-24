@@ -133,6 +133,14 @@ sealed class Either<Left, Right> private constructor() {
     }
 
     /**
+     * Maps the right value if it is present.
+     */
+    inline fun ifRight(block: (Right) -> Unit): Either<Left, Right> {
+        if (isRight()) block(getRight())
+        return this
+    }
+
+    /**
      * Folds the left value if it is present.
      */
     inline fun foldIfLeft(block: (Either<Left, Right>) -> Unit) {

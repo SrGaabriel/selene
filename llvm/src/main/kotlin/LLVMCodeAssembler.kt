@@ -15,7 +15,7 @@ class LLVMCodeAssembler(val generator: ILLVMCodeGenerator): ILLVMCodeAssembler {
     override fun finish(): String = ir.joinToString("\n")
 
     override fun instruct(instruction: String) {
-        ir.add(instruction)
+        ir.add("    $instruction")
     }
 
     fun saveToRegister(register: Int, expression: String) {
@@ -24,8 +24,9 @@ class LLVMCodeAssembler(val generator: ILLVMCodeGenerator): ILLVMCodeAssembler {
 
     override fun allocateStackMemory(type: LLVMType, alignment: Int): MemoryUnit {
         val register = nextRegister()
-        saveToRegister(register, generator.stackMemoryAllocation(type, alignment))
-        return MemoryUnit.Sized(register, LLVMType.Pointer(type), type.size)
+        val pointer = LLVMType.Pointer(type)
+        saveToRegister(register, generator.stackMemoryAllocation(pointer, alignment))
+        return MemoryUnit.Sized(register, pointer, type.size)
     }
 
     override fun allocateHeapMemory(size: Int): MemoryUnit {
@@ -48,11 +49,11 @@ class LLVMCodeAssembler(val generator: ILLVMCodeGenerator): ILLVMCodeAssembler {
     }
 
     override fun declareFunction(name: String, returnType: LLVMType, arguments: List<MemoryUnit>) {
-        instruct(generator.functionDeclaration(name, returnType, arguments))
+        ir.add(generator.functionDeclaration(name, returnType, arguments))
     }
 
     override fun createBranch(label: String) {
-        instruct(generator.createBranch(label))
+        ir.add(generator.createBranch(label))
     }
 
     override fun conditionalBranch(condition: MemoryUnit, trueLabel: String, falseLabel: String) {
@@ -81,7 +82,7 @@ class LLVMCodeAssembler(val generator: ILLVMCodeGenerator): ILLVMCodeAssembler {
     }
 
     override fun closeBrace() {
-        instruct("}")
+        ir.add("}")
     }
 
     override fun addNumber(type: LLVMType, left: Value, right: Value): MemoryUnit =
@@ -159,7 +160,7 @@ class LLVMCodeAssembler(val generator: ILLVMCodeGenerator): ILLVMCodeAssembler {
     override fun createArray(type: LLVMType, size: Int?, elements: List<Value>): MemoryUnit {
         val unit = if (size != null) MemoryUnit.Sized(
             register = nextRegister(),
-            type = LLVMType.Array(type, size),
+            type = LLVMType.Pointer(LLVMType.Array(type, size)),
             size = size
         ) else {
             MemoryUnit.Unsized(
@@ -181,11 +182,11 @@ class LLVMCodeAssembler(val generator: ILLVMCodeGenerator): ILLVMCodeAssembler {
                 firstPointer = reference
             }
         }
-        if (firstPointer == null) {
-            return unit
-        }
+//        if (firstPointer == null) {
+//            return unit
+//        }
 
-        return firstPointer!!
+        return unit
     }
 
     /**
@@ -360,6 +361,19 @@ class LLVMCodeAssembler(val generator: ILLVMCodeGenerator): ILLVMCodeAssembler {
         saveToRegister(
             register = unit.register,
             expression = generator.signedIntegerComparison(value, expected)
+        )
+        return unit
+    }
+
+    fun customComparison(comparison: Comparison): MemoryUnit {
+        val unit = MemoryUnit.Sized(
+            register = nextRegister(),
+            type = LLVMType.I1,
+            size = 1
+        )
+        saveToRegister(
+            register = unit.register,
+            expression = generator.comparison(comparison)
         )
         return unit
     }

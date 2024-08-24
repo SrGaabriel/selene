@@ -21,6 +21,8 @@ interface ILLVMCodeGenerator {
 
     fun functionCall(name: String, returnType: LLVMType, arguments: Collection<Value>, local: Boolean = false): String
 
+    fun comparison(comparison: Comparison): String
+
     fun signedIntegerComparison(left: Value, right: Value): String
 
     fun signedIntegerNotEqualComparison(left: Value, right: Value): String

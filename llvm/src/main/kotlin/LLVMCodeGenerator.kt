@@ -6,7 +6,10 @@ class LLVMCodeGenerator: ILLVMCodeGenerator {
     private val dependencies = mutableSetOf<String>()
 
     override fun stackMemoryAllocation(type: LLVMType, alignment: Int): String {
-        return "alloca ${type.llvm}, align $alignment"
+        if (type !is LLVMType.Pointer) {
+            error("Cannot allocate stack memory for non-pointer type")
+        }
+        return "alloca ${type.type.llvm}, align $alignment"
     }
 
     override fun heapMemoryAllocation(type: LLVMType, size: Int): String {
@@ -44,6 +47,10 @@ class LLVMCodeGenerator: ILLVMCodeGenerator {
     override fun functionCall(name: String, returnType: LLVMType, arguments: Collection<Value>, local: Boolean): String {
         val argsString = arguments.joinToString(", ") { "${it.type.llvm} ${it.llvm()}" }
         return "call ${returnType.llvm} ${if (local) '%' else '@'}$name($argsString)"
+    }
+
+    override fun comparison(comparison: Comparison): String {
+        return "${comparison.number} ${comparison.op} ${comparison.type.llvm} ${comparison.left.llvm()}, ${comparison.right.llvm()}"
     }
 
     override fun memoryCopy(source: MemoryUnit, destination: MemoryUnit, size: Value): String {

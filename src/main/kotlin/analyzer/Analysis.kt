@@ -42,7 +42,8 @@ tailrec fun getExpressionType(
             }
         }
         is ArrayAccessNode -> {
-            val arrayType = block.figureOutSymbol(node.identifier) ?: return Either.Left(AnalysisError.UndefinedArray(node, node.identifier))
+            val arrayType = getExpressionType(block, node.array, signatures).getRightOrNull()
+                ?: return Either.Left(AnalysisError.UndefinedArray(node, node.array.mark.value))
             when (arrayType) {
                 is Type.FixedArray -> Either.Right(arrayType.type)
                 is Type.DynamicArray -> Either.Right(arrayType.type)
@@ -55,13 +56,16 @@ tailrec fun getExpressionType(
         }
         is DataStructureNode -> Either.Right(block.figureOutSymbol(node.name) ?: return Either.Left(AnalysisError.UndefinedDataStructure(node, node.name)))
         is TraitFunctionCallNode -> {
-            val symbol = if (node.trait != "self") block.figureOutSymbol(node.trait) else block.self
+            val symbol = if (!(node.trait is VariableReferenceNode && node.trait.name== "self"))
+                getExpressionType(block, node.trait, signatures).getRightOrNull()
+                    ?: return Either.Left(AnalysisError.UndefinedVariable(node, node.trait.mark.value, block))
+                else block.self
             if (symbol is Type.Trait) {
                 val function = symbol.functions.firstOrNull { it.name == node.function }
                 if (function != null) {
                     return Either.Right(function.returnType)
                 }
-                return Either.Left(AnalysisError.TraitForFunctionNotFound(node, node.trait, node.function))
+                return Either.Left(AnalysisError.TraitForFunctionNotFound(node, node.trait.mark.value, node.function))
             }
 
             val (_, _, function) = figureOutTraitForVariable(
@@ -69,14 +73,15 @@ tailrec fun getExpressionType(
                 variable = node.trait,
                 signatures = signatures,
                 call = node.function
-            ) ?: return Either.Left(AnalysisError.TraitForFunctionNotFound(node, node.trait, node.function))
+            ) ?: return Either.Left(AnalysisError.TraitForFunctionNotFound(node, node.trait.mark.value, node.function))
             Either.Right(function.returnType)
         }
         is StructAccessNode -> {
-            val struct = when (node.struct) {
-                "self" -> block.self ?: return Either.Left(AnalysisError.UndefinedDataStructure(node, node.struct))
-                else -> block.figureOutSymbol(node.struct) ?: return Either.Left(AnalysisError.UndefinedDataStructure(node, node.struct))
-            }
+            val struct = getExpressionType(
+                block = block,
+                node = node.struct,
+                signatures = signatures
+            ).getRightOrNull() ?: return Either.Left(AnalysisError.UndefinedDataStructure(node, node.struct.mark.value))
 
             when (struct) {
                 is Type.Struct -> {
@@ -112,11 +117,11 @@ data class TraitFunctionMetadata(
 
 fun figureOutTraitForVariable(
     block: MemoryBlock,
-    variable: String,
+    variable: SyntaxTreeNode,
     signatures: Signatures,
     call: String
 ): TraitFunctionMetadata? {
-    val resolvedVariable = (if (variable != "self") block.figureOutSymbol(variable) else block.self) ?: return null
+    val resolvedVariable = (if (!isNodeSelf(variable)) getExpressionType(block ,variable, signatures).getRightOrNull() else block.self) ?: return null
 
     return signatures.traits.firstNotNullOfOrNull { trait ->
         val impl = if (resolvedVariable !is Type.Trait) trait.impls.firstOrNull {
@@ -131,4 +136,8 @@ fun figureOutTraitForVariable(
         }
         null
     }
+}
+
+fun isNodeSelf(node: SyntaxTreeNode): Boolean {
+    return node is VariableReferenceNode && node.name == "self"
 }

@@ -1,28 +1,28 @@
-data Point(
-    x: int32,
-    y: int32,
-    signed: bool
-);
+data Collection(
+    array: int32[7],
+    cursor: int32
+)
+
+trait Iterable(
+    next() :: int32
+)
+
+make Collection into Iterable {
+    func next(mut self) :: int32 {
+        element := self.array[self.cursor];
+        self.cursor = self.cursor + 1;
+        return element;
+    }
+}
 
 func main() {
-    mut point := new_point();
-    print_point(point);
-    change_point(point);
-    print_point(point);
+    primes := [2, 3, 5, 7, 11, 13, 17];
+    coll := @Collection(primes, 0);
+
+    for i in 0..arraylen(primes)-1 {
+        printf("Now at index: ");
+        println(i);
+        println(coll.next());
+    }
 }
 
-func new_point() :: Point {
-    return @Point(100, 400, true);
-}
-
-func change_point(point: mut Point) {
-    point.x = 200;
-    point.y = 800;
-    point.signed = false;
-}
-
-func print_point(point: Point) {
-    println(point.x);
-    println(point.y);
-    println(point.signed);
-}

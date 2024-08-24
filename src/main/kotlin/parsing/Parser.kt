@@ -267,11 +267,8 @@ class Parser(private val tokens: TokenStream) {
         val memberToken = member.unwrap()
         return when (peekToken().kind) {
             TokenKind.MUTATION -> parseMutation(identifierToken.value, memberToken).mapInto()
-            TokenKind.OPENING_PARENTHESES -> parseTraitFunctionCall(
-                identifierToken.value,
-                memberToken
-            ).mapInto()
-            else -> Either.Right(StructAccessNode(identifierToken.value, memberToken.value, identifierToken))
+            TokenKind.OPENING_PARENTHESES -> TODO("implement struct function call")
+            else -> TODO("implement struct access but iteratively")
         }
     }
 
@@ -280,17 +277,6 @@ class Parser(private val tokens: TokenStream) {
         return parseExpression().flatMapRight { expr ->
             consumeToken(TokenKind.SEMICOLON).mapRight {
                 MutationNode(struct, fieldToken.value, expr, mutationToken)
-            }
-        }
-    }
-
-    private fun parseTraitFunctionCall(
-        trait: String,
-        functionToken: Token
-    ): Either<ParsingError, TraitFunctionCallNode> {
-        return parseCallParameters().flatMapRight { params ->
-            consumeToken(TokenKind.SEMICOLON).mapRight {
-                TraitFunctionCallNode(trait, functionToken.value, params, functionToken)
             }
         }
     }
@@ -365,34 +351,60 @@ class Parser(private val tokens: TokenStream) {
         val identifier = consumeOneOf(TokenKind.IDENTIFIER, TokenKind.SELF)
         if (identifier is Either.Left) return Either.Left(identifier.value)
         val identifierToken = identifier.unwrap()
-        return when (peekToken().kind) {
-            TokenKind.OPENING_PARENTHESES -> parseCallParameters().mapRight { CallNode(identifierToken.value, it, identifierToken) }
-            TokenKind.DOT -> parseStructAccess(identifierToken)
-            TokenKind.OPENING_BRACKETS -> parseArrayAccess(identifierToken).mapInto()
-            else -> Either.Right(VariableReferenceNode(identifierToken.value, identifierToken))
-        }
-    }
 
-    private fun parseStructAccess(structToken: Token): Either<ParsingError, SyntaxTreeNode> {
-        val dot = consumeToken(TokenKind.DOT)
-        if (dot is Either.Left) return Either.Left(dot.value)
-        return parseIdentifier().flatMapRight { field ->
-            if (peekToken().kind == TokenKind.OPENING_PARENTHESES) {
-                parseCallParameters().mapRight { params ->
-                    TraitFunctionCallNode(structToken.value, field.value, params, dot.unwrap())
+        if (peekToken().kind == TokenKind.OPENING_PARENTHESES) {
+            return parseCallParameters().mapRight { params ->
+                CallNode(identifierToken.value, params, identifierToken)
+            }
+        }
+
+        var currentNode: SyntaxTreeNode = VariableReferenceNode(identifierToken.value, identifierToken)
+
+        while (true) {
+            when (peekToken().kind) {
+                TokenKind.DOT -> {
+                    val dot = consumeToken(TokenKind.DOT)
+                    if (dot is Either.Left) return Either.Left(dot.value)
+                    val field = parseIdentifier()
+                    if (field is Either.Left) return Either.Left(field.value)
+                    if (peekToken().kind == TokenKind.OPENING_PARENTHESES) {
+                        val parameters = parseCallParameters()
+                        if (parameters is Either.Left) return Either.Left(parameters.value)
+                        currentNode = TraitFunctionCallNode(currentNode, field.unwrap().value, parameters.unwrap(), dot.unwrap())
+                    } else {
+                        currentNode = StructAccessNode(currentNode, field.unwrap().value, dot.unwrap())
+                    }
                 }
-            } else {
-                Either.Right(StructAccessNode(structToken.value, field.value, dot.unwrap()))
+                TokenKind.OPENING_BRACKETS -> {
+                    val index = parseArrayAccess(currentNode)
+                    if (index is Either.Left) return Either.Left(index.value)
+                    currentNode = ArrayAccessNode(currentNode, index.unwrap().index, identifierToken)
+                }
+                else -> return Either.Right(currentNode)
             }
         }
     }
 
-    private fun parseArrayAccess(arrayToken: Token): Either<ParsingError, ArrayAccessNode> {
+//    private fun parseStructAccess(structToken: Token): Either<ParsingError, SyntaxTreeNode> {
+//        val dot = consumeToken(TokenKind.DOT)
+//        if (dot is Either.Left) return Either.Left(dot.value)
+//        return parseIdentifier().flatMapRight { field ->
+//            if (peekToken().kind == TokenKind.OPENING_PARENTHESES) {
+//                parseCallParameters().mapRight { params ->
+//                    TraitFunctionCallNode(structToken.value, field.value, params, dot.unwrap())
+//                }
+//            } else {
+//                Either.Right(StructAccessNode(structToken.value, field.value, dot.unwrap()))
+//            }
+//        }
+//    }
+
+    private fun parseArrayAccess(array: SyntaxTreeNode): Either<ParsingError, ArrayAccessNode> {
         val openingBracket = consumeToken(TokenKind.OPENING_BRACKETS)
         if (openingBracket is Either.Left) return Either.Left(openingBracket.value)
         return parseExpression().flatMapRight { index ->
             consumeToken(TokenKind.CLOSING_BRACKETS).mapRight {
-                ArrayAccessNode(arrayToken.value, index, openingBracket.unwrap())
+                ArrayAccessNode(array, index, openingBracket.unwrap())
             }
         }
     }

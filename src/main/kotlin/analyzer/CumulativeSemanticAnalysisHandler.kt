@@ -304,10 +304,10 @@ class CumulativeSemanticAnalysisHandler(
             }
 
             is StructAccessNode -> {
-                if (node.struct == "self") return
-                val struct = block.figureOutSymbol(node.struct)
+                if (isNodeSelf(node.struct)) return
+                val struct = getExpressionType(block, node.struct, signatures).getRightOrNull()
                 if (struct == null) {
-                    errors.add(AnalysisError.UndefinedDataStructure(node, node.struct))
+                    errors.add(AnalysisError.UndefinedDataStructure(node, node.struct.mark.value))
                     return
                 }
                 if (struct !is Type.Struct) {

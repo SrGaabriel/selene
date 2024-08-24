@@ -21,8 +21,18 @@ fun Type.asLLVM(): LLVMType = when (this) {
     is Type.DynamicArray -> LLVMType.Pointer(this.type.asLLVM())
     is Type.Struct -> LLVMType.Struct(
         name = this.identifier,
-        fields = this.fields.mapValues { it.value.asLLVM() }
+        fields = this.fields.mapValues { getProperReturnType(it.value.asLLVM()) }
     )
     is Type.Mutable -> this.baseType.asLLVM()
     else -> error("Unsupported LLVM type $this")
+}
+
+fun getProperReturnType(returnType: Type): LLVMType =
+    getProperReturnType(returnType.asLLVM())
+
+fun getProperReturnType(returnType: LLVMType): LLVMType {
+    return when (returnType) {
+        is LLVMType.Struct, is LLVMType.Array -> LLVMType.Pointer(returnType)
+        else -> returnType
+    }
 }

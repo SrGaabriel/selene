@@ -182,13 +182,13 @@ class ArrayNode(
 }
 
 class ArrayAccessNode(
-    val identifier: String,
+    val array: SyntaxTreeNode,
     val index: SyntaxTreeNode,
     mark: Token,
 ) : SyntaxTreeNode(mark) {
     override fun getChildren(): List<SyntaxTreeNode> = listOf(index)
 
-    override fun toString(): String = "ArrayAccessNode(identifier='$identifier', index=$index)"
+    override fun toString(): String = "ArrayAccessNode(array='$array', index=$index)"
 }
 
 class DataStructureNode(
@@ -254,7 +254,7 @@ class InstantiationNode(
 }
 
 class StructAccessNode(
-    val struct: String,
+    val struct: SyntaxTreeNode,
     val field: String,
     mark: Token
 ) : SyntaxTreeNode(mark) {
@@ -275,7 +275,7 @@ class MutationNode(
 }
 
 class TraitFunctionCallNode(
-    val trait: String,
+    val trait: SyntaxTreeNode,
     val function: String,
     val arguments: List<SyntaxTreeNode>,
     mark: Token
