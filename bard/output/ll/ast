@@ -1,6 +1,6 @@
-RootNode(children=[me.gabriel.gwydion.parsing.FunctionNode@61322f9d])}
-  me.gabriel.gwydion.parsing.FunctionNode@61322f9d}
-    me.gabriel.gwydion.parsing.BlockNode@65e98b1c}
+RootNode(children=[me.gabriel.gwydion.parsing.FunctionNode@1ff4931d])}
+  me.gabriel.gwydion.parsing.FunctionNode@1ff4931d}
+    me.gabriel.gwydion.parsing.BlockNode@710f4dc7}
       AssignmentNode(name='array', expression=ArrayNode(elements=[StringNode(value='', segments=[Text(text=Gwydion)]), StringNode(value='', segments=[Text(text=Is)]), StringNode(value='', segments=[Text(text=The)]), StringNode(value='', segments=[Text(text=Best!)])], dynamic=true), mutable=true)}
         ArrayNode(elements=[StringNode(value='', segments=[Text(text=Gwydion)]), StringNode(value='', segments=[Text(text=Is)]), StringNode(value='', segments=[Text(text=The)]), StringNode(value='', segments=[Text(text=Best!)])], dynamic=true)}
           StringNode(value='', segments=[Text(text=Gwydion)])}
@@ -17,51 +17,65 @@ RootNode(children=[me.gabriel.gwydion.parsing.FunctionNode@61322f9d])}
 
           NumberNode(value='4', explicit=false)}
 
-      ForNode(variable='i', iterable=RangeNode(from=NumberNode(value='0', explicit=false), to=BinaryOperatorNode(left=TraitFunctionCallNode(trait='VariableReferenceNode(name='list')', function='size', arguments=[]) operator=Token(kind=MINUS, value=-, position=132) right=NumberNode(value='1', explicit=false))), body=me.gabriel.gwydion.parsing.BlockNode@710f4dc7)}
+      ForNode(variable='i', iterable=RangeNode(from=NumberNode(value='0', explicit=false), to=BinaryOperatorNode(left=TraitFunctionCallNode(trait='VariableReferenceNode(name='list')', function='size', arguments=[]) operator=Token(kind=MINUS, value=-, position=132) right=NumberNode(value='1', explicit=false))), body=me.gabriel.gwydion.parsing.BlockNode@45c7e403)}
         RangeNode(from=NumberNode(value='0', explicit=false), to=BinaryOperatorNode(left=TraitFunctionCallNode(trait='VariableReferenceNode(name='list')', function='size', arguments=[]) operator=Token(kind=MINUS, value=-, position=132) right=NumberNode(value='1', explicit=false)))}
           NumberNode(value='0', explicit=false)}
 
           BinaryOperatorNode(left=TraitFunctionCallNode(trait='VariableReferenceNode(name='list')', function='size', arguments=[]) operator=Token(kind=MINUS, value=-, position=132) right=NumberNode(value='1', explicit=false))}
             TraitFunctionCallNode(trait='VariableReferenceNode(name='list')', function='size', arguments=[])}
+              VariableReferenceNode(name='list')}
 
             NumberNode(value='1', explicit=false)}
 
-        me.gabriel.gwydion.parsing.BlockNode@710f4dc7}
-          me.gabriel.gwydion.parsing.CallNode@5e0e82ae}
+        me.gabriel.gwydion.parsing.BlockNode@45c7e403}
+          me.gabriel.gwydion.parsing.CallNode@2d3379b4}
             StringNode(value='', segments=[Text(text=Next: )])}
 
-          me.gabriel.gwydion.parsing.CallNode@45752059}
+          me.gabriel.gwydion.parsing.CallNode@22555ebf}
             ArrayAccessNode(array='VariableReferenceNode(name='array')', index=VariableReferenceNode(name='i'))}
+              VariableReferenceNode(name='array')}
+
               VariableReferenceNode(name='i')}
 
-      me.gabriel.gwydion.parsing.CallNode@dd05255}
+      me.gabriel.gwydion.parsing.CallNode@44c03695}
         StringNode(value='', segments=[Text(text=================)])}
 
       TraitFunctionCallNode(trait='VariableReferenceNode(name='list')', function='push', arguments=[StringNode(value='', segments=[Text(text=Bard)])])}
         StringNode(value='', segments=[Text(text=Bard)])}
 
+        VariableReferenceNode(name='list')}
+
       TraitFunctionCallNode(trait='VariableReferenceNode(name='list')', function='push', arguments=[StringNode(value='', segments=[Text(text=Is)])])}
         StringNode(value='', segments=[Text(text=Is)])}
+
+        VariableReferenceNode(name='list')}
 
       TraitFunctionCallNode(trait='VariableReferenceNode(name='list')', function='push', arguments=[StringNode(value='', segments=[Text(text=Cool)])])}
         StringNode(value='', segments=[Text(text=Cool)])}
 
+        VariableReferenceNode(name='list')}
+
       TraitFunctionCallNode(trait='VariableReferenceNode(name='list')', function='push', arguments=[StringNode(value='', segments=[Text(text=Too!)])])}
         StringNode(value='', segments=[Text(text=Too!)])}
 
-      ForNode(variable='i', iterable=RangeNode(from=NumberNode(value='0', explicit=false), to=BinaryOperatorNode(left=StructAccessNode(struct='VariableReferenceNode(name='list')', field='size') operator=Token(kind=MINUS, value=-, position=359) right=NumberNode(value='1', explicit=false))), body=me.gabriel.gwydion.parsing.BlockNode@1ff4931d)}
+        VariableReferenceNode(name='list')}
+
+      ForNode(variable='i', iterable=RangeNode(from=NumberNode(value='0', explicit=false), to=BinaryOperatorNode(left=StructAccessNode(struct='VariableReferenceNode(name='list')', field='size') operator=Token(kind=MINUS, value=-, position=359) right=NumberNode(value='1', explicit=false))), body=me.gabriel.gwydion.parsing.BlockNode@2925bf5b)}
         RangeNode(from=NumberNode(value='0', explicit=false), to=BinaryOperatorNode(left=StructAccessNode(struct='VariableReferenceNode(name='list')', field='size') operator=Token(kind=MINUS, value=-, position=359) right=NumberNode(value='1', explicit=false)))}
           NumberNode(value='0', explicit=false)}
 
           BinaryOperatorNode(left=StructAccessNode(struct='VariableReferenceNode(name='list')', field='size') operator=Token(kind=MINUS, value=-, position=359) right=NumberNode(value='1', explicit=false))}
             StructAccessNode(struct='VariableReferenceNode(name='list')', field='size')}
+              VariableReferenceNode(name='list')}
 
             NumberNode(value='1', explicit=false)}
 
-        me.gabriel.gwydion.parsing.BlockNode@1ff4931d}
-          me.gabriel.gwydion.parsing.CallNode@3eb738bb}
+        me.gabriel.gwydion.parsing.BlockNode@2925bf5b}
+          me.gabriel.gwydion.parsing.CallNode@f5958c9}
             StringNode(value='', segments=[Text(text=Next: )])}
 
-          me.gabriel.gwydion.parsing.CallNode@5bda8e08}
+          me.gabriel.gwydion.parsing.CallNode@233795b6}
             ArrayAccessNode(array='VariableReferenceNode(name='array')', index=VariableReferenceNode(name='i'))}
+              VariableReferenceNode(name='array')}
+
               VariableReferenceNode(name='i')}

@@ -192,7 +192,7 @@ class ArrayAccessNode(
     val index: SyntaxTreeNode,
     mark: Token,
 ) : SyntaxTreeNode(mark) {
-    override fun getChildren(): List<SyntaxTreeNode> = listOf(index)
+    override fun getChildren(): List<SyntaxTreeNode> = listOf(array, index)
 
     override fun toString(): String = "ArrayAccessNode(array='$array', index=$index)"
 }
@@ -203,7 +203,7 @@ class ArrayAssignmentNode(
     val expression: SyntaxTreeNode,
     mark: Token
 ) : SyntaxTreeNode(mark) {
-    override fun getChildren(): List<SyntaxTreeNode> = listOf(index, expression)
+    override fun getChildren(): List<SyntaxTreeNode> = listOf(index, array, expression)
 
     override fun toString(): String = "ArrayAssignmentNode(array='$array', index=$index, expression=$expression)"
 }
@@ -275,7 +275,7 @@ class StructAccessNode(
     val field: String,
     mark: Token
 ) : SyntaxTreeNode(mark) {
-    override fun getChildren(): List<SyntaxTreeNode> = listOf()
+    override fun getChildren(): List<SyntaxTreeNode> = listOf(struct)
 
     override fun toString(): String = "StructAccessNode(struct='$struct', field='$field')"
 }
@@ -286,7 +286,7 @@ class MutationNode(
     val expression: SyntaxTreeNode,
     mark: Token
 ) : SyntaxTreeNode(mark) {
-    override fun getChildren(): List<SyntaxTreeNode> = listOf(expression)
+    override fun getChildren(): List<SyntaxTreeNode> = listOf(struct, expression)
 
     override fun toString(): String = "MutationNode(struct='$struct', field='$field', expression=$expression)"
 }
@@ -297,7 +297,7 @@ class TraitFunctionCallNode(
     val arguments: List<SyntaxTreeNode>,
     mark: Token
 ) : SyntaxTreeNode(mark) {
-    override fun getChildren(): List<SyntaxTreeNode> = arguments
+    override fun getChildren(): List<SyntaxTreeNode> = arguments + trait
 
     override fun toString(): String = "TraitFunctionCallNode(trait='$trait', function='$function', arguments=$arguments)"
 }
