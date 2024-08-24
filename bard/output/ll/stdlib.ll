@@ -1,14 +1,14 @@
-@trait_1532606500 = unnamed_addr constant <{ i16, i16, ptr }> <{
+@trait_529163019 = unnamed_addr constant <{ i16, i16, ptr }> <{
     i16 8,
     i16 8,
     ptr @int32_text
 }>, align 8
-@trait_788113146 = unnamed_addr constant <{ i16, i16, ptr }> <{
+@trait_1124215107 = unnamed_addr constant <{ i16, i16, ptr }> <{
     i16 8,
     i16 8,
     ptr @string_text
 }>, align 8
-@trait_1273278798 = unnamed_addr constant <{ i16, i16, ptr }> <{
+@trait_739170393 = unnamed_addr constant <{ i16, i16, ptr }> <{
     i16 8,
     i16 8,
     ptr @string_length
@@ -117,7 +117,7 @@ entry:
 }
 define i8* @int32_text(i32* %3) {
 entry:
-    %4 = alloca [6 x i8], align 8
+    %4 = alloca [6 x i8], align 1
     %5 = getelementptr inbounds [6 x i8], [6 x i8]* %4, i32 0, i32 0
     store i8 105, i8* %5
     %6 = getelementptr inbounds [6 x i8], [6 x i8]* %4, i32 0, i32 1

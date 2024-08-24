@@ -135,6 +135,8 @@ class NumberNode(
     mark: Token
 ) : TypedSyntaxTreeNode(type, mark) {
     override fun getChildren(): List<SyntaxTreeNode> = emptyList()
+
+    override fun toString(): String = "NumberNode(value='$value', explicit=$explicit)"
 }
 
 class StringNode(
@@ -149,6 +151,8 @@ class StringNode(
         data class Reference(val node: VariableReferenceNode) : Segment()
         data class Expression(val node: SyntaxTreeNode) : Segment()
     }
+
+    override fun toString(): String = "StringNode(value='$value', segments=$segments)"
 }
 
 class BooleanNode(

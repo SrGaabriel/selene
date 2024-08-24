@@ -187,7 +187,7 @@ class LLVMCodeAdaptationProcess(
 
         val arguments = mutableListOf<Value>()
         node.arguments.forEachIndexed { index, arg ->
-            val result = acceptNode(block, arg, true)
+            val result = passReferenceToArray(acceptNode(block, arg, true))
             if (result is NullMemoryUnit || result.type is LLVMType.Void) {
                 error("Argument $arg is void")
             }
@@ -251,7 +251,7 @@ class LLVMCodeAdaptationProcess(
     }
 
     fun generateAssignment(block: MemoryBlock, node: AssignmentNode): MemoryUnit {
-        val expression = acceptNode(block, node.expression, true) as? MemoryUnit.Sized
+        val expression = acceptNode(block, node.expression, true) as? MemoryUnit
             ?: error("Expression ${node.expression} not stored")
 
         block.memory.allocate(node.name, expression)
@@ -425,15 +425,16 @@ class LLVMCodeAdaptationProcess(
     }
 
     fun generateArrayAccess(block: MemoryBlock, node: ArrayAccessNode): MemoryUnit {
-        val arrayMemory = acceptNode(block, node.array) as MemoryUnit.Sized
+        val arrayMemory = acceptNode(block, node.array) as MemoryUnit
         val index = acceptNode(block, node.index)
 
-        val type = (arrayMemory.type as LLVMType.Pointer).descendOneLevel().descendOneLevel()
+        val intermediate = (arrayMemory.type as LLVMType.Pointer).descendOneLevel()
+        val type = intermediate.descendOneLevel()
         val pointer = assembler.getElementFromStructure(
             struct = arrayMemory,
-            type = type,
+            type = if (intermediate is LLVMType.Array) type else LLVMType.Pointer(type),
             index = index,
-            total = true
+            total = intermediate is LLVMType.Array
         )
         if (type is LLVMType.Array || type is LLVMType.Struct) {
             return pointer
@@ -707,6 +708,19 @@ class LLVMCodeAdaptationProcess(
                 LLVMType.I16,
             ).plus(impl.types.map { LLVMType.Ptr }))
         )
+    }
+
+    fun passReferenceToArray(array: Value): Value {
+        val primitive = array.type.extractPrimitiveType()
+        if (primitive is LLVMType.Array) {
+            return assembler.getElementFromStructure(
+                struct = array,
+                type = primitive.type,
+                index = LLVMConstant(0, LLVMType.I32),
+                total = true
+            )
+        }
+        return array
     }
 
     fun getBinaryOp(kind: TokenKind): BinaryOp {

@@ -55,5 +55,5 @@ fun LLVMType.extractPrimitiveType() = when (this) {
 fun LLVMType.descendOneLevel(): LLVMType = when (this) {
     is LLVMType.Array -> this.type
     is LLVMType.Pointer -> this.type
-    else -> error("Cannot descend one level on non-array or non-pointer type")
+    else -> error("Cannot descend one level on type $this")
 }

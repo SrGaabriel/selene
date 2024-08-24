@@ -33,8 +33,6 @@ interface ILLVMCodeAssembler {
 
     fun unconditionalBranchTo(label: String)
 
-    fun dynamicMemoryUnitAllocation(unit: MemoryUnit)
-
     fun createArray(
         type: LLVMType,
         size: Int?,

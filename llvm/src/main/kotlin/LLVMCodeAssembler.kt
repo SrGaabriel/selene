@@ -98,30 +98,30 @@ class LLVMCodeAssembler(val generator: ILLVMCodeGenerator): ILLVMCodeAssembler {
         )
     }
 
-    override fun dynamicMemoryUnitAllocation(unit: MemoryUnit) {
-        when (unit) {
-            is MemoryUnit.Unsized -> saveToRegister(unit.register, generator.heapMemoryAllocation(
-                size = min(unit.type.size, 64),
-                type = unit.type
-            ))
-            is MemoryUnit.Sized -> {
-                if (unit.size > 1024) {
-                    saveToRegister(unit.register, generator.heapMemoryAllocation(
-                        size = unit.size,
-                        type = unit.type
-                    ))
-                }
-                saveToRegister(unit.register, generator.stackMemoryAllocation(
-                    type = unit.type,
-                    alignment = unit.type.defaultAlignment
-                ))
-            }
-            is MemoryUnit.TraitData -> {
-                error("Trait data cannot be allocated dynamically")
-            }
-            NullMemoryUnit -> error("Tried to store null memory unit")
-        }
-    }
+//    override fun dynamicMemoryUnitAllocation(unit: MemoryUnit) {
+//        when (unit) {
+//            is MemoryUnit.Unsized -> saveToRegister(unit.register, generator.heapMemoryAllocation(
+//                size = min(unit.type.size, 64),
+//                type = unit.type
+//            ))
+//            is MemoryUnit.Sized -> {
+//                if (unit.size > 1024) {
+//                    saveToRegister(unit.register, generator.heapMemoryAllocation(
+//                        size = unit.size,
+//                        type = unit.type
+//                    ))
+//                }
+//                saveToRegister(unit.register, generator.stackMemoryAllocation(
+//                    type = unit.type,
+//                    alignment = unit.type.defaultAlignment
+//                ))
+//            }
+//            is MemoryUnit.TraitData -> {
+//                error("Trait data cannot be allocated dynamically")
+//            }
+//            NullMemoryUnit -> error("Tried to store null memory unit")
+//        }
+//    }
 
     override fun callFunction(name: String, arguments: Collection<Value>, assignment: Value, local: Boolean) {
         val call = generator.functionCall(
@@ -158,17 +158,18 @@ class LLVMCodeAssembler(val generator: ILLVMCodeGenerator): ILLVMCodeAssembler {
     }
 
     override fun createArray(type: LLVMType, size: Int?, elements: List<Value>): MemoryUnit {
-        val unit = if (size != null) MemoryUnit.Sized(
-            register = nextRegister(),
-            type = LLVMType.Pointer(LLVMType.Array(type, size)),
-            size = size
-        ) else {
-            MemoryUnit.Unsized(
-                register = nextRegister(),
+        // TODO: improve code
+        val unit = if (size != null) {
+            this.allocateStackMemory(
+                type = LLVMType.Array(type, size),
+                alignment = type.defaultAlignment
+            )
+        } else {
+            this.allocateHeapMemoryAndCast(
+                size = 64,
                 type = LLVMType.Pointer(type)
             )
         }
-        dynamicMemoryUnitAllocation(unit)
 
         var firstPointer: MemoryUnit? = null
         elements.forEachIndexed { index, element ->

@@ -1,5 +1,5 @@
 data Collection(
-    array: string[7],
+    array: string[*],
     cursor: int32
 )
 
@@ -17,11 +17,17 @@ make Collection into Iterables {
 
 func main(argc: int32, argv: string[*]) {
     println(argc);
+    printf("You passed: ");
+    for i in 1..argc-1 {
+        printf(argv[i]);
+        printf(" ");
+    }
+    println("");
 
-    texts := ["Hello", "World", "Bard", "Programming", "Language", "Is", "Cool"];
+    texts := *["Hello", "World", "Bard", "Programming", "Language", "Is", "Cool"];
     coll := @Collection(texts, 0);
 
-    for i in 0..arraylen(texts)-1 {
+    for i in 0..6 {
         printf("Now at index: ");
         println(i);
         println(coll.next());
