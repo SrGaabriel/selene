@@ -1,3 +1,16 @@
-trait Iterable(
-    next() :: int32
+data Collection(
+    array: string[*],
+    cursor: int32
 )
+
+trait Iterable(
+    next() :: string
+)
+
+make Collection into Iterable {
+    func next(mut self) :: string {
+        element := self.array[self.cursor];
+        self.cursor = self.cursor + 1;
+        return element;
+    }
+}

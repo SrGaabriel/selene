@@ -50,8 +50,15 @@ tailrec fun getExpressionType(
             }
         }
         is InstantiationNode -> {
-            val struct = block.figureOutSymbol(node.name) ?: return Either.Left(AnalysisError.UndefinedDataStructure(node, node.name))
-            Either.Right(struct)
+            val struct = block.figureOutSymbol(node.name)
+            val signature = signatures.structs.firstOrNull { it.name == node.name }
+
+            val final = struct ?: if (signature != null) Type.Struct(
+                identifier = signature.name,
+                fields = signature.fields
+            ) else return Either.Left(AnalysisError.UndefinedVariable(node, node.name, block))
+
+            Either.Right(final)
         }
         is DataStructureNode -> Either.Right(block.figureOutSymbol(node.name) ?: return Either.Left(AnalysisError.UndefinedDataStructure(node, node.name)))
         is TraitFunctionCallNode -> {
@@ -120,7 +127,7 @@ fun figureOutTraitForVariable(
     signatures: Signatures,
     call: String
 ): TraitFunctionMetadata? {
-    val resolvedVariable = (if (!isNodeSelf(variable)) getExpressionType(block ,variable, signatures).getRightOrNull() else block.self) ?: return null
+    val resolvedVariable = (if (!isNodeSelf(variable)) getExpressionType(block, variable, signatures).getRightOrNull() else block.self) ?: return null
 
     return signatures.traits.firstNotNullOfOrNull { trait ->
         val impl = if (resolvedVariable !is Type.Trait) trait.impls.firstOrNull {

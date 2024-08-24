@@ -455,13 +455,23 @@ class LLVMCodeAdaptationProcess(
     }
 
     fun generateInstantiation(block: MemoryBlock, node: InstantiationNode): MemoryUnit {
-        val memory = block.figureOutMemory(node.name) ?: error("Data structure ${node.name} not found")
+        val memoryType = block.figureOutMemory(node.name)?.type ?: signatures.structs.find { it.name == node.name }
+            ?.let {
+                LLVMType.Struct(it.name, it.fields.mapValues { (_, type) -> getProperReturnType(type.asLLVM()) })
+            }?.also {
+                assembler.declareStruct(
+                    name = it.name,
+                    fields = it.fields
+                )
+            }
+            ?: error("Struct ${node.name} not found in block ${block.name}")
+
         val heap = false
         val allocation = if (heap) assembler.allocateHeapMemoryAndCast(
             size = node.arguments.sumOf { getExpressionType(block, it, signatures).getRightOrNull()?.asLLVM()?.size ?: 0 },
-            type = LLVMType.Pointer(memory.type)
+            type = LLVMType.Pointer(memoryType)
         ) else assembler.allocateStackMemory(
-            type = memory.type,
+            type = memoryType,
             alignment = 8
         ) as MemoryUnit.Sized
 

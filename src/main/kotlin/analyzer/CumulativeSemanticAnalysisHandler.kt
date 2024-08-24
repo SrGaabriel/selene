@@ -291,18 +291,32 @@ class CumulativeSemanticAnalysisHandler(
 
             is InstantiationNode -> {
                 val struct = block.figureOutSymbol(node.name)
-                if (struct == null) {
+                val signature = signatures.structs.find { it.name == node.name }
+
+                if (struct == null && signature == null) {
                     errors.add(AnalysisError.UndefinedDataStructure(node, node.name))
                     return
                 }
-                // Check if passed types match the struct
-                if (struct is Type.Struct) {
+
+                if (struct != null) {
+                    if (struct !is Type.Struct) {
+                        errors.add(AnalysisError.InvalidStructAccess(node, struct))
+                        return
+                    }
                     if (struct.fields.size != node.arguments.size) {
                         errors.add(AnalysisError.MissingArgumentsForInstantiation(node, node.name))
                         return
                     }
                     // TODO: Check if the types match
                 }
+                if (signature != null) {
+                    if (signature.fields.size != node.arguments.size) {
+                        errors.add(AnalysisError.MissingArgumentsForInstantiation(node, node.name))
+                        return
+                    }
+                    // TODO: Check if the types match
+                }
+
                 block
             }
 

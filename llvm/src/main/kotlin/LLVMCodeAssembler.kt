@@ -144,7 +144,7 @@ class LLVMCodeAssembler(val generator: ILLVMCodeGenerator): ILLVMCodeAssembler {
             type = LLVMType.Struct(name, fields),
             size = fields.values.sumOf { it.size }
         )
-        instruct("%$name = ${generator.structDeclaration(fields.values)}")
+        addDependency("%$name = ${generator.structDeclaration(fields.values)}")
         return unit
     }
 

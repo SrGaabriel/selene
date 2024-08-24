@@ -1,36 +1,9 @@
-data Collection(
-    array: string[*],
-    cursor: int32
-)
+func main() {
+    array := *["Gwydion", "Is", "The", "Best!"];
+    collection := @Collection(array, 0);
 
-trait Iterables(
-    next() :: string
-)
-
-make Collection into Iterables {
-    func next(mut self) :: string {
-        element := self.array[self.cursor];
-        self.cursor = self.cursor + 1;
-        return element;
+    for i in 0..3 {
+        printf("Next: ");
+        println(collection.next());
     }
 }
-
-func main(argc: int32, argv: string[*]) {
-    println(argc);
-    printf("You passed: ");
-    for i in 1..argc-1 {
-        printf(argv[i]);
-        printf(" ");
-    }
-    println("");
-
-    texts := *["Hello", "World", "Bard", "Programming", "Language", "Is", "Cool"];
-    coll := @Collection(texts, 0);
-
-    for i in 0..6 {
-        printf("Now at index: ");
-        println(i);
-        println(coll.next());
-    }
-}
-
