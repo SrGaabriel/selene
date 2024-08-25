@@ -1,26 +1,22 @@
-package me.gabriel.gwydion
+package me.gabriel.gwydion.compiler
 
 import com.github.ajalt.mordant.rendering.TextColors
-import kotlinx.serialization.encodeToString
 import kotlinx.serialization.json.Json
-import me.gabriel.gwydion.analyzer.CumulativeSemanticAnalysisHandler
-import me.gabriel.gwydion.cli.CommandHandler
-import me.gabriel.gwydion.compiler.ProgramMemoryRepository
-import me.gabriel.gwydion.compiler.llvm.LLVMCodeAdapter
-import me.gabriel.gwydion.intrinsics.INTRINSICS
-import me.gabriel.gwydion.lexing.lexers.StringLexer
-import me.gabriel.gwydion.log.GwydionLogger
-import me.gabriel.gwydion.log.LogLevel
-import me.gabriel.gwydion.log.MordantLogger
-import me.gabriel.gwydion.parsing.Parser
-import me.gabriel.gwydion.parsing.SyntaxTree
-import me.gabriel.gwydion.reader.AmbiguousSourceReader
-import me.gabriel.gwydion.signature.SignatureHandler
-import me.gabriel.gwydion.signature.Signatures
-import me.gabriel.gwydion.util.findRowOfIndex
-import me.gabriel.gwydion.util.formatAstTree
-import me.gabriel.gwydion.util.replaceAtIndex
-import me.gabriel.gwydion.util.trimIndentReturningWidth
+import me.gabriel.gwydion.analysis.CumulativeSemanticAnalysisHandler
+import me.gabriel.gwydion.analysis.ProgramMemoryRepository
+import me.gabriel.gwydion.analysis.signature.SignatureHandler
+import me.gabriel.gwydion.analysis.signature.Signatures
+import me.gabriel.gwydion.compiler.cli.CommandHandler
+import me.gabriel.gwydion.compiler.log.MordantLogger
+import me.gabriel.gwydion.compiler.log.bold
+import me.gabriel.gwydion.compiler.log.color
+import me.gabriel.gwydion.compiler.reader.AmbiguousSourceReader
+import me.gabriel.gwydion.frontend.lexing.lexers.StringLexer
+import me.gabriel.gwydion.frontend.parsing.Parser
+import me.gabriel.gwydion.frontend.parsing.SyntaxTree
+import me.gabriel.gwydion.ir.LLVMCodeAdapter
+import me.gabriel.gwydion.ir.intrinsics.INTRINSICS
+import me.gabriel.gwydion.tools.*
 import java.io.File
 import java.time.Instant
 import kotlin.system.exitProcess
@@ -132,7 +128,6 @@ fun parse(logger: GwydionLogger, text: String, memory: ProgramMemoryRepository, 
     } else {
         logger.log(LogLevel.DEBUG) { +"The parsing was successful!" }
     }
-    File("ast").writeText(formatAstTree(parsingResult.unwrap().root))
 
     val analyzer = CumulativeSemanticAnalysisHandler(parsingResult.getRight(), memory, signatures)
     val analysis = analyzer.analyzeTree()

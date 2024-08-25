@@ -9,5 +9,5 @@ repositories {
 dependencies {
     compileOnly(project(":analysis"))
     compileOnly(project(":frontend"))
-    compileOnly(project(":llvm"))
+    implementation(project(":llvm"))
 }

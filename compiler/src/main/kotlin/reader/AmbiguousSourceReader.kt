@@ -1,7 +1,8 @@
-package me.gabriel.gwydion.reader
+package me.gabriel.gwydion.compiler.reader
 
-import me.gabriel.gwydion.log.GwydionLogger
-import me.gabriel.gwydion.log.LogLevel
+import me.gabriel.gwydion.reader.SourceReader
+import me.gabriel.gwydion.tools.GwydionLogger
+import me.gabriel.gwydion.tools.LogLevel
 import java.io.File
 
 // This is a shitty source reader that will work as a placeholder for the real one
