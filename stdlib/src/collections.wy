@@ -1,5 +1,6 @@
 trait Collection(
     size() :: int32,
+    get(index: int32) :: string,
     push(value: string) :: void,
 )
 
@@ -11,6 +12,10 @@ data List(
 make List into Collection {
     func size(self) :: int32 {
         return self.size;
+    }
+
+    func get(self, index: int32) :: string {
+        return self.array[index];
     }
 
     func push(mut self, value: string) {

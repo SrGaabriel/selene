@@ -1,11 +1,12 @@
-package me.gabriel.gwydion.parsing
+package me.gabriel.gwydion.frontend.parsing
 
-import me.gabriel.gwydion.exception.ParsingError
-import me.gabriel.gwydion.lexing.TYPE_TOKENS
-import me.gabriel.gwydion.lexing.Token
-import me.gabriel.gwydion.lexing.TokenKind
-import me.gabriel.gwydion.lexing.TokenStream
-import me.gabriel.gwydion.util.Either
+import me.gabriel.gwydion.frontend.Type
+import me.gabriel.gwydion.frontend.lexing.TYPE_TOKENS
+import me.gabriel.gwydion.frontend.lexing.Token
+import me.gabriel.gwydion.frontend.lexing.TokenKind
+import me.gabriel.gwydion.frontend.lexing.TokenStream
+import me.gabriel.gwydion.frontend.lexing.error.ParsingError
+import me.gabriel.gwydion.tools.Either
 
 class Parser(private val tokens: TokenStream) {
     private var currentPosition: Int = 0

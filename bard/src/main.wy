@@ -14,8 +14,11 @@ func main() {
     list.push("Cool");
     list.push("Too!");
 
-    for i in 0..list.size-1 {
+    for i in 0..list.size()-1 {
         printf("Next: ");
         println(array[i]);
     }
+
+    println("================");
+    println(list.get(0));
 }

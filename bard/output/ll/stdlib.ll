@@ -1,22 +1,23 @@
-@trait_1533592890 = unnamed_addr constant <{ i16, i16, ptr }> <{
+@trait_345750740 = unnamed_addr constant <{ i16, i16, ptr }> <{
     i16 8,
     i16 8,
     ptr @int32_text
 }>, align 8
-@trait_41287126 = unnamed_addr constant <{ i16, i16, ptr }> <{
+@trait_253640345 = unnamed_addr constant <{ i16, i16, ptr }> <{
     i16 8,
     i16 8,
     ptr @string_text
 }>, align 8
-@trait_1044683172 = unnamed_addr constant <{ i16, i16, ptr }> <{
+@trait_2119392233 = unnamed_addr constant <{ i16, i16, ptr }> <{
     i16 8,
     i16 8,
     ptr @string_length
 }>, align 8
-            @trait_1874442193 = unnamed_addr constant <{ i16, i16, ptr, ptr }> <{
+            @trait_1753692167 = unnamed_addr constant <{ i16, i16, ptr, ptr, ptr }> <{
                 i16 8,
                 i16 8,
                 ptr @List_size, 
+ptr @List_get, 
 ptr @List_push
             }>, align 8
 @format_f = private unnamed_addr constant [3 x i8] c"%f\00"
@@ -119,45 +120,53 @@ entry:
     %3 = load i32, i32* %2
     ret i32 %3
 }
-define void @List_push(%List* %4, i8* %5) {
+define i8* @List_get(%List* %4, i32 %5) {
 entry:
     %6 = getelementptr inbounds %List, %List* %4, i32 0, i32 0
     %7 = load i8**, i8*** %6
-    %8 = getelementptr inbounds %List, %List* %4, i32 0, i32 1
-    %9 = load i32, i32* %8
-    %10 = getelementptr inbounds i8*, i8** %7, i32 %9
-    store i8* %5, i8** %10
-    %11 = getelementptr inbounds %List, %List* %4, i32 0, i32 1
-    %12 = load i32, i32* %11
-    %13 = add i32 %12, 1
-    %14 = getelementptr inbounds %List, %List* %4, i32 0, i32 1
-    store i32 %13, i32* %14
+    %8 = getelementptr inbounds i8*, i8** %7, i32 %5
+    %9 = load i8*, i8** %8
+    ret i8* %9
+}
+define void @List_push(%List* %10, i8* %11) {
+entry:
+    %12 = getelementptr inbounds %List, %List* %10, i32 0, i32 0
+    %13 = load i8**, i8*** %12
+    %14 = getelementptr inbounds %List, %List* %10, i32 0, i32 1
+    %15 = load i32, i32* %14
+    %16 = getelementptr inbounds i8*, i8** %13, i32 %15
+    store i8* %11, i8** %16
+    %17 = getelementptr inbounds %List, %List* %10, i32 0, i32 1
+    %18 = load i32, i32* %17
+    %19 = add i32 %18, 1
+    %20 = getelementptr inbounds %List, %List* %10, i32 0, i32 1
+    store i32 %19, i32* %20
     ret void
 }
-define i32 @string_length(i8** %15) {
+define i32 @string_length(i8** %21) {
 entry:
-    %16 = call i32 @str_length(i8** %15)
-    ret i32 %16
+    %22 = call i32 @str_length(i8** %21)
+    ret i32 %22
 }
-define i8* @string_text(i8** %17) {
+define i8* @string_text(i8** %23) {
 entry:
-    ret i8** %17
+    ret i8** %23
 }
-define i8* @int32_text(i32* %18) {
+define i8* @int32_text(i32* %24) {
 entry:
-    %19 = alloca [6 x i8], align 1
-    %20 = getelementptr inbounds [6 x i8], [6 x i8]* %19, i32 0, i32 0
-    store i8 105, i8* %20
-    %21 = getelementptr inbounds [6 x i8], [6 x i8]* %19, i32 0, i32 1
-    store i8 110, i8* %21
-    %22 = getelementptr inbounds [6 x i8], [6 x i8]* %19, i32 0, i32 2
-    store i8 116, i8* %22
-    %23 = getelementptr inbounds [6 x i8], [6 x i8]* %19, i32 0, i32 3
-    store i8 51, i8* %23
-    %24 = getelementptr inbounds [6 x i8], [6 x i8]* %19, i32 0, i32 4
-    store i8 50, i8* %24
-    %25 = getelementptr inbounds [6 x i8], [6 x i8]* %19, i32 0, i32 5
-    store i8 0, i8* %25
-    %26 = getelementptr inbounds [6 x i8], [6 x i8]* %19, i32 0, i32 0
-    ret i8* %26
+    %25 = alloca [6 x i8], align 1
+    %26 = getelementptr inbounds [6 x i8], [6 x i8]* %25, i32 0, i32 0
+    store i8 105, i8* %26
+    %27 = getelementptr inbounds [6 x i8], [6 x i8]* %25, i32 0, i32 1
+    store i8 110, i8* %27
+    %28 = getelementptr inbounds [6 x i8], [6 x i8]* %25, i32 0, i32 2
+    store i8 116, i8* %28
+    %29 = getelementptr inbounds [6 x i8], [6 x i8]* %25, i32 0, i32 3
+    store i8 51, i8* %29
+    %30 = getelementptr inbounds [6 x i8], [6 x i8]* %25, i32 0, i32 4
+    store i8 50, i8* %30
+    %31 = getelementptr inbounds [6 x i8], [6 x i8]* %25, i32 0, i32 5
+    store i8 0, i8* %31
+    %32 = getelementptr inbounds [6 x i8], [6 x i8]* %25, i32 0, i32 0
+    ret i8* %32
 }

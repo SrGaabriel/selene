@@ -2,7 +2,7 @@ declare void @println_f64(double)
 declare void @println_bool(i1)
 declare void @println_i32(i32)
 declare void @println_str(i8*)
-@trait_1874442193 = external constant <{ i16, i16, ptr, ptr }>
+@trait_1753692167 = external constant <{ i16, i16, ptr, ptr, ptr }>
 @format_f = private unnamed_addr constant [3 x i8] c"%f\00"
 @format_n = private unnamed_addr constant [3 x i8] c"%d\00"
 @format_s = private unnamed_addr constant [3 x i8] c"%s\00"
@@ -76,7 +76,7 @@ entry:
     store i32 4, i32* %34
     %35 = alloca i32, align 4
     store i32 0, i32* %35
-    %36 = getelementptr inbounds <{i16, i16, ptr, ptr}>, ptr @trait_1874442193, i32 0, i32 2
+    %36 = getelementptr inbounds <{i16, i16, ptr, ptr, ptr}>, ptr @trait_1753692167, i32 0, i32 2
     %37 = load ptr, ptr %36
     %38 = call i32 %37(%List* %32)
     %39 = sub i32 %38, 1
@@ -148,7 +148,7 @@ label2:
     store i8 0, i8* %77
     %78 = getelementptr inbounds [17 x i8], [17 x i8]* %60, i32 0, i32 0
     call void @println_str(i8* %78)
-    %80 = getelementptr inbounds <{i16, i16, ptr, ptr}>, ptr @trait_1874442193, i32 0, i32 3
+    %80 = getelementptr inbounds <{i16, i16, ptr, ptr, ptr}>, ptr @trait_1753692167, i32 0, i32 4
     %81 = load ptr, ptr %80
     %82 = alloca [5 x i8], align 1
     %83 = getelementptr inbounds [5 x i8], [5 x i8]* %82, i32 0, i32 0
@@ -162,7 +162,7 @@ label2:
     %87 = getelementptr inbounds [5 x i8], [5 x i8]* %82, i32 0, i32 4
     store i8 0, i8* %87
     call i1 %81(%List* %32, [5 x i8]* %82)
-    %89 = getelementptr inbounds <{i16, i16, ptr, ptr}>, ptr @trait_1874442193, i32 0, i32 3
+    %89 = getelementptr inbounds <{i16, i16, ptr, ptr, ptr}>, ptr @trait_1753692167, i32 0, i32 4
     %90 = load ptr, ptr %89
     %91 = alloca [3 x i8], align 1
     %92 = getelementptr inbounds [3 x i8], [3 x i8]* %91, i32 0, i32 0
@@ -172,7 +172,7 @@ label2:
     %94 = getelementptr inbounds [3 x i8], [3 x i8]* %91, i32 0, i32 2
     store i8 0, i8* %94
     call i1 %90(%List* %32, [3 x i8]* %91)
-    %96 = getelementptr inbounds <{i16, i16, ptr, ptr}>, ptr @trait_1874442193, i32 0, i32 3
+    %96 = getelementptr inbounds <{i16, i16, ptr, ptr, ptr}>, ptr @trait_1753692167, i32 0, i32 4
     %97 = load ptr, ptr %96
     %98 = alloca [5 x i8], align 1
     %99 = getelementptr inbounds [5 x i8], [5 x i8]* %98, i32 0, i32 0
@@ -186,7 +186,7 @@ label2:
     %103 = getelementptr inbounds [5 x i8], [5 x i8]* %98, i32 0, i32 4
     store i8 0, i8* %103
     call i1 %97(%List* %32, [5 x i8]* %98)
-    %105 = getelementptr inbounds <{i16, i16, ptr, ptr}>, ptr @trait_1874442193, i32 0, i32 3
+    %105 = getelementptr inbounds <{i16, i16, ptr, ptr, ptr}>, ptr @trait_1753692167, i32 0, i32 4
     %106 = load ptr, ptr %105
     %107 = alloca [5 x i8], align 1
     %108 = getelementptr inbounds [5 x i8], [5 x i8]* %107, i32 0, i32 0
@@ -202,39 +202,81 @@ label2:
     call i1 %106(%List* %32, [5 x i8]* %107)
     %114 = alloca i32, align 4
     store i32 0, i32* %114
-    %115 = getelementptr inbounds %List, %List* %32, i32 0, i32 1
-    %116 = load i32, i32* %115
-    %117 = sub i32 %116, 1
+    %115 = getelementptr inbounds <{i16, i16, ptr, ptr, ptr}>, ptr @trait_1753692167, i32 0, i32 2
+    %116 = load ptr, ptr %115
+    %117 = call i32 %116(%List* %32)
+    %118 = sub i32 %117, 1
     br label %label3
 label3:
-    %119 = load i32, i32* %114
-    %120 = icmp sle i32 %119, %117
-    br i1 %120, label %label4, label %label5
+    %120 = load i32, i32* %114
+    %121 = icmp sle i32 %120, %118
+    br i1 %121, label %label4, label %label5
 label4:
-    %121 = load i32, i32* %114
-    %122 = alloca [7 x i8], align 1
-    %123 = getelementptr inbounds [7 x i8], [7 x i8]* %122, i32 0, i32 0
-    store i8 78, i8* %123
-    %124 = getelementptr inbounds [7 x i8], [7 x i8]* %122, i32 0, i32 1
-    store i8 101, i8* %124
-    %125 = getelementptr inbounds [7 x i8], [7 x i8]* %122, i32 0, i32 2
-    store i8 120, i8* %125
-    %126 = getelementptr inbounds [7 x i8], [7 x i8]* %122, i32 0, i32 3
-    store i8 116, i8* %126
-    %127 = getelementptr inbounds [7 x i8], [7 x i8]* %122, i32 0, i32 4
-    store i8 58, i8* %127
-    %128 = getelementptr inbounds [7 x i8], [7 x i8]* %122, i32 0, i32 5
-    store i8 32, i8* %128
-    %129 = getelementptr inbounds [7 x i8], [7 x i8]* %122, i32 0, i32 6
-    store i8 0, i8* %129
-    %130 = getelementptr inbounds [7 x i8], [7 x i8]* %122, i32 0, i32 0
-    call i1 @printf(i8* %130)
-    %133 = getelementptr inbounds i8*, i8** %26, i32 %121
-    %134 = load i8*, i8** %133
-    call void @println_str(i8* %134)
-    %136 = add i32 %119, 1
-    store i32 %136, i32* %114
+    %122 = load i32, i32* %114
+    %123 = alloca [7 x i8], align 1
+    %124 = getelementptr inbounds [7 x i8], [7 x i8]* %123, i32 0, i32 0
+    store i8 78, i8* %124
+    %125 = getelementptr inbounds [7 x i8], [7 x i8]* %123, i32 0, i32 1
+    store i8 101, i8* %125
+    %126 = getelementptr inbounds [7 x i8], [7 x i8]* %123, i32 0, i32 2
+    store i8 120, i8* %126
+    %127 = getelementptr inbounds [7 x i8], [7 x i8]* %123, i32 0, i32 3
+    store i8 116, i8* %127
+    %128 = getelementptr inbounds [7 x i8], [7 x i8]* %123, i32 0, i32 4
+    store i8 58, i8* %128
+    %129 = getelementptr inbounds [7 x i8], [7 x i8]* %123, i32 0, i32 5
+    store i8 32, i8* %129
+    %130 = getelementptr inbounds [7 x i8], [7 x i8]* %123, i32 0, i32 6
+    store i8 0, i8* %130
+    %131 = getelementptr inbounds [7 x i8], [7 x i8]* %123, i32 0, i32 0
+    call i1 @printf(i8* %131)
+    %134 = getelementptr inbounds i8*, i8** %26, i32 %122
+    %135 = load i8*, i8** %134
+    call void @println_str(i8* %135)
+    %137 = add i32 %120, 1
+    store i32 %137, i32* %114
     br label %label3
 label5:
+    %139 = alloca [17 x i8], align 1
+    %140 = getelementptr inbounds [17 x i8], [17 x i8]* %139, i32 0, i32 0
+    store i8 61, i8* %140
+    %141 = getelementptr inbounds [17 x i8], [17 x i8]* %139, i32 0, i32 1
+    store i8 61, i8* %141
+    %142 = getelementptr inbounds [17 x i8], [17 x i8]* %139, i32 0, i32 2
+    store i8 61, i8* %142
+    %143 = getelementptr inbounds [17 x i8], [17 x i8]* %139, i32 0, i32 3
+    store i8 61, i8* %143
+    %144 = getelementptr inbounds [17 x i8], [17 x i8]* %139, i32 0, i32 4
+    store i8 61, i8* %144
+    %145 = getelementptr inbounds [17 x i8], [17 x i8]* %139, i32 0, i32 5
+    store i8 61, i8* %145
+    %146 = getelementptr inbounds [17 x i8], [17 x i8]* %139, i32 0, i32 6
+    store i8 61, i8* %146
+    %147 = getelementptr inbounds [17 x i8], [17 x i8]* %139, i32 0, i32 7
+    store i8 61, i8* %147
+    %148 = getelementptr inbounds [17 x i8], [17 x i8]* %139, i32 0, i32 8
+    store i8 61, i8* %148
+    %149 = getelementptr inbounds [17 x i8], [17 x i8]* %139, i32 0, i32 9
+    store i8 61, i8* %149
+    %150 = getelementptr inbounds [17 x i8], [17 x i8]* %139, i32 0, i32 10
+    store i8 61, i8* %150
+    %151 = getelementptr inbounds [17 x i8], [17 x i8]* %139, i32 0, i32 11
+    store i8 61, i8* %151
+    %152 = getelementptr inbounds [17 x i8], [17 x i8]* %139, i32 0, i32 12
+    store i8 61, i8* %152
+    %153 = getelementptr inbounds [17 x i8], [17 x i8]* %139, i32 0, i32 13
+    store i8 61, i8* %153
+    %154 = getelementptr inbounds [17 x i8], [17 x i8]* %139, i32 0, i32 14
+    store i8 61, i8* %154
+    %155 = getelementptr inbounds [17 x i8], [17 x i8]* %139, i32 0, i32 15
+    store i8 61, i8* %155
+    %156 = getelementptr inbounds [17 x i8], [17 x i8]* %139, i32 0, i32 16
+    store i8 0, i8* %156
+    %157 = getelementptr inbounds [17 x i8], [17 x i8]* %139, i32 0, i32 0
+    call void @println_str(i8* %157)
+    %159 = getelementptr inbounds <{i16, i16, ptr, ptr, ptr}>, ptr @trait_1753692167, i32 0, i32 3
+    %160 = load ptr, ptr %159
+    %161 = call i8* %160(%List* %32, i32 0)
+    call void @println_str(i8* %161)
     ret void
 }
