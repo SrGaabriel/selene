@@ -1,6 +1,6 @@
 package me.gabriel.gwydion.analysis.signature
 
-import me.gabriel.gwydion.frontend.Type
+import me.gabriel.gwydion.frontend.GwydionType
 import kotlinx.serialization.Serializable
 
 @Serializable
@@ -31,7 +31,7 @@ data class Signatures(
 data class SignatureStruct(
     val name: String,
     val module: String,
-    val fields: Map<String, Type>
+    val fields: Map<String, GwydionType>
 )
 
 @Serializable
@@ -44,8 +44,8 @@ data class SignatureTrait(
 @Serializable
 data class SignatureFunction(
     val name: String,
-    val returnType: Type,
-    val parameters: List<Type>
+    val returnType: GwydionType,
+    val parameters: List<GwydionType>
 )
 
 @Serializable
@@ -54,5 +54,5 @@ data class SignatureTraitImpl(
     val trait: String,
     var index: Int?,
     var module: String?,
-    val types: List<Type>
+    val types: List<GwydionType>
 )

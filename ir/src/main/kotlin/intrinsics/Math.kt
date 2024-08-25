@@ -1,6 +1,6 @@
 package me.gabriel.gwydion.ir.intrinsics
 
-import me.gabriel.gwydion.frontend.Type
+import me.gabriel.gwydion.frontend.GwydionType
 import me.gabriel.gwydion.frontend.parsing.CallNode
 
 class SinFunction: IntrinsicFunction(name = "sin") {
@@ -8,7 +8,7 @@ class SinFunction: IntrinsicFunction(name = "sin") {
         return """""".trimIndent()
     }
 
-    override fun handleCall(call: CallNode, types: Collection<Type>, arguments: String): String {
+    override fun handleCall(call: CallNode, types: Collection<GwydionType>, arguments: String): String {
         return "call double @sin(${arguments})"
     }
 
@@ -22,7 +22,7 @@ class CosFunction: IntrinsicFunction(name = "cos") {
         return """""".trimIndent()
     }
 
-    override fun handleCall(call: CallNode, types: Collection<Type>, arguments: String): String {
+    override fun handleCall(call: CallNode, types: Collection<GwydionType>, arguments: String): String {
         return "call double @cos(${arguments})"
     }
 
@@ -36,7 +36,7 @@ class TanFunction: IntrinsicFunction(name = "tan") {
         return """""".trimIndent()
     }
 
-    override fun handleCall(call: CallNode, types: Collection<Type>, arguments: String): String {
+    override fun handleCall(call: CallNode, types: Collection<GwydionType>, arguments: String): String {
         return "call double @tan(${arguments})"
     }
 
@@ -50,7 +50,7 @@ class AsinFunction: IntrinsicFunction(name = "asin") {
         return """""".trimIndent()
     }
 
-    override fun handleCall(call: CallNode, types: Collection<Type>, arguments: String): String {
+    override fun handleCall(call: CallNode, types: Collection<GwydionType>, arguments: String): String {
         return "call double @asin(double ${arguments})"
     }
 
@@ -64,7 +64,7 @@ class AcosFunction: IntrinsicFunction(name = "acos") {
         return """""".trimIndent()
     }
 
-    override fun handleCall(call: CallNode, types: Collection<Type>, arguments: String): String {
+    override fun handleCall(call: CallNode, types: Collection<GwydionType>, arguments: String): String {
         return "call double @acos(${arguments})"
     }
 
@@ -78,7 +78,7 @@ class AtanFunction: IntrinsicFunction(name = "atan") {
         return """""".trimIndent()
     }
 
-    override fun handleCall(call: CallNode, types: Collection<Type>, arguments: String): String {
+    override fun handleCall(call: CallNode, types: Collection<GwydionType>, arguments: String): String {
         return "call double @atan(${arguments})"
     }
 
@@ -92,7 +92,7 @@ class Atan2Function: IntrinsicFunction(name = "atan2") {
         return """""".trimIndent()
     }
 
-    override fun handleCall(call: CallNode, types: Collection<Type>, arguments: String): String {
+    override fun handleCall(call: CallNode, types: Collection<GwydionType>, arguments: String): String {
         return "call double @atan2(double ${arguments})"
     }
 
@@ -106,7 +106,7 @@ class SqrtFunction: IntrinsicFunction(name = "sqrt") {
         return """""".trimIndent()
     }
 
-    override fun handleCall(call: CallNode, types: Collection<Type>, arguments: String): String {
+    override fun handleCall(call: CallNode, types: Collection<GwydionType>, arguments: String): String {
         return "call double @sqrt(double ${arguments})"
     }
 

@@ -2,8 +2,8 @@ package me.gabriel.gwydion.compiler
 
 import com.github.ajalt.mordant.rendering.TextColors
 import kotlinx.serialization.json.Json
-import me.gabriel.gwydion.analysis.CumulativeSemanticAnalysisHandler
-import me.gabriel.gwydion.analysis.ProgramMemoryRepository
+import me.gabriel.gwydion.analysis.SemanticAnalysisManager
+import me.gabriel.gwydion.analysis.SymbolRepository
 import me.gabriel.gwydion.analysis.signature.SignatureHandler
 import me.gabriel.gwydion.analysis.signature.Signatures
 import me.gabriel.gwydion.compiler.cli.CommandHandler
@@ -53,7 +53,7 @@ fun main(args: Array<String>) {
 
     val currentFolder = File("").absolutePath
     logger.log(LogLevel.INFO) { +"Starting the Gwydion compiler..." }
-    val memory = ProgramMemoryRepository()
+    val symbols = SymbolRepository()
 
     val sourceReader = AmbiguousSourceReader(logger)
     val memoryStart = Instant.now()
@@ -61,14 +61,14 @@ fun main(args: Array<String>) {
     llvmCodeAdapter.registerIntrinsicFunction(*INTRINSICS)
 
     val sources = File(folder, "src")
-    val tree = parse(logger, sourceReader.read(sources), memory, signatures)
+    val tree = parse(logger, sourceReader.read(sources), symbols, signatures)
 
     val memoryEnd = Instant.now()
     val memoryDelay = memoryEnd.toEpochMilli() - memoryStart.toEpochMilli()
     logger.log(LogLevel.INFO) { +"Memory analysis took ${memoryDelay}ms" }
 
     val generationStart = Instant.now()
-    val generated = llvmCodeAdapter.generate(name, tree, memory, signatures, isStdlib)
+    val generated = llvmCodeAdapter.generate(name, tree, symbols, signatures, isStdlib)
     val generationEnd = Instant.now()
     val generationDelay = generationEnd.toEpochMilli() - generationStart.toEpochMilli()
     logger.log(LogLevel.INFO) { +"Code generation took ${generationDelay}ms" }
@@ -90,7 +90,7 @@ fun main(args: Array<String>) {
     exitProcess(0)
 }
 
-fun parse(logger: GwydionLogger, text: String, memory: ProgramMemoryRepository, signatures: Signatures): SyntaxTree {
+fun parse(logger: GwydionLogger, text: String, symbols: SymbolRepository, signatures: Signatures): SyntaxTree {
     val start = Instant.now()
     val lexer = StringLexer(text)
     val result = lexer.tokenize()
@@ -129,8 +129,8 @@ fun parse(logger: GwydionLogger, text: String, memory: ProgramMemoryRepository, 
         logger.log(LogLevel.DEBUG) { +"The parsing was successful!" }
     }
 
-    val analyzer = CumulativeSemanticAnalysisHandler(parsingResult.getRight(), memory, signatures)
-    val analysis = analyzer.analyzeTree()
+    val analyzer = SemanticAnalysisManager(symbols, signatures)
+    val analysis = analyzer.analyzeTree(parsingResult.getRight())
     if (analysis.errors.isNotEmpty()) {
         logger.log(LogLevel.ERROR) {
             +"There were ${analysis.errors.size} error(s) during the semantic analysis:"

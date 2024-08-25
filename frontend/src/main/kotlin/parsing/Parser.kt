@@ -1,6 +1,6 @@
 package me.gabriel.gwydion.frontend.parsing
 
-import me.gabriel.gwydion.frontend.Type
+import me.gabriel.gwydion.frontend.GwydionType
 import me.gabriel.gwydion.frontend.lexing.TYPE_TOKENS
 import me.gabriel.gwydion.frontend.lexing.Token
 import me.gabriel.gwydion.frontend.lexing.TokenKind
@@ -214,7 +214,7 @@ class Parser(private val tokens: TokenStream) {
             consumeToken(TokenKind.DECLARATION).flatMapRight {
                 parseExpression().flatMapRight { expr ->
                     consumeToken(TokenKind.SEMICOLON).mapRight {
-                        AssignmentNode(name.value, expr, true, Type.Unknown, mutToken)
+                        AssignmentNode(name.value, expr, true, GwydionType.Unknown, mutToken)
                     }
                 }
             }
@@ -290,7 +290,7 @@ class Parser(private val tokens: TokenStream) {
         if (declaration is Either.Left) return Either.Left(declaration.value)
         return parseExpression().flatMapRight { expr ->
             consumeToken(TokenKind.SEMICOLON).mapRight {
-                AssignmentNode(name, expr, false, Type.Unknown, declaration.unwrap())
+                AssignmentNode(name, expr, false, GwydionType.Unknown, declaration.unwrap())
             }
         }
     }
@@ -467,7 +467,7 @@ class Parser(private val tokens: TokenStream) {
         val number = consumeToken(TokenKind.NUMBER)
         if (number is Either.Left) return Either.Left(number.value)
         val token = number.unwrap()
-        return Either.Right(NumberNode(token.value, false, Type.Int32, token))
+        return Either.Right(NumberNode(token.value, false, GwydionType.Int32, token))
     }
 
     private fun parseStringExpression(): Either<ParsingError, StringNode> {
@@ -512,18 +512,18 @@ class Parser(private val tokens: TokenStream) {
         }
     }
 
-    private fun parseType(): Either<ParsingError, Type> {
+    private fun parseType(): Either<ParsingError, GwydionType> {
         val isMutable = consumeTokenIfPresent(TokenKind.MUT) != null
         val baseType = parseBaseType() ?: return Either.Left(ParsingError.UnexpectedToken(peekToken()))
 
         return if (peekToken().kind == TokenKind.OPENING_BRACKETS) {
             parseArrayType(baseType, isMutable)
         } else {
-            Either.Right(if (isMutable) Type.Mutable(baseType) else baseType)
+            Either.Right(if (isMutable) GwydionType.Mutable(baseType) else baseType)
         }
     }
 
-    private fun parseBaseType(): Type? {
+    private fun parseBaseType(): GwydionType? {
         val token = peekToken()
         return if (token.kind in TYPE_TOKENS) {
             consumeToken()
@@ -533,20 +533,20 @@ class Parser(private val tokens: TokenStream) {
         }
     }
 
-    private fun parseArrayType(baseType: Type, isMutable: Boolean): Either<ParsingError, Type> {
+    private fun parseArrayType(baseType: GwydionType, isMutable: Boolean): Either<ParsingError, GwydionType> {
         consumeToken() // Consume opening bracket
         return when (peekToken().kind) {
             TokenKind.NUMBER -> {
                 val size = consumeToken().value.toInt()
                 consumeToken(TokenKind.CLOSING_BRACKETS).mapRight {
-                    if (isMutable) Type.Mutable(Type.FixedArray(baseType, size)) else Type.FixedArray(baseType, size)
+                    if (isMutable) GwydionType.Mutable(GwydionType.FixedArray(baseType, size)) else GwydionType.FixedArray(baseType, size)
                 }
             }
 
             TokenKind.TIMES -> {
                 consumeToken()
                 consumeToken(TokenKind.CLOSING_BRACKETS).mapRight {
-                    if (isMutable) Type.Mutable(Type.DynamicArray(baseType)) else Type.DynamicArray(baseType)
+                    if (isMutable) GwydionType.Mutable(GwydionType.DynamicArray(baseType)) else GwydionType.DynamicArray(baseType)
                 }
             }
 
@@ -564,13 +564,13 @@ class Parser(private val tokens: TokenStream) {
         return when {
             peekToken().kind == TokenKind.SELF -> {
                 val token = consumeToken()
-                Either.Right(ParameterNode("self", Type.Self, token))
+                Either.Right(ParameterNode("self", GwydionType.Self, token))
             }
 
             peekToken().kind == TokenKind.MUT && peekNextToken().kind == TokenKind.SELF -> {
                 consumeToken() // Consume MUT
                 val token = consumeToken() // Consume SELF
-                Either.Right(ParameterNode("self", Type.Mutable(Type.Self), token))
+                Either.Right(ParameterNode("self", GwydionType.Mutable(GwydionType.Self), token))
             }
 
             else -> parseIdentifier().flatMapRight { name ->
@@ -589,12 +589,12 @@ class Parser(private val tokens: TokenStream) {
         }
     }
 
-    private fun parseReturnType(): Either<ParsingError, Type> {
+    private fun parseReturnType(): Either<ParsingError, GwydionType> {
         return if (peekToken().kind == TokenKind.RETURN_TYPE_DECLARATION) {
             consumeToken()
             parseType()
         } else {
-            Either.Right(Type.Void)
+            Either.Right(GwydionType.Void)
         }
     }
 
@@ -664,26 +664,26 @@ class Parser(private val tokens: TokenStream) {
         }
     }
 
-    private fun tokenKindToType(token: Token, mutable: Boolean): Type {
+    private fun tokenKindToType(token: Token, mutable: Boolean): GwydionType {
         val base = when (token.kind) {
-            TokenKind.ANY_TYPE -> Type.Any
-            TokenKind.VOID -> return Type.Void
-            TokenKind.INT8_TYPE -> Type.Int8
-            TokenKind.INT16_TYPE -> Type.Int16
-            TokenKind.INT32_TYPE -> Type.Int32
-            TokenKind.INT64_TYPE -> Type.Int64
-            TokenKind.UINT8_TYPE -> Type.UInt8
-            TokenKind.UINT16_TYPE -> Type.UInt16
-            TokenKind.UINT32_TYPE -> Type.UInt32
-            TokenKind.UINT64_TYPE -> Type.UInt64
-            TokenKind.FLOAT32_TYPE -> Type.Float32
-            TokenKind.FLOAT64_TYPE -> Type.Float64
-            TokenKind.BOOL_TYPE -> Type.Boolean
-            TokenKind.STRING_TYPE -> Type.String
-            TokenKind.IDENTIFIER -> Type.UnknownReference(token.value, mutable)
+            TokenKind.ANY_TYPE -> GwydionType.Any
+            TokenKind.VOID -> return GwydionType.Void
+            TokenKind.INT8_TYPE -> GwydionType.Int8
+            TokenKind.INT16_TYPE -> GwydionType.Int16
+            TokenKind.INT32_TYPE -> GwydionType.Int32
+            TokenKind.INT64_TYPE -> GwydionType.Int64
+            TokenKind.UINT8_TYPE -> GwydionType.UInt8
+            TokenKind.UINT16_TYPE -> GwydionType.UInt16
+            TokenKind.UINT32_TYPE -> GwydionType.UInt32
+            TokenKind.UINT64_TYPE -> GwydionType.UInt64
+            TokenKind.FLOAT32_TYPE -> GwydionType.Float32
+            TokenKind.FLOAT64_TYPE -> GwydionType.Float64
+            TokenKind.BOOL_TYPE -> GwydionType.Boolean
+            TokenKind.STRING_TYPE -> GwydionType.String
+            TokenKind.IDENTIFIER -> GwydionType.UnknownReference(token.value, mutable)
             else -> throw IllegalArgumentException("Unexpected token kind for type: ${token.kind}")
         }
-        return if (mutable) Type.Mutable(base) else base
+        return if (mutable) GwydionType.Mutable(base) else base
     }
 
     companion object {

@@ -1,6 +1,6 @@
 package me.gabriel.gwydion.ir.intrinsics
 
-import me.gabriel.gwydion.frontend.Type
+import me.gabriel.gwydion.frontend.GwydionType
 import me.gabriel.gwydion.frontend.parsing.CallNode
 
 abstract class IntrinsicFunction(
@@ -8,7 +8,7 @@ abstract class IntrinsicFunction(
 ) {
     abstract fun llvmIr(): String
 
-    abstract fun handleCall(call: CallNode, types: Collection<Type>, arguments: String): String
+    abstract fun handleCall(call: CallNode, types: Collection<GwydionType>, arguments: String): String
 
     abstract fun declarations(): List<String>
 

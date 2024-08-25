@@ -1,6 +1,6 @@
 package me.gabriel.gwydion.ir
 
-import me.gabriel.gwydion.analysis.ProgramMemoryRepository
+import me.gabriel.gwydion.analysis.SymbolRepository
 import me.gabriel.gwydion.analysis.signature.Signatures
 import me.gabriel.gwydion.frontend.parsing.SyntaxTree
 import me.gabriel.gwydion.ir.intrinsics.IntrinsicFunction
@@ -13,12 +13,12 @@ class LLVMCodeAdapter {
     fun generate(
         module: String,
         tree: SyntaxTree,
-        memory: ProgramMemoryRepository,
+        symbols: SymbolRepository,
         signatures: Signatures,
         compileIntrinsics: Boolean
     ): String {
         val process = LLVMCodeAdaptationProcess(module, intrinsics, signatures, stdlibDependencies, compileIntrinsics)
-        process.acceptNode(memory.root, tree.root)
+        process.acceptNode(symbols.root, tree.root)
         process.setup()
         process.finish()
         return process.getGeneratedCode()

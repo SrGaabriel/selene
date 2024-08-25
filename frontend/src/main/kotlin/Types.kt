@@ -5,111 +5,118 @@ import me.gabriel.gwydion.frontend.lexing.Token
 import me.gabriel.gwydion.frontend.lexing.TokenKind
 
 @Serializable
-sealed class Type(
+sealed class GwydionType(
     val id: kotlin.String,
     val signature: kotlin.String = id
 ) {
     @Serializable
-    data object Any : Type("any")
+    data object Any : GwydionType("any")
     @Serializable
-    data object Int8 : Type("int8")
+    data object Int8 : GwydionType("int8")
     @Serializable
-    data object Int16 : Type("int16")
+    data object Int16 : GwydionType("int16")
     @Serializable
-    data object Int32 : Type("int32")
+    data object Int32 : GwydionType("int32")
     @Serializable
-    data object Int64 : Type("int64")
+    data object Int64 : GwydionType("int64")
     @Serializable
-    data object UInt8 : Type("uint8")
+    data object UInt8 : GwydionType("uint8")
     @Serializable
-    data object UInt16 : Type("uint16")
+    data object UInt16 : GwydionType("uint16")
     @Serializable
-    data object UInt32 : Type("uint32")
+    data object UInt32 : GwydionType("uint32")
     @Serializable
-    data object UInt64 : Type("uint64")
+    data object UInt64 : GwydionType("uint64")
     @Serializable
-    data object Float32 : Type("float32")
+    data object Float32 : GwydionType("float32")
     @Serializable
-    data object Float64 : Type("float64")
+    data object Float64 : GwydionType("float64")
     @Serializable
-    data object String : Type("string")
+    data object String : GwydionType("string")
     @Serializable
-    data object Self: Type("self")
+    data object Self: GwydionType("self")
     @Serializable
-    data object Void : Type("void")
+    data object Void : GwydionType("void")
     @Serializable
-    data object Boolean : Type("bool")
-    data object Unknown : Type("unknown")
-    data class UnknownReference(val reference: kotlin.String, val mutable: kotlin.Boolean): Type("unknown", reference)
+    data object Boolean : GwydionType("bool")
+    data object Unknown : GwydionType("unknown")
+    data class UnknownReference(val reference: kotlin.String, val mutable: kotlin.Boolean): GwydionType("unknown", reference)
     @Serializable
     data class DynamicArray(
-        val baseType: Type,
-    ): Type("fixed array", "${baseType.signature}[]")
+        val baseType: GwydionType,
+    ): GwydionType("fixed array", "${baseType.signature}[]")
     @Serializable
     data class FixedArray(
-        val baseType: Type,
+        val baseType: GwydionType,
         val length: Int
-    ): Type("fixed array", "${baseType.signature}[$length]")
+    ): GwydionType("fixed array", "${baseType.signature}[$length]")
 
     @Serializable
     data class Struct(
         val identifier: kotlin.String,
-        val fields: Map<kotlin.String, Type>
-    ): Type("struct", identifier)
+        val fields: Map<kotlin.String, GwydionType>
+    ): GwydionType("struct", identifier)
 
     @Serializable
     data class Trait(
         val identifier: kotlin.String,
         val functions: List<VirtualFunction>
-    ): Type("trait", identifier)
+    ): GwydionType("trait", identifier)
 
     @Serializable
     data class VirtualFunction(
         val name: kotlin.String,
-        val returnType: Type,
-        val parameters: List<Type>
+        val returnType: GwydionType,
+        val parameters: List<GwydionType>
     )
 
     @Serializable
     data class Mutable(
-        val baseType: Type
-    ): Type("mutate", "mut ${baseType.signature}") {
-        override val base: Type
+        val baseType: GwydionType
+    ): GwydionType("mutate", "mut ${baseType.signature}") {
+        override val base: GwydionType
             get() = baseType
     }
 
-    open val base: Type
+    open val base: GwydionType
         get() = this
 
     override fun toString(): kotlin.String = id
 }
 
 fun tokenKindToType(token: Token, mutable: Boolean) = when (token.kind) {
-    TokenKind.ANY_TYPE -> Type.Any
-    TokenKind.INT8_TYPE -> Type.Int8
-    TokenKind.INT16_TYPE -> Type.Int16
-    TokenKind.INT32_TYPE -> Type.Int32
-    TokenKind.INT64_TYPE -> Type.Int64
-    TokenKind.UINT8_TYPE -> Type.UInt8
-    TokenKind.UINT16_TYPE -> Type.UInt16
-    TokenKind.UINT32_TYPE -> Type.UInt32
-    TokenKind.UINT64_TYPE -> Type.UInt64
-    TokenKind.FLOAT32_TYPE -> Type.Float32
-    TokenKind.FLOAT64_TYPE -> Type.Float64
-    TokenKind.STRING_TYPE -> Type.String
-    TokenKind.BOOL_TYPE -> Type.Boolean
-    TokenKind.IDENTIFIER -> Type.UnknownReference(token.value, mutable)
+    TokenKind.ANY_TYPE -> GwydionType.Any
+    TokenKind.INT8_TYPE -> GwydionType.Int8
+    TokenKind.INT16_TYPE -> GwydionType.Int16
+    TokenKind.INT32_TYPE -> GwydionType.Int32
+    TokenKind.INT64_TYPE -> GwydionType.Int64
+    TokenKind.UINT8_TYPE -> GwydionType.UInt8
+    TokenKind.UINT16_TYPE -> GwydionType.UInt16
+    TokenKind.UINT32_TYPE -> GwydionType.UInt32
+    TokenKind.UINT64_TYPE -> GwydionType.UInt64
+    TokenKind.FLOAT32_TYPE -> GwydionType.Float32
+    TokenKind.FLOAT64_TYPE -> GwydionType.Float64
+    TokenKind.STRING_TYPE -> GwydionType.String
+    TokenKind.BOOL_TYPE -> GwydionType.Boolean
+    TokenKind.IDENTIFIER -> GwydionType.UnknownReference(token.value, mutable)
     else -> error("Unknown token kind ${token.kind}")
 }
 
-fun Type.isNumeric(): Boolean = when (this) {
-    is Type.Int8, is Type.Int16, is Type.Int32, is Type.Int64,
-    is Type.UInt8, is Type.UInt16, is Type.UInt32, is Type.UInt64,
-    is Type.Float32, is Type.Float64 -> true
+fun GwydionType.isNumeric(): Boolean = when (this) {
+    is GwydionType.Int8, is GwydionType.Int16, is GwydionType.Int32, is GwydionType.Int64,
+    is GwydionType.UInt8, is GwydionType.UInt16, is GwydionType.UInt32, is GwydionType.UInt64,
+    is GwydionType.Float32, is GwydionType.Float64 -> true
     else -> false
 }
 
-fun Type.workingBase(): Type = when (this) {
-    is Type.Mutable -> base.workingBase()
+fun GwydionType.workingBase(): GwydionType = when (this) {
+    is GwydionType.Mutable -> base.workingBase()
     else -> this
+}
+
+fun GwydionType.mapBase(mapper: (GwydionType) -> GwydionType): GwydionType = when (this) {
+    is GwydionType.Mutable -> GwydionType.Mutable(base.mapBase(mapper))
+    is GwydionType.DynamicArray -> GwydionType.DynamicArray(baseType.mapBase(mapper))
+    is GwydionType.FixedArray -> GwydionType.FixedArray(baseType.mapBase(mapper), length)
+    else -> mapper(this)
 }

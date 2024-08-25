@@ -1,6 +1,6 @@
 package me.gabriel.gwydion.ir.intrinsics
 
-import me.gabriel.gwydion.frontend.Type
+import me.gabriel.gwydion.frontend.GwydionType
 import me.gabriel.gwydion.frontend.parsing.CallNode
 
 class ReadlineFunction: IntrinsicFunction(
@@ -47,7 +47,7 @@ end_read:
     """.trimIndent()
     }
 
-    override fun handleCall(call: CallNode, types: Collection<Type>, arguments: String): String {
+    override fun handleCall(call: CallNode, types: Collection<GwydionType>, arguments: String): String {
         return "call i8* @readln()"
     }
 }

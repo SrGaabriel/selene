@@ -1,6 +1,6 @@
 package me.gabriel.gwydion.ir.intrinsics
 
-import me.gabriel.gwydion.frontend.Type
+import me.gabriel.gwydion.frontend.GwydionType
 import me.gabriel.gwydion.frontend.parsing.CallNode
 
 class PrintlnFunction: IntrinsicFunction(
@@ -56,13 +56,13 @@ class PrintlnFunction: IntrinsicFunction(
         )
     }
 
-    override fun handleCall(call: CallNode, types: Collection<Type>, arguments: String): String {
-        val type = types.firstOrNull() ?: Type.Unknown
+    override fun handleCall(call: CallNode, types: Collection<GwydionType>, arguments: String): String {
+        val type = types.firstOrNull() ?: GwydionType.Unknown
         return when (type) {
-            Type.String -> "call void @println_str(${arguments})"
-            Type.Int32 -> "call void @println_i32(${arguments})"
-            Type.Float64 -> "call void @println_f64(${arguments})"
-            Type.Boolean -> "call void @println_bool(${arguments})"
+            GwydionType.String -> "call void @println_str(${arguments})"
+            GwydionType.Int32 -> "call void @println_i32(${arguments})"
+            GwydionType.Float64 -> "call void @println_f64(${arguments})"
+            GwydionType.Boolean -> "call void @println_bool(${arguments})"
             else -> error("Unsupported type $type for intrinsic $name")
         }
     }
