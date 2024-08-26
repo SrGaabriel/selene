@@ -16,9 +16,7 @@ class TraitFunctionCallAnalyzer: SingleNodeAnalyzer<TraitFunctionCallNode>(Trait
         signatures: Signatures,
         visitor: TypeInferenceVisitor
     ): SymbolBlock {
-        println("Welp ${node.trait}")
         val traitType = block.resolveExpression(node.trait) ?: return block
-        println("Passed? ${traitType}")
 
         if (traitType is GwydionType.Trait) {
             val function = traitType.functions.firstOrNull { it.name == node.function }

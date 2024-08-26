@@ -15,9 +15,7 @@ class AssignmentAnalyzer: SingleNodeAnalyzer<AssignmentNode>(AssignmentNode::cla
         signatures: Signatures,
         visitor: TypeInferenceVisitor
     ): SymbolBlock {
-        println("Ran")
         visitor.visit(node.expression) {
-            println("Visited ${node.expression} ${block.resolveExpression(node.expression)}")
             val type = block.resolveExpression(node.expression) ?: return@visit
 
             if (node.mutable) {

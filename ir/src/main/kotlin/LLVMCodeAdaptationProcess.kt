@@ -321,7 +321,6 @@ class LLVMCodeAdaptationProcess(
     }
 
     private fun generateBinaryOperator(block: SymbolBlock, node: BinaryOperatorNode): MemoryUnit {
-        println("Access: ${node.left}")
         val type = block.resolveExpression(node.left)
             ?: error("Couldn't resolve binary operation type")
 
