@@ -1,6 +1,7 @@
 package me.gabriel.gwydion.analysis
 
 import me.gabriel.gwydion.analysis.analyzers.ISemanticAnalyzer
+import me.gabriel.gwydion.analysis.analyzers.TypeInferenceVisitor
 import me.gabriel.gwydion.analysis.analyzers.impl.*
 import me.gabriel.gwydion.analysis.signature.Signatures
 import me.gabriel.gwydion.frontend.parsing.SyntaxTree
@@ -23,7 +24,9 @@ class SemanticAnalysisManager(
             AssignmentAnalyzer(),
             ParameterAnalyzer(),
             ArrayAnalyzer(),
-            TraitFunctionCallAnalyzer()
+            TraitFunctionCallAnalyzer(),
+            InstantiationAnalyzer(),
+            ArrayAccessAnalyzer()
         )
     }
 
@@ -46,12 +49,20 @@ class SemanticAnalysisManager(
     }
 
     fun registerNodeSymbols(block: SymbolBlock, node: SyntaxTreeNode) {
+        val alreadyVisitedChildren = mutableSetOf<SyntaxTreeNode>()
         val newBlock = getAnalyzersFor(node).map { analyzer ->
             @Suppress("UNCHECKED_CAST")
-            (analyzer as ISemanticAnalyzer<SyntaxTreeNode>).register(block, node, signatures)
+            val visitor = TypeInferenceVisitor(node)
+            val block = (analyzer as ISemanticAnalyzer<SyntaxTreeNode>).register(block, node, signatures, visitor)
+            visitor.queuedVisits.forEach { (node, callback) ->
+                alreadyVisitedChildren.add(node)
+                registerNodeSymbols(block, node)
+                callback()
+            }
+            block
         }.firstOrNull() ?: block
 
-        node.getChildren().forEach {
+        (node.getChildren() - alreadyVisitedChildren).forEach {
             registerNodeSymbols(newBlock, it)
         }
     }

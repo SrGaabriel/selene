@@ -5,6 +5,7 @@ import me.gabriel.gwydion.analysis.AnalysisResult
 import me.gabriel.gwydion.analysis.AnalysisWarning
 import me.gabriel.gwydion.analysis.SymbolBlock
 import me.gabriel.gwydion.analysis.analyzers.SingleNodeAnalyzer
+import me.gabriel.gwydion.analysis.analyzers.TypeInferenceVisitor
 import me.gabriel.gwydion.analysis.signature.SignatureFunction
 import me.gabriel.gwydion.analysis.signature.Signatures
 import me.gabriel.gwydion.analysis.util.unknownReferenceSignatureToType
@@ -14,7 +15,12 @@ import me.gabriel.gwydion.frontend.parsing.Modifiers
 import me.gabriel.gwydion.frontend.parsing.ReturnNode
 
 class FunctionAnalyzer: SingleNodeAnalyzer<FunctionNode>(FunctionNode::class) {
-    override fun register(block: SymbolBlock, node: FunctionNode, signatures: Signatures): SymbolBlock {
+    override fun register(
+        block: SymbolBlock,
+        node: FunctionNode,
+        signatures: Signatures,
+        visitor: TypeInferenceVisitor
+    ): SymbolBlock {
         node.returnType = unknownReferenceSignatureToType(signatures, node.returnType)
 
         signatures.functions.add(SignatureFunction(

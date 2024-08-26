@@ -8,7 +8,12 @@ import me.gabriel.gwydion.frontend.parsing.SyntaxTreeNode
 interface ISemanticAnalyzer<T : SyntaxTreeNode> {
     fun handles(node: SyntaxTreeNode): Boolean
 
-    fun register(block: SymbolBlock, node: T, signatures: Signatures): SymbolBlock = block
+    fun register(
+        block: SymbolBlock,
+        node: T,
+        signatures: Signatures,
+        visitor: TypeInferenceVisitor
+    ): SymbolBlock = block
 
     fun analyze(block: SymbolBlock, node: T, signatures: Signatures, results: AnalysisResult): SymbolBlock = block
 }

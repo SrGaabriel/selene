@@ -1,25 +1,25 @@
-@trait_1002103288 = unnamed_addr constant <{ i16, i16, ptr }> <{
-    i16 8,
-    i16 8,
-    ptr @int32_text
-}>, align 8
-@trait_1718914881 = unnamed_addr constant <{ i16, i16, ptr }> <{
-    i16 8,
-    i16 8,
-    ptr @string_text
-}>, align 8
-@trait_309915575 = unnamed_addr constant <{ i16, i16, ptr }> <{
-    i16 8,
-    i16 8,
-    ptr @string_length
-}>, align 8
-            @trait_1042232916 = unnamed_addr constant <{ i16, i16, ptr, ptr, ptr }> <{
+            @trait_1114394032 = unnamed_addr constant <{ i16, i16, ptr, ptr, ptr }> <{
                 i16 8,
                 i16 8,
                 ptr @List_size, 
 ptr @List_get, 
 ptr @List_push
             }>, align 8
+@trait_1784057367 = unnamed_addr constant <{ i16, i16, ptr }> <{
+    i16 8,
+    i16 8,
+    ptr @int32_text
+}>, align 8
+@trait_953365947 = unnamed_addr constant <{ i16, i16, ptr }> <{
+    i16 8,
+    i16 8,
+    ptr @string_text
+}>, align 8
+@trait_1125659911 = unnamed_addr constant <{ i16, i16, ptr }> <{
+    i16 8,
+    i16 8,
+    ptr @string_length
+}>, align 8
 @format_f = private unnamed_addr constant [3 x i8] c"%f\00"
 @format_n = private unnamed_addr constant [3 x i8] c"%d\00"
 @format_s = private unnamed_addr constant [3 x i8] c"%s\00"
@@ -114,59 +114,59 @@ end_read:
 declare i32 @getchar()
 @buffer = global [256 x i8] zeroinitializer
 %List = type { i8**, i32 }
-define i32 @List_size(%List* %1) {
+define i32 @string_length(i8** %0) {
 entry:
-    %2 = getelementptr inbounds %List, %List* %1, i32 0, i32 1
-    %3 = load i32, i32* %2
-    ret i32 %3
+    %1 = call i32 @str_length(i8** %0)
+    ret i32 %1
 }
-define i8* @List_get(%List* %4, i32 %5) {
+define i8* @string_text(i8** %2) {
 entry:
-    %6 = getelementptr inbounds %List, %List* %4, i32 0, i32 0
-    %7 = load i8**, i8*** %6
-    %8 = getelementptr inbounds i8*, i8** %7, i32 %5
-    %9 = load i8*, i8** %8
-    ret i8* %9
+    ret i8** %2
 }
-define void @List_push(%List* %10, i8* %11) {
+define i8* @int32_text(i32* %3) {
 entry:
-    %12 = getelementptr inbounds %List, %List* %10, i32 0, i32 0
-    %13 = load i8**, i8*** %12
-    %14 = getelementptr inbounds %List, %List* %10, i32 0, i32 1
+    %4 = alloca [6 x i8], align 1
+    %5 = getelementptr inbounds [6 x i8], [6 x i8]* %4, i32 0, i32 0
+    store i8 105, i8* %5
+    %6 = getelementptr inbounds [6 x i8], [6 x i8]* %4, i32 0, i32 1
+    store i8 110, i8* %6
+    %7 = getelementptr inbounds [6 x i8], [6 x i8]* %4, i32 0, i32 2
+    store i8 116, i8* %7
+    %8 = getelementptr inbounds [6 x i8], [6 x i8]* %4, i32 0, i32 3
+    store i8 51, i8* %8
+    %9 = getelementptr inbounds [6 x i8], [6 x i8]* %4, i32 0, i32 4
+    store i8 50, i8* %9
+    %10 = getelementptr inbounds [6 x i8], [6 x i8]* %4, i32 0, i32 5
+    store i8 0, i8* %10
+    %11 = getelementptr inbounds [6 x i8], [6 x i8]* %4, i32 0, i32 0
+    ret i8* %11
+}
+define i32 @List_size(%List* %13) {
+entry:
+    %14 = getelementptr inbounds %List, %List* %13, i32 0, i32 1
     %15 = load i32, i32* %14
-    %16 = getelementptr inbounds i8*, i8** %13, i32 %15
-    store i8* %11, i8** %16
-    %17 = getelementptr inbounds %List, %List* %10, i32 0, i32 1
-    %18 = load i32, i32* %17
-    %19 = add i32 %18, 1
-    %20 = getelementptr inbounds %List, %List* %10, i32 0, i32 1
-    store i32 %19, i32* %20
+    ret i32 %15
+}
+define i8* @List_get(%List* %16, i32 %17) {
+entry:
+    %18 = getelementptr inbounds %List, %List* %16, i32 0, i32 0
+    %19 = load i8**, i8*** %18
+    %20 = getelementptr inbounds i8*, i8** %19, i32 %17
+    %21 = load i8*, i8** %20
+    ret i8* %21
+}
+define void @List_push(%List* %22, i8* %23) {
+entry:
+    %24 = getelementptr inbounds %List, %List* %22, i32 0, i32 0
+    %25 = load i8**, i8*** %24
+    %26 = getelementptr inbounds %List, %List* %22, i32 0, i32 1
+    %27 = load i32, i32* %26
+    %28 = getelementptr inbounds i8*, i8** %25, i32 %27
+    store i8* %23, i8** %28
+    %29 = getelementptr inbounds %List, %List* %22, i32 0, i32 1
+    %30 = load i32, i32* %29
+    %31 = add i32 %30, 1
+    %32 = getelementptr inbounds %List, %List* %22, i32 0, i32 1
+    store i32 %31, i32* %32
     ret void
-}
-define i32 @string_length(i8** %21) {
-entry:
-    %22 = call i32 @str_length(i8** %21)
-    ret i32 %22
-}
-define i8* @string_text(i8** %23) {
-entry:
-    ret i8** %23
-}
-define i8* @int32_text(i32* %24) {
-entry:
-    %25 = alloca [6 x i8], align 1
-    %26 = getelementptr inbounds [6 x i8], [6 x i8]* %25, i32 0, i32 0
-    store i8 105, i8* %26
-    %27 = getelementptr inbounds [6 x i8], [6 x i8]* %25, i32 0, i32 1
-    store i8 110, i8* %27
-    %28 = getelementptr inbounds [6 x i8], [6 x i8]* %25, i32 0, i32 2
-    store i8 116, i8* %28
-    %29 = getelementptr inbounds [6 x i8], [6 x i8]* %25, i32 0, i32 3
-    store i8 51, i8* %29
-    %30 = getelementptr inbounds [6 x i8], [6 x i8]* %25, i32 0, i32 4
-    store i8 50, i8* %30
-    %31 = getelementptr inbounds [6 x i8], [6 x i8]* %25, i32 0, i32 5
-    store i8 0, i8* %31
-    %32 = getelementptr inbounds [6 x i8], [6 x i8]* %25, i32 0, i32 0
-    ret i8* %32
 }
