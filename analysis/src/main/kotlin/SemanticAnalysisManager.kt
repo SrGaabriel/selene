@@ -1,8 +1,7 @@
 package me.gabriel.gwydion.analysis
 
 import me.gabriel.gwydion.analysis.analyzers.ISemanticAnalyzer
-import me.gabriel.gwydion.analysis.analyzers.impl.FunctionAnalyzer
-import me.gabriel.gwydion.analysis.analyzers.impl.StructAnalyzer
+import me.gabriel.gwydion.analysis.analyzers.impl.*
 import me.gabriel.gwydion.analysis.signature.Signatures
 import me.gabriel.gwydion.frontend.parsing.SyntaxTree
 import me.gabriel.gwydion.frontend.parsing.SyntaxTreeNode
@@ -16,7 +15,15 @@ class SemanticAnalysisManager(
     fun registerInternal() {
         registerAnalyzers(
             FunctionAnalyzer(),
-            StructAnalyzer()
+            StructAnalyzer(),
+            TraitAnalyzer(),
+            TraitImplAnalyzer(),
+            BinaryOpAnalyzer(),
+            StructAccessAnalyzer(),
+            AssignmentAnalyzer(),
+            ParameterAnalyzer(),
+            ArrayAnalyzer(),
+            TraitFunctionCallAnalyzer()
         )
     }
 
@@ -42,7 +49,7 @@ class SemanticAnalysisManager(
         val newBlock = getAnalyzersFor(node).map { analyzer ->
             @Suppress("UNCHECKED_CAST")
             (analyzer as ISemanticAnalyzer<SyntaxTreeNode>).register(block, node, signatures)
-        }.first()
+        }.firstOrNull() ?: block
 
         node.getChildren().forEach {
             registerNodeSymbols(newBlock, it)
@@ -59,7 +66,7 @@ class SemanticAnalysisManager(
         val newBlock = getAnalyzersFor(node).map { analyzer ->
             @Suppress("UNCHECKED_CAST")
             (analyzer as ISemanticAnalyzer<SyntaxTreeNode>).analyze(block, node, signatures, result)
-        }.first()
+        }.firstOrNull() ?: block
 
         node.getChildren().forEach {
             analyzeNode(newBlock, it, result)

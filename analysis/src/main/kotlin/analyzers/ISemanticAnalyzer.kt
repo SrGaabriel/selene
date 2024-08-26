@@ -10,5 +10,5 @@ interface ISemanticAnalyzer<T : SyntaxTreeNode> {
 
     fun register(block: SymbolBlock, node: T, signatures: Signatures): SymbolBlock = block
 
-    fun analyze(block: SymbolBlock, node: T, signatures: Signatures, results: AnalysisResult): SymbolBlock
+    fun analyze(block: SymbolBlock, node: T, signatures: Signatures, results: AnalysisResult): SymbolBlock = block
 }

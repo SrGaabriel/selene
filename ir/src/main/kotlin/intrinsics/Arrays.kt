@@ -49,7 +49,7 @@ class ArrayLengthFunction: IntrinsicFunction(
         return when (type) {
             GwydionType.String -> return "call i32 @str_length(${arguments})"
             is GwydionType.FixedArray -> "add i32 ${type.length}, 0"
-            else -> error("Invalid type for arraylen function")
+            else -> error("Invalid type (${type}) for arraylen function")
         }
     }
 }

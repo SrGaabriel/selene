@@ -128,9 +128,13 @@ fun parse(logger: GwydionLogger, text: String, symbols: SymbolRepository, signat
     } else {
         logger.log(LogLevel.DEBUG) { +"The parsing was successful!" }
     }
+    val tree = parsingResult.getRight()
 
     val analyzer = SemanticAnalysisManager(symbols, signatures)
-    val analysis = analyzer.analyzeTree(parsingResult.getRight())
+    analyzer.registerInternal()
+    analyzer.registerTreeSymbols(tree)
+
+    val analysis = analyzer.analyzeTree(tree)
     if (analysis.errors.isNotEmpty()) {
         logger.log(LogLevel.ERROR) {
             +"There were ${analysis.errors.size} error(s) during the semantic analysis:"

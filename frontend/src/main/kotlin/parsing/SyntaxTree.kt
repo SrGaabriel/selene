@@ -36,7 +36,7 @@ class FunctionNode(
     val parameters: List<ParameterNode>,
     val body: BlockNode,
     val modifiers: MutableList<Modifiers>,
-    val blockName: String = name,
+    var blockName: String = name,
     mark: Token
 ) : SyntaxTreeNode(mark) {
     override fun getChildren(): List<SyntaxTreeNode> = parameters + body
@@ -50,6 +50,8 @@ class FunctionNode(
         blockName: String = this.blockName,
         mark: Token = this.mark
     ) = FunctionNode(name, returnType, parameters, body, modifiers, blockName, mark)
+
+    override fun toString(): String = "FunctionNode(name='$name', returnType=$returnType, parameters=$parameters, body=$body, modifiers=$modifiers, blockName='$blockName')"
 }
 
 class BlockNode(
@@ -65,6 +67,8 @@ class ParameterNode(
     mark: Token
 ) : TypedSyntaxTreeNode(type, mark) {
     override fun getChildren(): List<SyntaxTreeNode> = emptyList()
+
+    override fun toString(): String = "ParameterNode(name='$name', type=$type)"
 }
 
 class AssignmentNode(

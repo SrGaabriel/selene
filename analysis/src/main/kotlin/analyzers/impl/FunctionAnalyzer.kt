@@ -32,6 +32,7 @@ class FunctionAnalyzer: SingleNodeAnalyzer<FunctionNode>(FunctionNode::class) {
             parent = block,
             children = mutableListOf()
         )
+        block.children.add(functionBlock)
         return functionBlock
     }
 
@@ -42,7 +43,7 @@ class FunctionAnalyzer: SingleNodeAnalyzer<FunctionNode>(FunctionNode::class) {
         results: AnalysisResult
     ): SymbolBlock {
         val functionBlock =
-            block.surfaceSearchChild(node.name) ?: error("Block for function ${node.name} was not created")
+            block.surfaceSearchChild(node.name) ?: error("Block for function ${node.name} was not created (:${block.name})")
         if (node.modifiers.contains(Modifiers.INTRINSIC)) {
             return functionBlock
         }

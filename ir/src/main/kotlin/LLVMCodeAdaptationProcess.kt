@@ -33,6 +33,8 @@ class LLVMCodeAdaptationProcess(
     private val traitObjects = mutableMapOf<MemoryUnit.Unsized, MutableList<TraitObject>>()
     private val traitObjectsImpl = mutableSetOf<String>()
 
+    private val memory = mutableMapOf<SymbolBlock, MutableMap<String, MemoryUnit>>()
+
     private val intrinsicDependencies = mutableSetOf<String>()
 
     fun setup() {
@@ -137,8 +139,7 @@ class LLVMCodeAdaptationProcess(
                         functions = (param.type as GwydionType.Trait).functions.size
                     )
                 )
-                // TODO(refactor): replace block memory allocation
-//                block.memory.allocate(param.name, trait)
+                putMemoryUnit(block, param.name, trait)
 
                 parameters.add(vtable)
                 parameters.add(data)
@@ -151,6 +152,7 @@ class LLVMCodeAdaptationProcess(
                 type = type,
                 size = type.size
             )
+            putMemoryUnit(block, param.name, unit)
             parameters.add(unit)
         }
         val properReturnType = getProperReturnType(node.returnType)
@@ -250,8 +252,7 @@ class LLVMCodeAdaptationProcess(
         val expression = acceptNode(block, node.expression, true) as? MemoryUnit
             ?: error("Expression ${node.expression} not stored")
 
-        // TODO(refactor): replace block memory allocation
-//        block.memory.allocate(node.name, expression)
+        putMemoryUnit(block, node.name, expression)
 
         return expression
     }
@@ -307,20 +308,20 @@ class LLVMCodeAdaptationProcess(
     }
 
     private fun generateVariableReference(block: SymbolBlock, node: VariableReferenceNode): MemoryUnit {
-        // TODO(refactor): replace block memory allocation
-//        val reference = block.figureOutMemory(node.name)
-//            ?: error("Reference ${node.name} could not be found")
-//
-//        if (reference is MemoryUnit.TraitData) {
-//            if (reference.loadedData == null) {
-//                reference.loadedData = assembler.loadPointer(reference.data)
-//            }
-//        }
+        val reference = resolveMemoryUnit(block, node.name)
+            ?: error("Reference ${node.name} could not be found")
 
-        return NullMemoryUnit
+        if (reference is MemoryUnit.TraitData) {
+            if (reference.loadedData == null) {
+                reference.loadedData = assembler.loadPointer(reference.data)
+            }
+        }
+
+        return reference
     }
 
     private fun generateBinaryOperator(block: SymbolBlock, node: BinaryOperatorNode): MemoryUnit {
+        println("Access: ${node.left}")
         val type = block.resolveExpression(node.left)
             ?: error("Couldn't resolve binary operation type")
 
@@ -409,7 +410,8 @@ class LLVMCodeAdaptationProcess(
     }
 
     private fun generateArray(block: SymbolBlock, node: ArrayNode): MemoryUnit {
-        val arrayType = block.resolveExpression(node)?.asLLVM() as LLVMType.Array
+        val arrayType = block.resolveExpression(node)?.asLLVM()
+            ?: error("Couldn't resolve array type")
         val type = arrayType.descendOneLevel()
         return assembler.createArray(
             type = type,
@@ -543,7 +545,7 @@ class LLVMCodeAdaptationProcess(
             functions = node.functions.map { it.name }
         )
 
-        val traitBlock = block.surfaceSearchChild("${node.trait}_trait_${node.type.signature}")
+        val traitBlock = block.surfaceSearchChild("${node.type.signature} impls ${node.trait}")
             ?: error("Trait ${node.trait} not found in block ${block.name}")
 
         node.functions.forEach {
@@ -654,8 +656,7 @@ class LLVMCodeAdaptationProcess(
 
         assembler.createBranch(bodyLabel)
         val loadedBodyValue = assembler.loadPointer(allocation)
-        // TODO(refactor): replace block memory allocation
-//        block.memory.allocate(node.variable, loadedBodyValue)
+        putMemoryUnit(block, node.variable, loadedBodyValue)
 
         acceptNode(block, node.body)
         val next = assembler.addNumber(
@@ -732,6 +733,21 @@ class LLVMCodeAdaptationProcess(
             )
         }
         return array
+    }
+
+    private fun putMemoryUnit(block: SymbolBlock, name: String, unit: MemoryUnit) {
+        memory[block] = (memory[block] ?: mutableMapOf()).apply {
+            this[name] = unit
+        }
+    }
+
+    private fun resolveMemoryUnit(block: SymbolBlock, name: String): MemoryUnit? {
+        var currentBlock: SymbolBlock? = block
+        while (currentBlock != null) {
+            memory[currentBlock]?.get(name)?.let { return it }
+            currentBlock = currentBlock.parent
+        }
+        return null
     }
 
     private fun getBinaryOp(kind: TokenKind): BinaryOp {

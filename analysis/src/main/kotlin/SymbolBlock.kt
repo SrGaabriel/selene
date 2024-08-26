@@ -1,7 +1,10 @@
 package me.gabriel.gwydion.analysis
 
 import me.gabriel.gwydion.frontend.GwydionType
+import me.gabriel.gwydion.frontend.parsing.InstantiationNode
 import me.gabriel.gwydion.frontend.parsing.SyntaxTreeNode
+import me.gabriel.gwydion.frontend.parsing.TypedSyntaxTreeNode
+import me.gabriel.gwydion.frontend.parsing.VariableReferenceNode
 
 class SymbolRepository {
     val root = SymbolBlock(
@@ -21,7 +24,7 @@ class SymbolRepository {
     }
 }
 
-data class SymbolBlock(
+class SymbolBlock(
     val name: String,
     val parent: SymbolBlock?,
     val children: MutableList<SymbolBlock> = mutableListOf(),
@@ -29,6 +32,15 @@ data class SymbolBlock(
 ) {
     private val symbols = mutableMapOf<String, GwydionType>()
     private val definitions = mutableMapOf<SyntaxTreeNode, GwydionType>()
+
+    fun createChild(
+        name: String,
+        self: GwydionType? = this.self
+    ): SymbolBlock {
+        val block = SymbolBlock(name, this, mutableListOf(), self)
+        children.add(block)
+        return block
+    }
 
     fun surfaceSearchChild(name: String): SymbolBlock? {
         return children.find { it.name == name }
@@ -47,7 +59,11 @@ data class SymbolBlock(
     }
 
     fun resolveExpression(node: SyntaxTreeNode): GwydionType? {
-        return definitions[node] ?: parent?.resolveExpression(node)
+        return when (node) {
+            is TypedSyntaxTreeNode -> node.type
+            is VariableReferenceNode -> resolveSymbol(node.name)
+            else -> definitions[node] ?: parent?.resolveExpression(node)
+        }
     }
 
     override fun toString(): String {
