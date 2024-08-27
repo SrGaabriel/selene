@@ -60,13 +60,33 @@ sealed class AnalysisError(val message: String, val node: SyntaxTreeNode) {
         node
     )
 
-    class MissingArgumentsForInstantiation(node: SyntaxTreeNode, name: String) : AnalysisError(
-        "missing arguments for instantiation of $name",
+    class MissingArgumentsForInstantiation(
+        node: SyntaxTreeNode,
+        name: String,
+        arguments: Map<String, GwydionType>
+    ) : AnalysisError(
+        "missing arguments for instantiation of $name: ${arguments.keys.joinToString(", ") { 
+            "$it (${arguments[it]!!.signature})"
+        }}",
         node
+    )
+
+    class UnexpectedArguments(
+        node: SyntaxTreeNode,
+        name: String,
+        arguments: Collection<SyntaxTreeNode>
+    ) : AnalysisError(
+        node = node,
+        message = "too many arguments for $name: ${arguments.joinToString(", ")}"
     )
 
     class MissingReturnStatement(node: SyntaxTreeNode) : AnalysisError(
         "missing return statement",
+        node
+    )
+
+    class BinaryOpTypeMismatch(node: SyntaxTreeNode, left: GwydionType, right: GwydionType) : AnalysisError(
+        "binary operation type mismatch: ${left.signature} and ${right.signature}",
         node
     )
 
@@ -75,8 +95,16 @@ sealed class AnalysisError(val message: String, val node: SyntaxTreeNode) {
         node
     )
 
-    class WrongArgumentTypeForInstantiation(node: SyntaxTreeNode, expected: GwydionType, actual: GwydionType) : AnalysisError(
-        "wrong argument type for instantiation: expected ${expected.signature}, got ${actual.signature}",
+    class WrongArgumentTypeForInstantiation(node: SyntaxTreeNode, expected: GwydionType, provided: GwydionType) : AnalysisError(
+        "wrong argument type for instantiation: expected ${expected.signature}, got ${provided.signature}",
+        node
+    )
+
+    class CouldNotResolveType(
+        node: SyntaxTreeNode,
+        name: String
+    ): AnalysisError(
+        "could not resolve type for $name",
         node
     )
 

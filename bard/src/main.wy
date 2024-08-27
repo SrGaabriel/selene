@@ -1,6 +1,7 @@
 data Point(
     x: int32,
     y: int32,
+    z: int32,
     signed: bool
 );
 
