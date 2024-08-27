@@ -130,9 +130,10 @@ fun parse(logger: GwydionLogger, text: String, symbols: SymbolRepository, signat
     }
     val tree = parsingResult.getRight()
 
-    val analyzer = SemanticAnalysisManager(symbols, signatures)
+    val analyzer = SemanticAnalysisManager(logger, symbols, signatures)
     analyzer.registerInternal()
     analyzer.registerTreeSymbols(tree)
+    analyzer.issueWarnings()
 
     val analysis = analyzer.analyzeTree(tree)
     if (analysis.errors.isNotEmpty()) {

@@ -6,12 +6,16 @@ import me.gabriel.gwydion.analysis.analyzers.impl.*
 import me.gabriel.gwydion.analysis.signature.Signatures
 import me.gabriel.gwydion.frontend.parsing.SyntaxTree
 import me.gabriel.gwydion.frontend.parsing.SyntaxTreeNode
+import me.gabriel.gwydion.tools.GwydionLogger
+import me.gabriel.gwydion.tools.LogLevel
 
 class SemanticAnalysisManager(
+    private val logger: GwydionLogger,
     private val symbols: SymbolRepository,
-    private val signatures: Signatures
+    private val signatures: Signatures,
 ) {
     private val analyzers = mutableListOf<ISemanticAnalyzer<out SyntaxTreeNode>>()
+    private val unknown = mutableSetOf<String>()
 
     fun registerInternal() {
         registerAnalyzers(
@@ -50,16 +54,22 @@ class SemanticAnalysisManager(
 
     fun registerNodeSymbols(block: SymbolBlock, node: SyntaxTreeNode) {
         val alreadyVisitedChildren = mutableSetOf<SyntaxTreeNode>()
-        val newBlock = getAnalyzersFor(node).map { analyzer ->
-            @Suppress("UNCHECKED_CAST")
+        val analyzers = getAnalyzersFor(node)
+        if (analyzers.isEmpty()) {
+            unknown.add(node::class.simpleName!!)
+        }
+
+        val newBlock = analyzers.map { analyzer ->
             val visitor = TypeInferenceVisitor(node)
-            val block = (analyzer as ISemanticAnalyzer<SyntaxTreeNode>).register(block, node, signatures, visitor)
+
+            val switchBlock = @Suppress("UNCHECKED_CAST")
+                (analyzer as ISemanticAnalyzer<SyntaxTreeNode>).register(block, node, signatures, visitor)
             visitor.queuedVisits.forEach { (node, callback) ->
                 alreadyVisitedChildren.add(node)
-                registerNodeSymbols(block, node)
+                registerNodeSymbols(switchBlock, node)
                 callback()
             }
-            block
+            switchBlock
         }.firstOrNull() ?: block
 
         (node.getChildren() - alreadyVisitedChildren).forEach {
@@ -81,6 +91,12 @@ class SemanticAnalysisManager(
 
         node.getChildren().forEach {
             analyzeNode(newBlock, it, result)
+        }
+    }
+
+    fun issueWarnings() {
+        unknown.forEach { nodeName ->
+            logger.log(LogLevel.WARN) { +"No analyzers found for node $nodeName" }
         }
     }
 }
