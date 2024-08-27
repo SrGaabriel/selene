@@ -53,7 +53,7 @@ fun main(args: Array<String>) {
 
     val currentFolder = File("").absolutePath
     logger.log(LogLevel.INFO) { +"Starting the Gwydion compiler..." }
-    val symbols = SymbolRepository()
+    val symbols = SymbolRepository(name)
 
     val sourceReader = AmbiguousSourceReader(logger)
     val memoryStart = Instant.now()

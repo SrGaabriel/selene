@@ -6,8 +6,9 @@ import me.gabriel.gwydion.frontend.parsing.SyntaxTreeNode
 import me.gabriel.gwydion.frontend.parsing.TypedSyntaxTreeNode
 import me.gabriel.gwydion.frontend.parsing.VariableReferenceNode
 
-class SymbolRepository {
+class SymbolRepository(val module: String) {
     val root = SymbolBlock(
+        module,
         "root",
         null,
         mutableListOf()
@@ -18,13 +19,14 @@ class SymbolRepository {
         parent: SymbolBlock,
         self: GwydionType? = parent.self
     ): SymbolBlock {
-        val block = SymbolBlock(name, parent, mutableListOf(), self)
+        val block = SymbolBlock(module, name, parent, mutableListOf(), self)
         parent.children.add(block)
         return block
     }
 }
 
 class SymbolBlock(
+    val module: String,
     val name: String,
     val parent: SymbolBlock?,
     val children: MutableList<SymbolBlock> = mutableListOf(),
@@ -37,7 +39,7 @@ class SymbolBlock(
         name: String,
         self: GwydionType? = this.self
     ): SymbolBlock {
-        val block = SymbolBlock(name, this, mutableListOf(), self)
+        val block = SymbolBlock(module, name, this, mutableListOf(), self)
         children.add(block)
         return block
     }

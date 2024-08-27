@@ -31,7 +31,7 @@ class TraitImplAnalyzer: SingleNodeAnalyzer<TraitImplNode>(TraitImplNode::class)
                         func.returnType = treatedType
                     }
                 },
-                module = "TODO",
+                module = block.module,
                 struct = node.type.signature,
                 index = null
             )

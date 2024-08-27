@@ -21,7 +21,7 @@ class StructAnalyzer: SingleNodeAnalyzer<DataStructureNode>(DataStructureNode::c
 
         signatures.structs.add(
             SignatureStruct(
-                module = "TODO",
+                module = block.module,
                 name = node.name,
                 fields = fields
             )

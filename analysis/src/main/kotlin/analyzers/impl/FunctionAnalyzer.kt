@@ -34,6 +34,7 @@ class FunctionAnalyzer: SingleNodeAnalyzer<FunctionNode>(FunctionNode::class) {
         ))
 
         val functionBlock = SymbolBlock(
+            module = block.module,
             name = node.name,
             parent = block,
             children = mutableListOf()
