@@ -9,3 +9,10 @@ dependencyResolutionManagement {
 }
 
 include("llvm")
+include("frontend")
+include("compiler")
+include("ir")
+include("runtime")
+include("analysis")
+include("compiler")
+include("tools")

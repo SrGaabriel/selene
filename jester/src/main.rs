@@ -7,7 +7,7 @@ use std::time::Duration;
 fn main() {
     let binding = std::env::current_dir().expect("Failed to get current directory");
     let project_root = binding.parent().expect("Failed to get parent directory");
-    let gwydion_jar = project_root.join("build/libs/gwydion.jar");
+    let gwydion_jar = project_root.join("compiler/build/libs/gwydion.jar");
 
     if !gwydion_jar.exists() {
         return;
@@ -24,20 +24,20 @@ fn main() {
     let bard_dir = project_root.join("bard");
     let stdlib = project_root.join("stdlib");
     let stdlib_props = parse_properties(&stdlib);
-    let stdlib_result = compile(&stdlib_props.name, &stdlib, project_root, true);
+    let stdlib_result = compile(&stdlib_props.name, &stdlib, &project_root, &gwydion_jar, true);
     if !stdlib_result {
         eprintln!("Failed to compile stdlib");
         return;
     }
 
     let bard_props = parse_properties(&bard_dir);
-    let bard_result = compile(&bard_props.name, &bard_dir, project_root, false);
+    let bard_result = compile(&bard_props.name, &bard_dir, &project_root, &gwydion_jar, false);
     if !bard_result {
         eprintln!("Failed to compile project");
         return;
     }
 
-    link_files(project_root);
+    link_files(&project_root);
 }
 
 fn link_files(project_root: &Path) {
@@ -78,9 +78,14 @@ fn link_files(project_root: &Path) {
     }
 }
 
-fn compile(name: &String, file: &Path, project_root: &Path, is_stdlib: bool) -> bool {
+fn compile(
+    name: &String,
+    file: &Path,
+    project_root: &Path,
+    gwydion_jar: &Path,
+    is_stdlib: bool
+) -> bool {
     println!("Compiling {:?}", file);
-    let gwydion_jar = project_root.join("build/libs/gwydion.jar");
 
     let output_dir = project_root.join("bard/output/ll");
     fs::create_dir_all(&output_dir).expect("Failed to create output directory");
