@@ -9,7 +9,7 @@ import me.gabriel.gwydion.tools.Either
 class StringLexer(private val data: String): Lexer {
     private var position = 0
 
-    fun tokenize(): Either<LexingError, TokenStream> {
+    override fun tokenize(): Either<LexingError, TokenStream> {
         val tokens = mutableListOf<Token>()
         while (position < data.length) {
             when (val token = data[position]) {

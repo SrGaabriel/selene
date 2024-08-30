@@ -1,6 +1,5 @@
 package me.gabriel.gwydion.compiler.reader
 
-import me.gabriel.gwydion.reader.SourceReader
 import me.gabriel.gwydion.tools.GwydionLogger
 import me.gabriel.gwydion.tools.LogLevel
 import java.io.File
@@ -9,7 +8,7 @@ import java.io.File
 class AmbiguousSourceReader(
     private val logger: GwydionLogger
 ): SourceReader {
-    fun read(directory: File): String {
+    override fun read(directory: File): String {
         logger.log(LogLevel.DEBUG) { +"Reading the directory: ${directory.absolutePath}" }
         val builder = StringBuilder()
         directory.listFiles()?.forEach {

@@ -31,11 +31,6 @@ sealed class MemoryUnit(
         var loadedData: MemoryUnit? = null
     ) : MemoryUnit(vtable.register, type)
 
-    class ArrayData(
-
-        val pointer: MemoryUnit,
-    )
-
     override fun llvm(): String = "%$register"
 }
 

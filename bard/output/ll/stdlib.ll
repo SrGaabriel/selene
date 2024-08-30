@@ -1,21 +1,21 @@
-            @trait_1415160105 = unnamed_addr constant <{ i16, i16, ptr, ptr, ptr }> <{
+            @trait_1607904477 = unnamed_addr constant <{ i16, i16, ptr, ptr, ptr }> <{
                 i16 8,
                 i16 8,
                 ptr @List_size, 
 ptr @List_get, 
 ptr @List_push
             }>, align 8
-@trait_2047527994 = unnamed_addr constant <{ i16, i16, ptr }> <{
+@trait_339279032 = unnamed_addr constant <{ i16, i16, ptr }> <{
     i16 8,
     i16 8,
     ptr @int32_text
 }>, align 8
-@trait_511392015 = unnamed_addr constant <{ i16, i16, ptr }> <{
+@trait_543819105 = unnamed_addr constant <{ i16, i16, ptr }> <{
     i16 8,
     i16 8,
     ptr @string_text
 }>, align 8
-@trait_977033832 = unnamed_addr constant <{ i16, i16, ptr }> <{
+@trait_895200585 = unnamed_addr constant <{ i16, i16, ptr }> <{
     i16 8,
     i16 8,
     ptr @string_length

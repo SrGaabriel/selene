@@ -1,3 +1,7 @@
-package me.gabriel.gwydion.reader
+package me.gabriel.gwydion.compiler.reader
 
-interface SourceReader
+import java.io.File
+
+interface SourceReader {
+    fun read(directory: File): String
+}

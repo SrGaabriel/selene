@@ -1,11 +1,13 @@
 data Point(
     x: int32,
     y: int32,
-    z: int32,
+    z: mut int32,
     signed: bool
 );
 
 func main() {
+    wrong_array := ["a", 2];
+
     mut point := new_point();
     print_point(point);
     change_point(point);

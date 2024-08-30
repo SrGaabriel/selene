@@ -16,6 +16,14 @@ sealed class AnalysisError(val message: String, val node: SyntaxTreeNode) {
         node
     )
 
+    class StructFieldCannotBeMutable(
+        node: SyntaxTreeNode,
+        name: String
+    ): AnalysisError(
+        "struct field cannot be mutable: $name",
+        node
+    )
+
     class ReturnTypeMismatch(node: SyntaxTreeNode, expected: GwydionType, actual: GwydionType) : AnalysisError(
         "return type mismatch: expected ${expected.signature}, got ${actual.signature}",
         node
@@ -110,6 +118,16 @@ sealed class AnalysisError(val message: String, val node: SyntaxTreeNode) {
 
     class UndefinedField(node: SyntaxTreeNode, field: String) : AnalysisError(
         "undefined field: $field",
+        node
+    )
+
+    class ArrayElementTypeMismatch(
+        node: SyntaxTreeNode,
+        index: Int,
+        provided: GwydionType,
+        expected: GwydionType
+    ): AnalysisError(
+        "array element type mismatch: expected ${expected.signature}, got ${provided.signature} at index $index",
         node
     )
 

@@ -5,42 +5,43 @@ import me.gabriel.gwydion.analysis.AnalysisResult
 import me.gabriel.gwydion.analysis.SymbolBlock
 import me.gabriel.gwydion.analysis.analyzers.SingleNodeAnalyzer
 import me.gabriel.gwydion.analysis.analyzers.TypeInferenceVisitor
-import me.gabriel.gwydion.analysis.signature.SignatureStruct
 import me.gabriel.gwydion.analysis.signature.Signatures
 import me.gabriel.gwydion.analysis.util.unknownReferenceSignatureToType
 import me.gabriel.gwydion.frontend.GwydionType
-import me.gabriel.gwydion.frontend.parsing.DataStructureNode
+import me.gabriel.gwydion.frontend.parsing.DataFieldNode
 
-class StructAnalyzer: SingleNodeAnalyzer<DataStructureNode>(DataStructureNode::class) {
+class DataFieldAnalyzer: SingleNodeAnalyzer<DataFieldNode>(DataFieldNode::class) {
     override fun register(
         block: SymbolBlock,
-        node: DataStructureNode,
+        node: DataFieldNode,
         signatures: Signatures,
         visitor: TypeInferenceVisitor
     ): SymbolBlock {
-        val fields = node.fields.associate { it.name to unknownReferenceSignatureToType(signatures, it.type) }
-
-        signatures.structs.add(
-            SignatureStruct(
-                module = block.module,
-                name = node.name,
-                fields = fields
-            )
+        val type = unknownReferenceSignatureToType(
+            signatures,
+            node.type
         )
-        block.defineSymbol(node, GwydionType.Struct(
-            identifier = node.name,
-            fields = fields
-        ))
-        // TODO: Implement struct block to replace `self`
+        block.defineSymbol(node, type)
         return block
     }
 
     override fun analyze(
         block: SymbolBlock,
-        node: DataStructureNode,
+        node: DataFieldNode,
         signatures: Signatures,
         results: AnalysisResult
     ): SymbolBlock {
+        val type = block.resolveExpression(node)
+            ?: error("Type for DataFieldNode was not previously defined")
+
+        if (type is GwydionType.Mutable) {
+            results.errors.add(
+                AnalysisError.StructFieldCannotBeMutable(
+                    node = node,
+                    name = node.name
+                )
+            )
+        }
         return block
     }
 }
