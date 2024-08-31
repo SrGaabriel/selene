@@ -603,17 +603,19 @@ class LLVMCodeAdaptationProcess(
         } else NullMemoryUnit
 
         val arguments = mutableListOf<Value>()
+        if (!(node.static || !function.parameters.contains(GwydionType.Self))) {
+            val variableMemory = acceptNode(block, node.trait)
+            if (variableType !is GwydionType.Trait) {
+                arguments.add(0, variableMemory)
+            } else {
+                val traitMemory = variableMemory as? MemoryUnit.TraitData ?: error("Trait memory not found")
+                arguments.add(0, traitMemory.data)
+            }
+        }
+
         node.arguments.map {
             val result = acceptNode(block, it)
             arguments.add(result)
-        }
-
-        val variableMemory = acceptNode(block, node.trait)
-        if (variableType !is GwydionType.Trait) {
-            arguments.add(0, variableMemory)
-        } else {
-            val traitMemory = variableMemory as? MemoryUnit.TraitData ?: error("Trait memory not found")
-            arguments.add(0, traitMemory.data)
         }
 
         assembler.callFunction(

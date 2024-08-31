@@ -1,5 +1,5 @@
 trait CharArray(
-    length() :: int32
+    length(self) :: int32
 )
 
 make string into CharArray {

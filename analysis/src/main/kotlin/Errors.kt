@@ -102,6 +102,30 @@ sealed class AnalysisError(val message: String, val node: SyntaxTreeNode) {
         node
     )
 
+    class MissingFunctionForTraitImpl(
+        node: SyntaxTreeNode,
+        trait: String,
+        function: String,
+        struct: String
+    ) : AnalysisError(
+        "missing function `$function` for trait impl: $trait for $struct",
+        node
+    )
+
+    class WrongFunctionParametersForTraitImpl(
+        node: SyntaxTreeNode,
+        function: String,
+        trait: String,
+        struct: String,
+        correct: List<GwydionType>,
+    ) : AnalysisError(
+        "wrong function signature `$function` in trait impl $trait for $struct, expected${
+            if (correct.isEmpty()) " no parameters"
+            else ": (${correct.joinToString(", ") { it.signature }})"
+        }",
+        node
+    )
+
     class BinaryOpTypeMismatch(node: SyntaxTreeNode, left: GwydionType, right: GwydionType) : AnalysisError(
         "binary operation type mismatch: ${left.signature} and ${right.signature}",
         node

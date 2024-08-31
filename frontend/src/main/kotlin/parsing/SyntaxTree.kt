@@ -134,6 +134,15 @@ class VariableReferenceNode(
     override fun toString(): String = "VariableReferenceNode(name='$name')"
 }
 
+class DataStructureReferenceNode(
+    val name: String,
+    mark: Token
+): SyntaxTreeNode(mark) {
+    override fun getChildren(): List<SyntaxTreeNode> = emptyList()
+
+    override fun toString(): String = "DataStructureReferenceNode(name='$name')"
+}
+
 class NumberNode(
     var value: String,
     val explicit: Boolean,
@@ -244,7 +253,7 @@ class TraitNode(
 
 class TraitFunctionNode(
     val name: String,
-    val returnType: GwydionType,
+    var returnType: GwydionType,
     val parameters: List<ParameterNode>,
     mark: Token
 ) : SyntaxTreeNode(mark) {
@@ -299,6 +308,7 @@ class TraitFunctionCallNode(
     val trait: SyntaxTreeNode,
     val function: String,
     val arguments: List<SyntaxTreeNode>,
+    val static: Boolean,
     mark: Token
 ) : SyntaxTreeNode(mark) {
     override fun getChildren(): List<SyntaxTreeNode> = arguments + trait

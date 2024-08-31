@@ -4,6 +4,12 @@ import java.net.Socket
 
 import java.io.*
 
+/**
+ * This is a test for the `networking_prototype.ll` code.
+ * It creates a socket and sends a message to the server.
+ *
+ * I won't be removing it just to further test the compiler and equivalence to that code.
+ */
 fun main() {
     val socket = Socket("localhost", 8080)
     val out = PrintWriter(socket.getOutputStream(), true)

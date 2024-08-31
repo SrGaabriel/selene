@@ -3,6 +3,7 @@ package me.gabriel.gwydion.analysis.signature
 import kotlinx.serialization.decodeFromString
 import kotlinx.serialization.encodeToString
 import kotlinx.serialization.json.Json
+import me.gabriel.gwydion.frontend.GwydionType
 import me.gabriel.gwydion.tools.GwydionLogger
 import me.gabriel.gwydion.tools.LogLevel
 import java.io.File

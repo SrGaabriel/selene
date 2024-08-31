@@ -22,7 +22,7 @@ class StringLexer(private val data: String): Lexer {
                 ',' -> tokens.add(Token(TokenKind.COMMA, ",", position)).also { position++ }
                 '[' -> tokens.add(Token(TokenKind.OPENING_BRACKETS, "[", position)).also { position++ }
                 ']' -> tokens.add(Token(TokenKind.CLOSING_BRACKETS, "]", position)).also { position++ }
-                '@' -> tokens.add(Token(TokenKind.INSTANTIATION, "@", position)).also { position++ }
+                '@' -> tokens.add(Token(TokenKind.AT, "@", position)).also { position++ }
                 '"' -> return Either.left(lexString(tokens) ?: continue)
                 in '0'..'9' -> tokens.add(number())
                 in 'a'..'z', in 'A'..'Z', '_' -> {

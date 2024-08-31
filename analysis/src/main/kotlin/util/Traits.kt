@@ -6,7 +6,9 @@ import me.gabriel.gwydion.analysis.signature.SignatureTrait
 import me.gabriel.gwydion.analysis.signature.SignatureTraitImpl
 import me.gabriel.gwydion.analysis.signature.Signatures
 import me.gabriel.gwydion.frontend.GwydionType
+import me.gabriel.gwydion.frontend.parsing.DataStructureReferenceNode
 import me.gabriel.gwydion.frontend.parsing.SyntaxTreeNode
+import me.gabriel.gwydion.frontend.parsing.VariableReferenceNode
 import me.gabriel.gwydion.frontend.workingBase
 
 data class TraitFunctionMetadata(
@@ -23,7 +25,19 @@ fun resolveTraitForExpression(
     signatures: Signatures,
     call: String
 ): TraitFunctionMetadata? {
-    val resolvedVariable = block.resolveExpression(variable) ?: return null
+    val resolvedVariable = when (variable) {
+        is DataStructureReferenceNode -> signatures.structs.find {
+            it.name == variable.name
+        }?.let {
+            GwydionType.Struct(
+                it.name,
+                it.fields
+            )
+        }
+        is VariableReferenceNode -> block.resolveSymbol(variable.name).also {
+        }
+        else -> null
+    } ?: return null
 
     return signatures.traits.firstNotNullOfOrNull { trait ->
         val impl = if (resolvedVariable !is GwydionType.Trait) trait.impls.firstOrNull {

@@ -1,7 +1,7 @@
 trait Collection(
-    size() :: int32,
-    get(index: int32) :: string,
-    push(value: string) :: void,
+    size(self) :: int32,
+    get(self, index: int32) :: string,
+    push(mut self, value: string) :: void,
 )
 
 data List(

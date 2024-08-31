@@ -16,7 +16,9 @@ class TraitFunctionCallAnalyzer: SingleNodeAnalyzer<TraitFunctionCallNode>(Trait
         signatures: Signatures,
         visitor: TypeInferenceVisitor
     ): SymbolBlock {
-        val traitType = block.resolveExpression(node.trait) ?: return block
+        val traitType = block.resolveExpression(node.trait) ?: visitor.visit(node.trait) {
+            block.resolveExpression(node.trait) ?: return@visit
+        }
 
         if (traitType is GwydionType.Trait) {
             val function = traitType.functions.firstOrNull { it.name == node.function }

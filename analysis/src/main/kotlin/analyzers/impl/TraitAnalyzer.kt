@@ -6,6 +6,7 @@ import me.gabriel.gwydion.analysis.analyzers.TypeInferenceVisitor
 import me.gabriel.gwydion.analysis.signature.SignatureFunction
 import me.gabriel.gwydion.analysis.signature.SignatureTrait
 import me.gabriel.gwydion.analysis.signature.Signatures
+import me.gabriel.gwydion.analysis.util.unknownReferenceSignatureToType
 import me.gabriel.gwydion.frontend.parsing.TraitNode
 
 class TraitAnalyzer: SingleNodeAnalyzer<TraitNode>(TraitNode::class) {
@@ -22,8 +23,14 @@ class TraitAnalyzer: SingleNodeAnalyzer<TraitNode>(TraitNode::class) {
                     SignatureFunction(
                         module = block.module,
                         name = it.name,
-                        returnType = it.returnType,
-                        parameters = it.parameters.map { it.type },
+                        returnType = unknownReferenceSignatureToType(signatures, it.returnType).also { treatedType ->
+                            it.returnType = treatedType
+                        },
+                        parameters = it.parameters.map {
+                            unknownReferenceSignatureToType(signatures, it.type).also { treatedType ->
+                                it.type = treatedType
+                            }
+                        },
                         modifiers = emptyList()
                     )
                 }

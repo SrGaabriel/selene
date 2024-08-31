@@ -265,7 +265,7 @@ class Parser(private val tokens: TokenStream) {
                         ?: return Either.Left(ParsingError.UnexpectedToken(peekToken()))
                 }
                 TokenKind.OPENING_PARENTHESES -> {
-                    val params = parseCallParameters()
+                    val params = parseCallArguments()
                     currentNode = params.mapRight { p -> CallNode(currentNode.toString(), p, currentNode.mark) }.getRightOrNull()
                         ?: return Either.Left(ParsingError.UnexpectedToken(peekToken()))
                 }
@@ -307,7 +307,7 @@ class Parser(private val tokens: TokenStream) {
     }
 
     private fun parseCallExpression(identifierToken: Token): Either<ParsingError, CallNode> {
-        return parseCallParameters().flatMapRight { params ->
+        return parseCallArguments().flatMapRight { params ->
             consumeToken(TokenKind.SEMICOLON).mapRight {
                 CallNode(identifierToken.value, params, identifierToken)
             }
@@ -389,7 +389,7 @@ class Parser(private val tokens: TokenStream) {
             TokenKind.STRING_START -> parseStringExpression().mapInto()
             TokenKind.BOOL_TYPE -> parseBooleanLiteral().mapInto()
             TokenKind.OPENING_BRACKETS, TokenKind.TIMES -> parseArray().mapInto()
-            TokenKind.INSTANTIATION -> parseInstantiation().mapInto()
+            TokenKind.AT -> parseInstantiation().mapInto()
             else -> Either.Left(ParsingError.UnexpectedToken(peekToken()))
         }
     }
@@ -408,8 +408,24 @@ class Parser(private val tokens: TokenStream) {
         val identifierToken = identifier.unwrap()
 
         if (peekToken().kind == TokenKind.OPENING_PARENTHESES) {
-            return parseCallParameters().mapRight { params ->
+            return parseCallArguments().mapRight { params ->
                 CallNode(identifierToken.value, params, identifierToken)
+            }
+        }
+
+        if (peekToken().kind == TokenKind.AT) {
+            // This is a static trait call
+            val accessor = consumeToken(TokenKind.AT).unwrap()
+            return parseIdentifier().flatMapRight { function ->
+                parseCallArguments().mapRight { params ->
+                    TraitFunctionCallNode(
+                        trait = DataStructureReferenceNode(identifierToken.value, identifierToken),
+                        function = function.value,
+                        arguments = params,
+                        static = true,
+                        mark = accessor
+                    )
+                }
             }
         }
 
@@ -417,17 +433,23 @@ class Parser(private val tokens: TokenStream) {
 
         while (true) {
             when (peekToken().kind) {
-                TokenKind.DOT -> {
-                    val dot = consumeToken(TokenKind.DOT)
-                    if (dot is Either.Left) return Either.Left(dot.value)
+                TokenKind.DOT, TokenKind.AT -> {
+                    val accessor = consumeOneOf(TokenKind.DOT, TokenKind.AT)
+                    if (accessor is Either.Left) return Either.Left(accessor.value)
                     val field = parseIdentifier()
                     if (field is Either.Left) return Either.Left(field.value)
                     if (peekToken().kind == TokenKind.OPENING_PARENTHESES) {
-                        val parameters = parseCallParameters()
-                        if (parameters is Either.Left) return Either.Left(parameters.value)
-                        currentNode = TraitFunctionCallNode(currentNode, field.unwrap().value, parameters.unwrap(), dot.unwrap())
+                        val arguments = parseCallArguments()
+                        if (arguments is Either.Left) return Either.Left(arguments.value)
+                        currentNode = TraitFunctionCallNode(
+                            trait = currentNode,
+                            function = field.unwrap().value,
+                            arguments = arguments.unwrap(),
+                            static = accessor.unwrap().kind == TokenKind.AT,
+                            mark = accessor.unwrap()
+                        )
                     } else {
-                        currentNode = StructAccessNode(currentNode, field.unwrap().value, dot.unwrap())
+                        currentNode = StructAccessNode(currentNode, field.unwrap().value, accessor.unwrap())
                     }
                 }
                 TokenKind.OPENING_BRACKETS -> {
@@ -504,10 +526,10 @@ class Parser(private val tokens: TokenStream) {
     }
 
     private fun parseInstantiation(): Either<ParsingError, InstantiationNode> {
-        val instantiationToken = consumeToken(TokenKind.INSTANTIATION)
+        val instantiationToken = consumeToken(TokenKind.AT)
         if (instantiationToken is Either.Left) return Either.Left(instantiationToken.value)
         return parseIdentifier().flatMapRight { name ->
-            parseCallParameters().mapRight { args ->
+            parseCallArguments().mapRight { args ->
                 InstantiationNode(name.value, args, instantiationToken.unwrap())
             }
         }
@@ -584,7 +606,7 @@ class Parser(private val tokens: TokenStream) {
         }
     }
 
-    private fun parseCallParameters(): Either<ParsingError, List<SyntaxTreeNode>> {
+    private fun parseCallArguments(): Either<ParsingError, List<SyntaxTreeNode>> {
         return consumeToken(TokenKind.OPENING_PARENTHESES).flatMapRight {
             parseCommaSeparatedList(::parseExpression, TokenKind.CLOSING_PARENTHESES)
         }
