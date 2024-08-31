@@ -31,7 +31,8 @@ class SemanticAnalysisManager(
             TraitFunctionCallAnalyzer(),
             InstantiationAnalyzer(),
             ArrayAccessAnalyzer(),
-            DataFieldAnalyzer()
+            DataFieldAnalyzer(),
+            CallAnalyzer()
         )
     }
 

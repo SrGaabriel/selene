@@ -2,6 +2,7 @@ package me.gabriel.gwydion.analysis.signature
 
 import me.gabriel.gwydion.frontend.GwydionType
 import kotlinx.serialization.Serializable
+import me.gabriel.gwydion.frontend.parsing.Modifiers
 
 @Serializable
 data class Signatures(
@@ -43,9 +44,11 @@ data class SignatureTrait(
 
 @Serializable
 data class SignatureFunction(
+    val module: String,
     val name: String,
     val returnType: GwydionType,
-    val parameters: List<GwydionType>
+    val parameters: List<GwydionType>,
+    val modifiers: List<Modifiers>
 )
 
 @Serializable

@@ -8,6 +8,8 @@ data Point(
 func main() {
     wrong_array := ["a", 2];
 
+    sock := socket(2, 1, 0);
+
     mut point := new_point();
     print_point(point);
     change_point(point);

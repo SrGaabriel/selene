@@ -24,13 +24,15 @@ class FunctionAnalyzer: SingleNodeAnalyzer<FunctionNode>(FunctionNode::class) {
         node.returnType = unknownReferenceSignatureToType(signatures, node.returnType)
 
         signatures.functions.add(SignatureFunction(
+            module = block.module,
             name = node.name,
             returnType = node.returnType,
             parameters = node.parameters.map { param ->
                 unknownReferenceSignatureToType(signatures, param.type).also { treatedType ->
                     param.type = treatedType
                 }
-            }
+            },
+            modifiers = node.modifiers
         ))
 
         val functionBlock = SymbolBlock(

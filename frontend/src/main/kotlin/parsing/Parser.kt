@@ -1,10 +1,7 @@
 package me.gabriel.gwydion.frontend.parsing
 
 import me.gabriel.gwydion.frontend.GwydionType
-import me.gabriel.gwydion.frontend.lexing.TYPE_TOKENS
-import me.gabriel.gwydion.frontend.lexing.Token
-import me.gabriel.gwydion.frontend.lexing.TokenKind
-import me.gabriel.gwydion.frontend.lexing.TokenStream
+import me.gabriel.gwydion.frontend.lexing.*
 import me.gabriel.gwydion.frontend.lexing.error.ParsingError
 import me.gabriel.gwydion.tools.Either
 
@@ -41,10 +38,10 @@ class Parser(private val tokens: TokenStream) {
             TokenKind.TRAIT -> parseTrait().mapInto()
             TokenKind.MAKE -> parseTraitImplementation().mapInto()
             TokenKind.CLOSING_BRACES -> Either.Right(null)
-            TokenKind.INTRINSIC -> parseIntrinsicFunction().mapInto()
             TokenKind.FOR -> parseForLoop().mapInto()
             TokenKind.MUT -> parseMutableDeclaration().mapInto()
             TokenKind.IDENTIFIER, TokenKind.SELF -> parseIdentifierStatement().mapInto()
+            in MODIFIER_TOKENS.keys -> parseModifiedFunction().mapInto()
             else -> Either.Left(ParsingError.UnexpectedToken(peekToken()))
         }
     }
@@ -178,10 +175,14 @@ class Parser(private val tokens: TokenStream) {
         }
     }
 
-    private fun parseIntrinsicFunction(): Either<ParsingError, FunctionNode> {
-        consumeToken() // Consume 'intrinsic'
+    private fun parseModifiedFunction(): Either<ParsingError, FunctionNode> {
+        val modifiers = mutableListOf<Modifiers>()
+        while (peekToken().kind in MODIFIER_TOKENS.keys) {
+            val modifier = consumeToken().kind
+            modifiers.add(MODIFIER_TOKENS[modifier]!!)
+        }
         return parseFunctionDefinition().mapRight { function ->
-            function.modifiers.add(Modifiers.INTRINSIC)
+            function.modifiers.addAll(modifiers)
             function
         }
     }

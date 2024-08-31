@@ -1,6 +1,7 @@
 package me.gabriel.gwydion.frontend.lexing
 
 import kotlinx.serialization.Serializable
+import me.gabriel.gwydion.frontend.parsing.Modifiers
 
 @Serializable
 enum class TokenKind {
@@ -38,6 +39,7 @@ enum class TokenKind {
     FOR,
     IN,
     ELSE,
+    INTERNAL,
     TYPE_DECLARATION,
     RETURN_TYPE_DECLARATION,
     VOID,
@@ -81,6 +83,11 @@ val TYPE_TOKENS = listOf(
     TokenKind.STRING_TYPE,
     TokenKind.BOOL_TYPE,
     TokenKind.IDENTIFIER
+)
+
+val MODIFIER_TOKENS = mapOf(
+    TokenKind.INTRINSIC to Modifiers.INTRINSIC,
+    TokenKind.INTERNAL to Modifiers.INTERNAL
 )
 
 @Serializable

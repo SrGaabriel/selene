@@ -20,9 +20,11 @@ class TraitAnalyzer: SingleNodeAnalyzer<TraitNode>(TraitNode::class) {
                 name = node.name,
                 functions = node.functions.map {
                     SignatureFunction(
+                        module = block.module,
                         name = it.name,
                         returnType = it.returnType,
-                        parameters = it.parameters.map { it.type }
+                        parameters = it.parameters.map { it.type },
+                        modifiers = emptyList()
                     )
                 }
             )

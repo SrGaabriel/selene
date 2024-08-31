@@ -1,0 +1,1 @@
+internal intrinsic func socket (domain: int32, type: int32, protocol: int32) :: int32 {}
