@@ -84,7 +84,7 @@ sealed class AnalysisError(val message: String, val node: SyntaxTreeNode) {
         currentModule: String,
         functionModule: String,
     ) : AnalysisError(
-        "cannot call internal function from different module: $currentModule -> $functionModule: ${node.name}(...)",
+        "cannot call internal function `${node.name}(...)` from different module: $currentModule -> $functionModule",
         node
     )
 

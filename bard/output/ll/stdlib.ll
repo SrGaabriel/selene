@@ -1,19 +1,19 @@
-@trait_671165907 = unnamed_addr constant <{ i16, i16, ptr }> <{
+@trait_1877355084 = unnamed_addr constant <{ i16, i16, ptr }> <{
     i16 8,
     i16 8,
     ptr @int32_text
 }>, align 8
-@trait_886296402 = unnamed_addr constant <{ i16, i16, ptr }> <{
+@trait_1913860454 = unnamed_addr constant <{ i16, i16, ptr }> <{
     i16 8,
     i16 8,
     ptr @string_text
 }>, align 8
-@trait_1028684566 = unnamed_addr constant <{ i16, i16, ptr }> <{
+@trait_1283912744 = unnamed_addr constant <{ i16, i16, ptr }> <{
     i16 8,
     i16 8,
     ptr @string_length
 }>, align 8
-            @trait_1126549100 = unnamed_addr constant <{ i16, i16, ptr, ptr, ptr }> <{
+            @trait_305681338 = unnamed_addr constant <{ i16, i16, ptr, ptr, ptr }> <{
                 i16 8,
                 i16 8,
                 ptr @List_size, 
@@ -113,6 +113,8 @@ end_read:
 
 declare i32 @getchar()
 @buffer = global [256 x i8] zeroinitializer
+%TcpServer = type { i32, i16 }
+%Socket = type { i32, i32, i16, i32 }
 %List = type { i8**, i32 }
 define i32 @List_size(%List* %1) {
 entry:
@@ -143,30 +145,30 @@ entry:
     store i32 %19, i32* %20
     ret void
 }
-define i32 @string_length(i8** %21) {
+define i32 @string_length(i8** %23) {
 entry:
-    %22 = call i32 @str_length(i8** %21)
-    ret i32 %22
+    %24 = call i32 @str_length(i8** %23)
+    ret i32 %24
 }
-define i8* @string_text(i8** %23) {
+define i8* @string_text(i8** %25) {
 entry:
-    ret i8** %23
+    ret i8** %25
 }
-define i8* @int32_text(i32* %24) {
+define i8* @int32_text(i32* %26) {
 entry:
-    %25 = alloca [6 x i8], align 1
-    %26 = getelementptr inbounds [6 x i8], [6 x i8]* %25, i32 0, i32 0
-    store i8 105, i8* %26
-    %27 = getelementptr inbounds [6 x i8], [6 x i8]* %25, i32 0, i32 1
-    store i8 110, i8* %27
-    %28 = getelementptr inbounds [6 x i8], [6 x i8]* %25, i32 0, i32 2
-    store i8 116, i8* %28
-    %29 = getelementptr inbounds [6 x i8], [6 x i8]* %25, i32 0, i32 3
-    store i8 51, i8* %29
-    %30 = getelementptr inbounds [6 x i8], [6 x i8]* %25, i32 0, i32 4
-    store i8 50, i8* %30
-    %31 = getelementptr inbounds [6 x i8], [6 x i8]* %25, i32 0, i32 5
-    store i8 0, i8* %31
-    %32 = getelementptr inbounds [6 x i8], [6 x i8]* %25, i32 0, i32 0
-    ret i8* %32
+    %27 = alloca [6 x i8], align 1
+    %28 = getelementptr inbounds [6 x i8], [6 x i8]* %27, i32 0, i32 0
+    store i8 105, i8* %28
+    %29 = getelementptr inbounds [6 x i8], [6 x i8]* %27, i32 0, i32 1
+    store i8 110, i8* %29
+    %30 = getelementptr inbounds [6 x i8], [6 x i8]* %27, i32 0, i32 2
+    store i8 116, i8* %30
+    %31 = getelementptr inbounds [6 x i8], [6 x i8]* %27, i32 0, i32 3
+    store i8 51, i8* %31
+    %32 = getelementptr inbounds [6 x i8], [6 x i8]* %27, i32 0, i32 4
+    store i8 50, i8* %32
+    %33 = getelementptr inbounds [6 x i8], [6 x i8]* %27, i32 0, i32 5
+    store i8 0, i8* %33
+    %34 = getelementptr inbounds [6 x i8], [6 x i8]* %27, i32 0, i32 0
+    ret i8* %34
 }
