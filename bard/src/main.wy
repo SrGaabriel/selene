@@ -20,10 +20,13 @@ make Map into Fooable {
 
 func main() {
     println("Hello, World!");
+
     new := Map@new(4);
     println(new.fooat());
+
     map := @Map(42, 64);
     println(map.fooat());
+
     new2 := map.new(8);
     println(new2.fooat());
 }

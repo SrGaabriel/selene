@@ -10,6 +10,7 @@ You may look at the code and think the means to my desired end are incorrect and
 
 # Example
 
+Basic input/output:
 ```go
 func main () {
     check_typed();
@@ -36,6 +37,7 @@ func check_typed() {
 }
 ```
 
+Structs:
 ```go
 data Point(
     x: int32,
@@ -64,5 +66,41 @@ func print_point(point: Point) {
     println(point.x);
     println(point.y);
     println(point.signed);
+}
+```
+
+Traits:
+```golang
+data Map(
+    foo: int32,
+    remainder: int32
+)
+
+trait Fooable(
+    new(foo: int32) :: Map,
+    fooat(self) :: int32
+)
+
+make Map into Fooable {
+    func new(foo: int32) :: Map {
+        return @Map(foo, 42);
+    }
+
+    func fooat(self) :: int32 {
+        return self.foo;
+    }
+}
+
+func main() {
+    println("Hello, World!");
+
+    new := Map@new(4);
+    println(new.fooat());
+
+    map := @Map(42, 64);
+    println(map.fooat());
+
+    new2 := map.new(8);
+    println(new2.fooat());
 }
 ```
