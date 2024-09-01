@@ -36,22 +36,11 @@ class FunctionNode(
     val parameters: List<ParameterNode>,
     val body: BlockNode,
     val modifiers: MutableList<Modifiers>,
-    var blockName: String = name,
     mark: Token
 ) : SyntaxTreeNode(mark) {
     override fun getChildren(): List<SyntaxTreeNode> = parameters + body
 
-    fun copy(
-        name: String = this.name,
-        returnType: GwydionType = this.returnType,
-        parameters: List<ParameterNode> = this.parameters,
-        body: BlockNode = this.body,
-        modifiers: MutableList<Modifiers> = this.modifiers,
-        blockName: String = this.blockName,
-        mark: Token = this.mark
-    ) = FunctionNode(name, returnType, parameters, body, modifiers, blockName, mark)
-
-    override fun toString(): String = "FunctionNode(name='$name', returnType=$returnType, parameters=$parameters, body=$body, modifiers=$modifiers, blockName='$blockName')"
+    override fun toString(): String = "FunctionNode(name='$name', returnType=$returnType, parameters=$parameters, body=$body, modifiers=$modifiers)"
 }
 
 class BlockNode(

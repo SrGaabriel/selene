@@ -132,7 +132,7 @@ class LLVMCodeGenerator: ILLVMCodeGenerator {
             @${obj.prefix}${obj.register} = unnamed_addr constant <{ i16, i16, ${obj.functions.joinToString(", ") { "ptr" }} }> <{
                 i16 ${obj.size},
                 i16 ${obj.alignment},
-                ${obj.functions.joinToString(", \n") { "ptr @${obj.name}_$it" }}
+                ${obj.functions.joinToString(", \n") { "ptr @${obj.name}.$it" }}
             }>, align 8
         """.trimIndent()
     }

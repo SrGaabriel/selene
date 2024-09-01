@@ -16,8 +16,12 @@ class LambdaAnalyzer: SingleNodeAnalyzer<LambdaNode>(LambdaNode::class) {
         signatures: Signatures,
         visitor: TypeInferenceVisitor
     ): SymbolBlock {
+        val newBlock = block.createChild(
+            id = node
+        )
+
         block.defineSymbol(node, GwydionType.Unknown)
-        return block
+        return newBlock
     }
 
     override fun analyze(
@@ -26,6 +30,9 @@ class LambdaAnalyzer: SingleNodeAnalyzer<LambdaNode>(LambdaNode::class) {
         signatures: Signatures,
         results: AnalysisResult
     ): SymbolBlock {
+        val lambdaBlock = block.surfaceSearchChild(node)
+            ?: error("Lambda block not registered")
+
         val type = block.resolveExpression(node) ?: GwydionType.Unknown
         if (type == GwydionType.Unknown) {
             results.errors.add(
@@ -34,6 +41,6 @@ class LambdaAnalyzer: SingleNodeAnalyzer<LambdaNode>(LambdaNode::class) {
                 )
             )
         }
-        return block
+        return lambdaBlock
     }
 }

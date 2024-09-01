@@ -1,17 +1,17 @@
-@trait_1190033866 = unnamed_addr constant <{ i16, i16, ptr }> <{
+@trait_577087185 = unnamed_addr constant <{ i16, i16, ptr }> <{
     i16 8,
     i16 8,
-    ptr @int32_text
+    ptr @int32.text
 }>, align 8
-@trait_1027343998 = unnamed_addr constant <{ i16, i16, ptr }> <{
+@trait_890025642 = unnamed_addr constant <{ i16, i16, ptr }> <{
     i16 8,
     i16 8,
-    ptr @string_text
+    ptr @string.text
 }>, align 8
-@trait_931156835 = unnamed_addr constant <{ i16, i16, ptr }> <{
+@trait_71677456 = unnamed_addr constant <{ i16, i16, ptr }> <{
     i16 8,
     i16 8,
-    ptr @string_length
+    ptr @string.length
 }>, align 8
 @format_f = private unnamed_addr constant [3 x i8] c"%f\00"
 @format_n = private unnamed_addr constant [3 x i8] c"%d\00"
@@ -108,16 +108,16 @@ declare i32 @getchar()
 @buffer = global [256 x i8] zeroinitializer
 %TcpServer = type { i32, i16 }
 %Socket = type { i32, i32, i16, i32 }
-define i32 @string_length(i8** %2) {
+define i32 @string.length(i8** %2) {
 entry:
     %3 = call i32 @str_length(i8** %2)
     ret i32 %3
 }
-define i8* @string_text(i8** %4) {
+define i8* @string.text(i8** %4) {
 entry:
     ret i8** %4
 }
-define i8* @int32_text(i32* %5) {
+define i8* @int32.text(i32* %5) {
 entry:
     %6 = alloca [6 x i8], align 1
     %7 = getelementptr inbounds [6 x i8], [6 x i8]* %6, i32 0, i32 0

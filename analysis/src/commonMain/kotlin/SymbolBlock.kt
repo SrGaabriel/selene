@@ -1,25 +1,22 @@
 package me.gabriel.gwydion.analysis
 
 import me.gabriel.gwydion.frontend.GwydionType
-import me.gabriel.gwydion.frontend.parsing.InstantiationNode
-import me.gabriel.gwydion.frontend.parsing.SyntaxTreeNode
-import me.gabriel.gwydion.frontend.parsing.TypedSyntaxTreeNode
-import me.gabriel.gwydion.frontend.parsing.VariableReferenceNode
+import me.gabriel.gwydion.frontend.parsing.*
 
-class SymbolRepository(val module: String) {
+class SymbolRepository(val module: String,) {
     val root = SymbolBlock(
         module,
-        "root",
+        null,
         null,
         mutableListOf()
     )
 
     fun createBlock(
-        name: String,
+        id: SyntaxTreeNode,
         parent: SymbolBlock,
         self: GwydionType? = parent.self
     ): SymbolBlock {
-        val block = SymbolBlock(module, name, parent, mutableListOf(), self)
+        val block = SymbolBlock(module, id, parent, mutableListOf(), self)
         parent.children.add(block)
         return block
     }
@@ -27,7 +24,7 @@ class SymbolRepository(val module: String) {
 
 class SymbolBlock(
     val module: String,
-    val name: String,
+    val id: SyntaxTreeNode?,
     val parent: SymbolBlock?,
     val children: MutableList<SymbolBlock> = mutableListOf(),
     var self: GwydionType? = parent?.self
@@ -35,17 +32,23 @@ class SymbolBlock(
     private val symbols = mutableMapOf<String, GwydionType>()
     private val definitions = mutableMapOf<SyntaxTreeNode, GwydionType>()
 
+    val name get() = when (id) {
+        is FunctionNode -> id.name
+        is TraitImplNode -> "(${id.type.signature} impls ${id.trait})"
+        else -> id?.toString() ?: "root"
+    }
+
     fun createChild(
-        name: String,
+        id: SyntaxTreeNode,
         self: GwydionType? = this.self
     ): SymbolBlock {
-        val block = SymbolBlock(module, name, this, mutableListOf(), self)
+        val block = SymbolBlock(module, id, this, mutableListOf(), self)
         children.add(block)
         return block
     }
 
-    fun surfaceSearchChild(name: String): SymbolBlock? {
-        return children.find { it.name == name }
+    fun surfaceSearchChild(id: SyntaxTreeNode): SymbolBlock? {
+        return children.find { it.id == id }
     }
 
     fun declareSymbol(name: String, type: GwydionType) {
@@ -69,6 +72,6 @@ class SymbolBlock(
     }
 
     override fun toString(): String {
-        return "MemoryBlock(name='$name', symbols=$symbols, parent=$parent)"
+        return "SymbolBlock(module='$module', self=$self)"
     }
 }

@@ -67,7 +67,6 @@ class LLVMCodeAdaptationProcess(
             assembler.addDependency(it)
         }
         traitObjects.forEach { (_, traits) ->
-            // TODO: fix
             traits.forEach { obj ->
                 assembler.addDependency(assembler.generator.createTraitObject(obj = obj))
             }
@@ -129,7 +128,7 @@ class LLVMCodeAdaptationProcess(
         if (node.modifiers.contains(Modifiers.INTRINSIC)) return NullMemoryUnit
 
         val parameters = mutableListOf<MemoryUnit>()
-        val block = block.surfaceSearchChild(node.blockName)
+        val block = block.surfaceSearchChild(node)
             ?: error("Block ${node.name} not found in block ${block.name}")
         node.parameters.forEach { param ->
             if (param.type is GwydionType.Trait) {
@@ -166,9 +165,12 @@ class LLVMCodeAdaptationProcess(
             parameters.add(unit)
         }
         val properReturnType = getProperReturnType(node.returnType)
+        val name = if (self != null) {
+            "${self.signature}.${node.name}"
+        } else node.name
 
         assembler.functionDsl(
-            name = node.name,
+            name = name,
             arguments = parameters,
             returnType = properReturnType
         ) {
@@ -362,7 +364,7 @@ class LLVMCodeAdaptationProcess(
 
     private fun generateBinaryOperator(block: SymbolBlock, node: BinaryOperatorNode): MemoryUnit {
         val type = block.resolveExpression(node.left)
-            ?: error("Couldn't resolve binary operation type")
+            ?: error("Couldn't resolve binary operation type at ${block.name} for ${node.left}")
 
         val op = getBinaryOp(node.operator.kind)
         if (type == GwydionType.String) {
@@ -584,15 +586,11 @@ class LLVMCodeAdaptationProcess(
             functions = node.functions.map { it.name }
         )
 
-        val traitBlock = block.surfaceSearchChild("${node.type.signature} impls ${node.trait}")
+        val traitBlock = block.surfaceSearchChild(node)
             ?: error("Trait ${node.trait} not found in block ${block.name}")
 
         node.functions.forEach {
-            acceptNode(traitBlock, it.copy(
-                name = "${node.type.signature}_${it.name}",
-                blockName = it.name,
-                parameters = it.parameters
-            ), self = node.type)
+            acceptNode(traitBlock, it, self=node.type)
         }
 
         return NullMemoryUnit
@@ -733,8 +731,10 @@ class LLVMCodeAdaptationProcess(
     }
 
     private fun generateLambda(block: SymbolBlock, node: LambdaNode, store: Boolean): Value {
-        // we'll just create a function and pass a pointer to it
+        val lambdaBlock = block.surfaceSearchChild(node)
+            ?: error("Block for lambda ${node.hashCode()} not found in block ${block.name}")
         val parameters = mutableListOf<MemoryUnit>()
+
         node.parameters.forEach { param ->
             val type = getProperReturnType(param.type)
             val unit = MemoryUnit.Sized(
@@ -742,17 +742,17 @@ class LLVMCodeAdaptationProcess(
                 type = type,
                 size = type.size
             )
-            putMemoryUnit(block, param.name, unit)
+            putMemoryUnit(lambdaBlock, param.name, unit)
             parameters.add(unit)
         }
-        val returnType = block.resolveExpression(node.body)
+        val returnType = (block.resolveExpression(node) as? GwydionType.Lambda)?.returnType
             ?: error("Return type not found for lambda $node")
 
         lambdas.add(
             LambdaData(
                 node = node,
                 parameters = parameters,
-                block = block,
+                block = lambdaBlock,
                 returnType = returnType
             )
         )

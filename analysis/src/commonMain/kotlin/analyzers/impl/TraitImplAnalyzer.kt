@@ -41,15 +41,10 @@ class TraitImplAnalyzer: SingleNodeAnalyzer<TraitImplNode>(TraitImplNode::class)
             )
         )
 
-        node.functions.forEach {
-            it.blockName = "${node.type.signature}#${it.name}"
-        }
-
         val newBlock = block.createChild(
-            name = "${node.type.signature} impls ${node.trait}",
+            id = node,
             self = node.type
         )
-
         return newBlock
     }
 
@@ -59,7 +54,7 @@ class TraitImplAnalyzer: SingleNodeAnalyzer<TraitImplNode>(TraitImplNode::class)
         signatures: Signatures,
         results: AnalysisResult
     ): SymbolBlock {
-        val newBlock = block.surfaceSearchChild("${node.type.signature} impls ${node.trait}")
+        val newBlock = block.surfaceSearchChild(node)
             ?: error("Block for trait impl ${node.trait} for ${node.type.signature} was not created")
 
         // Here we'll check if the impl has all the required functions

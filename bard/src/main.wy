@@ -5,7 +5,7 @@ func callback(a: lambda(int32) -> int32) {
 
 func main() {
     println("Hello, World!");
-    callback(lambda|f: int32| f + 12);
-    callback(lambda|s: int32| s + 24);
-    callback(lambda|t: int32| t + 36);
+    callback(lambda|x: int32| x + 12);
+    callback(lambda|x: int32| x + 24);
+    callback(lambda|x: int32| x + 36);
 }
