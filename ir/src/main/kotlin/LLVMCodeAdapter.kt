@@ -4,7 +4,6 @@ import me.gabriel.gwydion.analysis.SymbolRepository
 import me.gabriel.gwydion.analysis.signature.Signatures
 import me.gabriel.gwydion.frontend.parsing.SyntaxTree
 import me.gabriel.gwydion.ir.intrinsics.IntrinsicFunction
-import java.io.File
 
 class LLVMCodeAdapter {
     private val intrinsics = mutableListOf<IntrinsicFunction>()
@@ -30,30 +29,5 @@ class LLVMCodeAdapter {
 
     fun registerIntrinsicFunction(vararg functions: IntrinsicFunction) {
         intrinsics.addAll(functions)
-    }
-
-    fun generateExecutable(llvmIr: String, outputDir: String, outputFileName: String) {
-        val outputDirectory = File(outputDir)
-        if (!outputDirectory.exists()) {
-            outputDirectory.mkdirs()
-        }
-
-        val inputLlPath = "$outputDir/$outputFileName.ll"
-//        val outputExePath = "$outputDir/$outputFileName"
-
-//        File(outputExePath).delete()
-        File(inputLlPath).delete()
-        File(inputLlPath).createNewFile()
-        File(inputLlPath).writeText(llvmIr)
-
-//        val clangProcess = ProcessBuilder(
-//            "clang",
-//            inputLlPath,
-//            "-o",
-//            outputExePath
-//        )
-//            .redirectError(ProcessBuilder.Redirect.INHERIT)
-//            .start()
-//        clangProcess.waitFor()
     }
 }

@@ -1,4 +1,4 @@
-            @trait_107680248 = unnamed_addr constant <{ i16, i16, ptr, ptr }> <{
+            @trait_1625244645 = unnamed_addr constant <{ i16, i16, ptr, ptr }> <{
                 i16 8,
                 i16 8,
                 ptr @Map_new, 
@@ -61,10 +61,10 @@ entry:
     store i8 0, i8* %22
     %23 = getelementptr inbounds [14 x i8], [14 x i8]* %8, i32 0, i32 0
     call void @println_str(i8* %23)
-    %25 = getelementptr inbounds <{i16, i16, ptr, ptr}>, ptr @trait_107680248, i32 0, i32 2
+    %25 = getelementptr inbounds <{i16, i16, ptr, ptr}>, ptr @trait_1625244645, i32 0, i32 2
     %26 = load ptr, ptr %25
     %27 = call %Map* %26(i32 4)
-    %28 = getelementptr inbounds <{i16, i16, ptr, ptr}>, ptr @trait_107680248, i32 0, i32 3
+    %28 = getelementptr inbounds <{i16, i16, ptr, ptr}>, ptr @trait_1625244645, i32 0, i32 3
     %29 = load ptr, ptr %28
     %30 = call i32 %29(%Map* %27)
     call void @println_i32(i32 %30)
@@ -73,14 +73,14 @@ entry:
     store i32 42, i32* %33
     %34 = getelementptr inbounds %Map, %Map* %32, i32 0, i32 1
     store i32 64, i32* %34
-    %35 = getelementptr inbounds <{i16, i16, ptr, ptr}>, ptr @trait_107680248, i32 0, i32 3
+    %35 = getelementptr inbounds <{i16, i16, ptr, ptr}>, ptr @trait_1625244645, i32 0, i32 3
     %36 = load ptr, ptr %35
     %37 = call i32 %36(%Map* %32)
     call void @println_i32(i32 %37)
-    %39 = getelementptr inbounds <{i16, i16, ptr, ptr}>, ptr @trait_107680248, i32 0, i32 2
+    %39 = getelementptr inbounds <{i16, i16, ptr, ptr}>, ptr @trait_1625244645, i32 0, i32 2
     %40 = load ptr, ptr %39
     %41 = call %Map* %40(i32 8)
-    %42 = getelementptr inbounds <{i16, i16, ptr, ptr}>, ptr @trait_107680248, i32 0, i32 3
+    %42 = getelementptr inbounds <{i16, i16, ptr, ptr}>, ptr @trait_1625244645, i32 0, i32 3
     %43 = load ptr, ptr %42
     %44 = call i32 %43(%Map* %41)
     call void @println_i32(i32 %44)

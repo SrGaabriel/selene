@@ -1,14 +1,15 @@
-package me.gabriel.gwydion.analysis.signature
+package me.gabriel.gwydion.compiler.io
 
 import kotlinx.serialization.decodeFromString
 import kotlinx.serialization.encodeToString
 import kotlinx.serialization.json.Json
-import me.gabriel.gwydion.frontend.GwydionType
+import me.gabriel.gwydion.analysis.signature.Signatures
 import me.gabriel.gwydion.tools.GwydionLogger
 import me.gabriel.gwydion.tools.LogLevel
 import java.io.File
 
-class SignatureHandler(
+// currently JVM only
+class SignatureIOService(
     val module: String,
     val logger: GwydionLogger,
     val json: Json

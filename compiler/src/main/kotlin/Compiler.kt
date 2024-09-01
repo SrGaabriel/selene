@@ -4,9 +4,10 @@ import com.github.ajalt.mordant.rendering.TextColors
 import kotlinx.serialization.json.Json
 import me.gabriel.gwydion.analysis.SemanticAnalysisManager
 import me.gabriel.gwydion.analysis.SymbolRepository
-import me.gabriel.gwydion.analysis.signature.SignatureHandler
 import me.gabriel.gwydion.analysis.signature.Signatures
 import me.gabriel.gwydion.compiler.cli.CommandHandler
+import me.gabriel.gwydion.compiler.io.CompilerIOService
+import me.gabriel.gwydion.compiler.io.SignatureIOService
 import me.gabriel.gwydion.compiler.log.MordantLogger
 import me.gabriel.gwydion.compiler.log.bold
 import me.gabriel.gwydion.compiler.log.color
@@ -26,7 +27,7 @@ private val json = Json {
 }
 
 fun main(args: Array<String>) {
-    println("Gwydion Compiler")
+    println("Gwydion Compiler") // Let's signal that the compiler has been reached, just in case we face an issue with build tools or whatever!
     val logger = MordantLogger()
     val cli = CommandHandler(args)
 
@@ -37,7 +38,7 @@ fun main(args: Array<String>) {
     }
     val sourcePath = args[0]
     val name = args.getOrNull(1) ?: "program"
-    val signatureHandler = SignatureHandler(name, logger, json)
+    val signatureHandler = SignatureIOService(name, logger, json)
     val signaturesFile = args.getOrNull(2)?.let { File(it) } ?: File("signatures.json")
     signaturesFile.createNewFile()
     signaturesFile.writeText(signaturesFile.readText().ifEmpty { "{}" })
@@ -73,7 +74,7 @@ fun main(args: Array<String>) {
     val generationDelay = generationEnd.toEpochMilli() - generationStart.toEpochMilli()
     logger.log(LogLevel.INFO) { +"Code generation took ${generationDelay}ms" }
     val compilingStart = Instant.now()
-    llvmCodeAdapter.generateExecutable(
+    CompilerIOService.generateExecutable(
         llvmIr = generated,
         outputDir = currentFolder,
         outputFileName = name

@@ -16,3 +16,5 @@ include("runtime")
 include("analysis")
 include("compiler")
 include("tools")
+
+include("runestone")

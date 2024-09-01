@@ -6,4 +6,6 @@ class TokenStream(private val tokens: List<Token>) : Iterator<Token> by tokens.i
     operator fun get(index: Int): Token = tokens[index]
 
     fun last(): Token = tokens.last()
+
+    fun toList(): List<Token> = tokens
 }
