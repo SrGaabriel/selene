@@ -32,8 +32,11 @@ class SemanticAnalysisManager(
             InstantiationAnalyzer(),
             ArrayAccessAnalyzer(),
             DataFieldAnalyzer(),
+            LambdaAnalyzer(),
+            LambdaParameterAnalyzer(),
             CallAnalyzer(),
-            StructReferenceAnalyzer()
+            StructReferenceAnalyzer(),
+            VariableReferenceAnalyzer()
         )
     }
 

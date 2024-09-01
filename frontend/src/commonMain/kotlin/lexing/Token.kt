@@ -21,6 +21,7 @@ enum class TokenKind {
     COMMA,
     DOT,
     AT,
+    PIPE,
     RANGE,
     OPENING_BRACKETS,
     CLOSING_BRACKETS,
@@ -62,6 +63,8 @@ enum class TokenKind {
     INTO,
     SELF,
     MUT,
+    LAMBDA,
+    LAMBDA_RETURN,
     MUTATION,
     EOF,
     BOF

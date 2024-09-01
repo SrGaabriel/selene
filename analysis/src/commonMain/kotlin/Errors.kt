@@ -112,6 +112,11 @@ sealed class AnalysisError(val message: String, val node: SyntaxTreeNode) {
         node
     )
 
+    class LambdaTypeCannotBeInferred(node: SyntaxTreeNode) : AnalysisError(
+        "lambda type cannot be inferred",
+        node
+    )
+
     class WrongFunctionParametersForTraitImpl(
         node: SyntaxTreeNode,
         function: String,

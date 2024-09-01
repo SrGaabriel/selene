@@ -23,6 +23,7 @@ class StringLexer(private val data: String): Lexer {
                 '[' -> tokens.add(Token(TokenKind.OPENING_BRACKETS, "[", position)).also { position++ }
                 ']' -> tokens.add(Token(TokenKind.CLOSING_BRACKETS, "]", position)).also { position++ }
                 '@' -> tokens.add(Token(TokenKind.AT, "@", position)).also { position++ }
+                '|' -> tokens.add(Token(TokenKind.PIPE, "|", position)).also { position++ }
                 '"' -> return Either.left(lexString(tokens) ?: continue)
                 in '0'..'9' -> tokens.add(number())
                 in 'a'..'z', in 'A'..'Z', '_' -> {
@@ -58,6 +59,8 @@ class StringLexer(private val data: String): Lexer {
                 '-' -> {
                     if (data[position + 1] == '=') {
                         tokens.add(Token(TokenKind.MINUS_ASSIGN, "--", position)).also { position += 2 }
+                    } else if (data[position + 1] == '>') {
+                        tokens.add(Token(TokenKind.LAMBDA_RETURN, "->", position)).also { position += 2 }
                     } else {
                         tokens.add(Token(TokenKind.MINUS, "-", position)).also { position++ }
                     }
@@ -132,6 +135,7 @@ class StringLexer(private val data: String): Lexer {
             "data" -> Either.Right(Token(TokenKind.DATA, value, start))
             "trait" -> Either.Right(Token(TokenKind.TRAIT, value, start))
             "make" -> Either.Right(Token(TokenKind.MAKE, value, start))
+            "lambda" -> Either.Right(Token(TokenKind.LAMBDA, value, start))
             "into" -> Either.Right(Token(TokenKind.INTO, value, start))
             "self" -> Either.Right(Token(TokenKind.SELF, value, start))
             "mut" -> Either.Right(Token(TokenKind.MUT, value, start))

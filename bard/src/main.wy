@@ -1,32 +1,11 @@
-data Map(
-    foo: int32,
-    remainder: int32
-)
-
-trait Fooable(
-    new(foo: int32) :: Map,
-    fooat(self) :: int32
-)
-
-make Map into Fooable {
-    func new(foo: int32) :: Map {
-        return @Map(foo, 42);
-    }
-
-    func fooat(self) :: int32 {
-        return self.foo;
-    }
+func callback(a: lambda(int32) -> int32) {
+    result := a(42);
+    println(result);
 }
 
 func main() {
     println("Hello, World!");
-
-    new := Map@new(4);
-    println(new.fooat());
-
-    map := @Map(42, 64);
-    println(map.fooat());
-
-    new2 := map.new(8);
-    println(new2.fooat());
+    callback(lambda|f: int32| f + 12);
+    callback(lambda|s: int32| s + 24);
+    callback(lambda|t: int32| t + 36);
 }

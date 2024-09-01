@@ -3,23 +3,3 @@ trait Collection(
     get(self, index: int32) :: string,
     push(mut self, value: string) :: void,
 )
-
-data List(
-    array: string[*],
-    size: int32
-)
-
-make List into Collection {
-    func size(self) :: int32 {
-        return self.size;
-    }
-
-    func get(self, index: int32) :: string {
-        return self.array[index];
-    }
-
-    func push(mut self, value: string) {
-        self.array[self.size] = value;
-        self.size = self.size + 1;
-    }
-}

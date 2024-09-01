@@ -6,42 +6,34 @@ import me.gabriel.gwydion.analysis.SymbolBlock
 import me.gabriel.gwydion.analysis.analyzers.SingleNodeAnalyzer
 import me.gabriel.gwydion.analysis.analyzers.TypeInferenceVisitor
 import me.gabriel.gwydion.analysis.signature.Signatures
-import me.gabriel.gwydion.analysis.util.doesProvidedTypeAccordToExpectedType
 import me.gabriel.gwydion.frontend.GwydionType
-import me.gabriel.gwydion.frontend.parsing.BinaryOperatorNode
+import me.gabriel.gwydion.frontend.parsing.LambdaNode
 
-class BinaryOpAnalyzer: SingleNodeAnalyzer<BinaryOperatorNode>(BinaryOperatorNode::class) {
+class LambdaAnalyzer: SingleNodeAnalyzer<LambdaNode>(LambdaNode::class) {
     override fun register(
         block: SymbolBlock,
-        node: BinaryOperatorNode,
+        node: LambdaNode,
         signatures: Signatures,
         visitor: TypeInferenceVisitor
     ): SymbolBlock {
-        visitor.visit(node.left) {
-            block.defineSymbol(node, block.resolveExpression(node.left) ?: GwydionType.Unknown)
-        }
+        block.defineSymbol(node, GwydionType.Unknown)
         return block
     }
 
     override fun analyze(
         block: SymbolBlock,
-        node: BinaryOperatorNode,
+        node: LambdaNode,
         signatures: Signatures,
         results: AnalysisResult
     ): SymbolBlock {
-        val left = block.resolveExpression(node.left) ?: GwydionType.Unknown
-        val right = block.resolveExpression(node.right) ?: GwydionType.Unknown
-
-        if (left != right) {
+        val type = block.resolveExpression(node) ?: GwydionType.Unknown
+        if (type == GwydionType.Unknown) {
             results.errors.add(
-                AnalysisError.BinaryOpTypeMismatch(
-                    node,
-                    left,
-                    right
+                AnalysisError.LambdaTypeCannotBeInferred(
+                    node
                 )
             )
         }
-
         return block
     }
 }

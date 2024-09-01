@@ -78,6 +78,12 @@ sealed class GwydionType(
             get() = baseType
     }
 
+    @Serializable
+    data class Lambda(
+        val parameters: List<GwydionType>,
+        val returnType: GwydionType
+    ): GwydionType("lambda", "(${parameters.joinToString(", ") { it.signature }}) -> ${returnType.signature}")
+
     open val base: GwydionType
         get() = this
 

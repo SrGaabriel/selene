@@ -390,6 +390,7 @@ class Parser(private val tokens: TokenStream) {
             TokenKind.BOOL_TYPE -> parseBooleanLiteral().mapInto()
             TokenKind.OPENING_BRACKETS, TokenKind.TIMES -> parseArray().mapInto()
             TokenKind.AT -> parseInstantiation().mapInto()
+            TokenKind.LAMBDA -> parseLambda().mapInto()
             else -> Either.Left(ParsingError.UnexpectedToken(peekToken()))
         }
     }
@@ -535,7 +536,45 @@ class Parser(private val tokens: TokenStream) {
         }
     }
 
+    private fun parseLambda(): Either<ParsingError, LambdaNode> {
+        val lambdaToken = consumeToken(TokenKind.LAMBDA)
+        if (lambdaToken is Either.Left) return Either.Left(lambdaToken.value)
+        return consumeToken(TokenKind.PIPE).flatMapRight {
+            parseCommaSeparatedList(::parseLambdaParameter, TokenKind.PIPE).flatMapRight { params ->
+                parseExpression().mapRight { body ->
+                    LambdaNode(params, body, lambdaToken.unwrap())
+                }
+            }
+        }
+    }
+
+    private fun parseLambdaParameter(): Either<ParsingError, LambdaParameterNode> {
+        return parseIdentifier().flatMapRight { name ->
+            if (peekToken().kind == TokenKind.TYPE_DECLARATION) {
+                consumeToken()
+                parseType().mapRight { type ->
+                    LambdaParameterNode(name.value, type, name)
+                }
+            } else {
+                Either.Right(LambdaParameterNode(name.value, GwydionType.Unknown, name))
+            }
+        }
+    }
+
     private fun parseType(): Either<ParsingError, GwydionType> {
+        if (peekToken().kind == TokenKind.LAMBDA) {
+            consumeToken()
+            return consumeToken(TokenKind.OPENING_PARENTHESES).flatMapRight {
+                parseCommaSeparatedList(::parseType, TokenKind.CLOSING_PARENTHESES).flatMapRight { params ->
+                    consumeToken(TokenKind.LAMBDA_RETURN).flatMapRight {
+                        parseType().mapRight { returnType ->
+                            GwydionType.Lambda(params, returnType)
+                        }
+                    }
+                }
+            }
+        }
+
         val isMutable = consumeTokenIfPresent(TokenKind.MUT) != null
         val baseType = parseBaseType() ?: return Either.Left(ParsingError.UnexpectedToken(peekToken()))
 

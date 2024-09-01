@@ -336,3 +336,23 @@ class RangeNode(
 
     override fun toString(): String = "RangeNode(from=$from, to=$to)"
 }
+
+class LambdaNode(
+    val parameters: List<LambdaParameterNode>,
+    val body: SyntaxTreeNode,
+    mark: Token
+) : SyntaxTreeNode(mark) {
+    override fun getChildren(): List<SyntaxTreeNode> = parameters + body
+
+    override fun toString(): String = "LambdaNode(parameters=$parameters, body=$body)"
+}
+
+class LambdaParameterNode(
+    val name: String,
+    val type: GwydionType,
+    mark: Token
+) : SyntaxTreeNode(mark) {
+    override fun getChildren(): List<SyntaxTreeNode> = emptyList()
+
+    override fun toString(): String = "LambdaParameterNode(name='$name', type=$type)"
+}

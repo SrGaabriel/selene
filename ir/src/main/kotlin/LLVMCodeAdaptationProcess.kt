@@ -30,6 +30,7 @@ class LLVMCodeAdaptationProcess(
     private val llvmGenerator = LLVMCodeGenerator()
     private val assembler = LLVMCodeAssembler(llvmGenerator)
 
+    private val lambdas = mutableListOf<LambdaData>()
     private val traitObjects = mutableMapOf<MemoryUnit.Unsized, MutableList<TraitObject>>()
     private val traitObjectsImpl = mutableSetOf<String>()
 
@@ -56,7 +57,6 @@ class LLVMCodeAdaptationProcess(
         traitObjectsImpl.forEach {
             dependencies.add(it)
         }
-
         (assembler.generator.getGeneratedDependencies() + dependencies).forEach {
             assembler.addDependency(it)
         }
@@ -70,6 +70,15 @@ class LLVMCodeAdaptationProcess(
             // TODO: fix
             traits.forEach { obj ->
                 assembler.addDependency(assembler.generator.createTraitObject(obj = obj))
+            }
+        }
+        lambdas.forEach { lambda ->
+            assembler.functionDsl(
+                name = "lambda_${lambda.node.hashCode()}",
+                arguments = lambda.parameters,
+                returnType = getProperReturnType(lambda.returnType)
+            ) {
+                assembler.returnValue(acceptNode(lambda.block, lambda.node.body))
             }
         }
     }
@@ -107,6 +116,7 @@ class LLVMCodeAdaptationProcess(
         is ArrayAssignmentNode -> generateArrayAssignment(block, node)
         is TraitFunctionCallNode -> generateTraitCall(block, node, store)
         is ForNode -> generateFor(block, node)
+        is LambdaNode -> generateLambda(block, node, store)
         else -> error("Node $node not supported")
     }
 
@@ -176,6 +186,36 @@ class LLVMCodeAdaptationProcess(
         node: CallNode,
         store: Boolean
     ): Value {
+        val potentialLambda = block.resolveSymbol(node.name)
+        if (potentialLambda != null && potentialLambda is GwydionType.Lambda) {
+            val parameters = mutableListOf<Value>()
+            node.arguments.forEachIndexed { index, arg ->
+                val result = acceptNode(block, arg)
+                parameters.add(result)
+            }
+
+            val type = getProperReturnType(potentialLambda.returnType)
+            val reg = assembler.nextRegister()
+            val assignment = if (type != LLVMType.Void) {
+                MemoryUnit.Sized(
+                    register = reg,
+                    type = type,
+                    size = type.size
+                )
+            } else NullMemoryUnit
+
+            val inMemory = resolveMemoryUnit(block, node.name)
+                ?: error("Lambda ${node.name} not found in block ${block.name}")
+
+            assembler.callFunction(
+                name = inMemory.register.toString(),
+                arguments = parameters,
+                assignment = assignment,
+                local = true
+            )
+            return assignment
+        }
+
         val (expectedParameters, functionSymbol) = signatures.functions.find { it.name == node.name }
             ?.let { it.parameters to it.returnType }
             ?: error("Function ${node.name} not found in block ${block.name}")
@@ -692,6 +732,34 @@ class LLVMCodeAdaptationProcess(
         return NullMemoryUnit
     }
 
+    private fun generateLambda(block: SymbolBlock, node: LambdaNode, store: Boolean): Value {
+        // we'll just create a function and pass a pointer to it
+        val parameters = mutableListOf<MemoryUnit>()
+        node.parameters.forEach { param ->
+            val type = getProperReturnType(param.type)
+            val unit = MemoryUnit.Sized(
+                register = assembler.nextRegister(),
+                type = type,
+                size = type.size
+            )
+            putMemoryUnit(block, param.name, unit)
+            parameters.add(unit)
+        }
+        val returnType = block.resolveExpression(node.body)
+            ?: error("Return type not found for lambda $node")
+
+        lambdas.add(
+            LambdaData(
+                node = node,
+                parameters = parameters,
+                block = block,
+                returnType = returnType
+            )
+        )
+
+        return LLVMConstant("@lambda_${node.hashCode()}", LLVMType.Ptr)
+    }
+
     private fun registerTraitObject(traitMem: MemoryUnit.Unsized, structName: String, functions: List<String>) {
         // Create new key if trait doesn't exist, otherwise add to the list of functions.
         traitObjects.computeIfAbsent(traitMem) { mutableListOf() }
@@ -760,4 +828,11 @@ class LLVMCodeAdaptationProcess(
             else -> error("Binary operation not supported")
         }
     }
+
+    private data class LambdaData(
+        val node: LambdaNode,
+        val parameters: List<MemoryUnit>,
+        val block: SymbolBlock,
+        val returnType: GwydionType,
+    )
 }

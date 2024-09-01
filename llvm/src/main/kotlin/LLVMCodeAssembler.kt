@@ -7,12 +7,17 @@ class LLVMCodeAssembler(val generator: ILLVMCodeGenerator): ILLVMCodeAssembler {
     private val ir = mutableListOf<String>()
     private var register = 0
     private var label = 0
+//    var cursor = 0
 
     override fun addDependency(dependency: String) {
         ir.add(0, dependency)
     }
 
     override fun finish(): String = ir.joinToString("\n")
+
+    override fun add(instruction: String) {
+        ir.add(instruction)
+    }
 
     override fun instruct(instruction: String) {
         ir.add("    $instruction")
@@ -49,11 +54,11 @@ class LLVMCodeAssembler(val generator: ILLVMCodeGenerator): ILLVMCodeAssembler {
     }
 
     override fun declareFunction(name: String, returnType: LLVMType, arguments: List<MemoryUnit>) {
-        ir.add(generator.functionDeclaration(name, returnType, arguments))
+        add(generator.functionDeclaration(name, returnType, arguments))
     }
 
     override fun createBranch(label: String) {
-        ir.add(generator.createBranch(label))
+        add(generator.createBranch(label))
     }
 
     override fun conditionalBranch(condition: MemoryUnit, trueLabel: String, falseLabel: String) {
@@ -82,7 +87,7 @@ class LLVMCodeAssembler(val generator: ILLVMCodeGenerator): ILLVMCodeAssembler {
     }
 
     override fun closeBrace() {
-        ir.add("}")
+        add("}")
     }
 
     override fun addNumber(type: LLVMType, left: Value, right: Value): MemoryUnit =
@@ -325,7 +330,7 @@ class LLVMCodeAssembler(val generator: ILLVMCodeGenerator): ILLVMCodeAssembler {
     }
 
     override fun returnValue(value: Value) {
-        instruct("ret ${value.llvm()}")
+        instruct("ret ${value.type.llvm} ${value.llvm()}")
     }
 
     override fun copySourceToDestinationString(source: MemoryUnit, destination: MemoryUnit) {

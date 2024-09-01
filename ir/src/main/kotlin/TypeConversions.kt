@@ -24,6 +24,7 @@ fun GwydionType.asLLVM(): LLVMType = when (this) {
         fields = this.fields.mapValues { getProperReturnType(it.value.asLLVM()) }
     )
     is GwydionType.Mutable -> this.baseType.asLLVM()
+    is GwydionType.Lambda -> LLVMType.Ptr
     else -> error("Unsupported LLVM type $this")
 }
 

@@ -8,6 +8,8 @@ import me.gabriel.gwydion.llvm.struct.Value
 interface ILLVMCodeAssembler {
     fun addDependency(dependency: String)
 
+    fun add(instruction: String)
+
     fun instruct(instruction: String)
 
     fun allocateStackMemory(type: LLVMType, alignment: Int): MemoryUnit
