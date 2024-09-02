@@ -1,12 +1,9 @@
 package me.gabriel.gwydion.compiler
 
 import com.github.ajalt.mordant.rendering.TextColors
-import kotlinx.serialization.json.Json
 import me.gabriel.gwydion.analysis.SemanticAnalysisManager
 import me.gabriel.gwydion.analysis.SymbolRepository
 import me.gabriel.gwydion.analysis.signature.Signatures
-import me.gabriel.gwydion.compiler.cli.CommandHandler
-import me.gabriel.gwydion.compiler.log.MordantLogger
 import me.gabriel.gwydion.compiler.log.bold
 import me.gabriel.gwydion.compiler.log.color
 import me.gabriel.gwydion.frontend.lexing.lexers.StringLexer
@@ -19,17 +16,17 @@ import me.gabriel.gwydion.tools.*
 class GwydionCompiler(
     private val platform: GwydionCompilerPlatform,
 ) {
-    fun start(args: Array<String>) {
+    fun start() {
         println("Gwydion Compiler") // Let's signal that the compiler has been reached, just in case we face an issue with build tools or whatever!
-        val logger = platform.logger
-        val cli = CommandHandler(args)
+        val logger by platform::logger
+        val cli by platform::cli
 
-        val isStdlib = cli.option("internal-stdlib")
-        if (args.isEmpty()) {
+        val isStdlib = platform.cli.option("internal-stdlib")
+        if (cli.isEmpty()) {
             logger.log(LogLevel.ERROR) { +"The argument should be the path to the file to compile" }
             platform.exitProcess(1)
         }
-        val name = args.getOrNull(1) ?: "program"
+        val name = cli.moduleNameOrNull() ?: "program"
         val signatures = platform.parseSignatures()
 
         logger.log(LogLevel.INFO) { +"Starting the Gwydion compiler..." }

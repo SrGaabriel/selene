@@ -5,14 +5,14 @@ import kotlinx.serialization.encodeToString
 import kotlinx.serialization.json.Json
 import me.gabriel.gwydion.analysis.signature.Signatures
 import me.gabriel.gwydion.compiler.GwydionCompilerPlatform
-import me.gabriel.gwydion.compiler.cli.CommandHandler
+import me.gabriel.gwydion.compiler.cli.CommandLine
 import me.gabriel.gwydion.tools.GwydionLogger
 import me.gabriel.gwydion.tools.LogLevel
 import java.io.File
 
 class JvmCompilerPlatform(
     override val logger: GwydionLogger,
-    private val cli: CommandHandler,
+    override val cli: CommandLine,
     private val json: Json
 ): GwydionCompilerPlatform {
     override fun getCurrentTimeMillis(): Long {

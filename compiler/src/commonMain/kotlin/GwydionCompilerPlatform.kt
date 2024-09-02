@@ -1,9 +1,11 @@
 package me.gabriel.gwydion.compiler
 
 import me.gabriel.gwydion.analysis.signature.Signatures
+import me.gabriel.gwydion.compiler.cli.CommandLine
 import me.gabriel.gwydion.tools.GwydionLogger
 
 interface GwydionCompilerPlatform {
+    val cli: CommandLine
     val logger: GwydionLogger
 
     fun getCurrentTimeMillis(): Long

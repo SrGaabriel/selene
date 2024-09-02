@@ -80,22 +80,21 @@ fn link_files(project_root: &Path) {
 
 fn compile(
     name: &String,
-    file: &Path,
-    project_root: &Path,
+    target_root: &Path,
+    gwydion_root: &Path,
     gwydion_jar: &Path,
     is_stdlib: bool
 ) -> bool {
-    println!("Compiling {:?}", file);
+    println!("Compiling {:?}", target_root);
 
-    let output_dir = project_root.join("bard/output/ll");
+    let output_dir = gwydion_root.join("bard/output/ll");
     fs::create_dir_all(&output_dir).expect("Failed to create output directory");
 
     let mut command = Command::new("java");
     command.arg("-jar")
         .arg(&gwydion_jar)
-        .arg(file)
+        .arg(target_root)
         .arg(name)
-        .arg("signatures.json")
         .current_dir(&output_dir);
 
     if is_stdlib {
