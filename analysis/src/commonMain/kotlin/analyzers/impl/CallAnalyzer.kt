@@ -56,7 +56,16 @@ class CallAnalyzer: SingleNodeAnalyzer<CallNode>(CallNode::class) {
         results: AnalysisResult
     ): SymbolBlock {
         val function = signatures.functions.find { it.name == node.name }
-        if (function == null) return@analyze block
+        if (function == null) {
+            val potentialLambda = block.resolveSymbol(node.name)
+            if (potentialLambda !is GwydionType.Lambda) {
+                results.errors.add(AnalysisError.UndefinedFunction(
+                    node = node,
+                ))
+                return block
+            }
+            return@analyze block
+        }
 
         if (function.modifiers.contains(Modifiers.INTERNAL) && block.module != function.module) {
             results.errors.add(AnalysisError.InternalFunctionCall(

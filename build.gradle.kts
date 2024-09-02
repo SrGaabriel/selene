@@ -4,7 +4,7 @@ plugins {
 }
 
 group = "me.gabriel.gwydion"
-version = "1.0-SNAPSHOT"
+version = "0.0.1-ALPHA"
 
 repositories {
     mavenCentral()

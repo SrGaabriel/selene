@@ -39,8 +39,8 @@ sealed class AnalysisError(val message: String, val node: SyntaxTreeNode) {
         node
     )
 
-    class UndefinedFunction(node: CallNode, block: String) : AnalysisError(
-        "undefined function: ${node.name} in block $block",
+    class UndefinedFunction(node: CallNode) : AnalysisError(
+        "undefined function: ${node.name}",
         node
     )
 
