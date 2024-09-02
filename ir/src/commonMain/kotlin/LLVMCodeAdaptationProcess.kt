@@ -12,8 +12,6 @@ import me.gabriel.gwydion.ir.intrinsics.IntrinsicFunction
 import me.gabriel.gwydion.llvm.LLVMCodeAssembler
 import me.gabriel.gwydion.llvm.LLVMCodeGenerator
 import me.gabriel.gwydion.llvm.struct.*
-import kotlin.math.absoluteValue
-import kotlin.random.Random
 
 /*
  * I decided to use exceptions instead of errors because the exceptions should be caught in
@@ -567,7 +565,7 @@ class LLVMCodeAdaptationProcess(
 
     private fun generateTraitImpl(block: SymbolBlock, node: TraitImplNode): MemoryUnit {
         val trait = MemoryUnit.Unsized(
-            register = Random.nextInt().absoluteValue, // Here we'll use absolute value instead of UInt to prevent potential overflow/compatibility issues
+            register = node.hashCode(),
             type = LLVMType.Dynamic(listOf(
                 LLVMType.I16,
                 LLVMType.I16,
