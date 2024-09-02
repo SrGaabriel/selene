@@ -1,17 +1,17 @@
-@trait_773697040 = unnamed_addr constant <{ i16, i16, ptr }> <{
+@trait_1598577558 = unnamed_addr constant <{ i16, i16, ptr }> <{
+    i16 8,
+    i16 8,
+    ptr @string.length
+}>, align 8
+@trait_436630602 = unnamed_addr constant <{ i16, i16, ptr }> <{
     i16 8,
     i16 8,
     ptr @int32.text
 }>, align 8
-@trait_599149644 = unnamed_addr constant <{ i16, i16, ptr }> <{
+@trait_1740672885 = unnamed_addr constant <{ i16, i16, ptr }> <{
     i16 8,
     i16 8,
     ptr @string.text
-}>, align 8
-@trait_1614627941 = unnamed_addr constant <{ i16, i16, ptr }> <{
-    i16 8,
-    i16 8,
-    ptr @string.length
 }>, align 8
 @format_f = private unnamed_addr constant [3 x i8] c"%f\00"
 @format_n = private unnamed_addr constant [3 x i8] c"%d\00"
@@ -108,30 +108,30 @@ declare i32 @getchar()
 @buffer = global [256 x i8] zeroinitializer
 %TcpServer = type { i32, i16 }
 %Socket = type { i32, i32, i16, i32 }
-define i32 @string.length(i8** %2) {
+define i8* @string.text(i8** %0) {
 entry:
-    %3 = call i32 @str_length(i8** %2)
-    ret i32 %3
+    ret i8** %0
 }
-define i8* @string.text(i8** %4) {
+define i8* @int32.text(i32* %1) {
 entry:
-    ret i8** %4
+    %2 = alloca [6 x i8], align 1
+    %3 = getelementptr inbounds [6 x i8], [6 x i8]* %2, i32 0, i32 0
+    store i8 105, i8* %3
+    %4 = getelementptr inbounds [6 x i8], [6 x i8]* %2, i32 0, i32 1
+    store i8 110, i8* %4
+    %5 = getelementptr inbounds [6 x i8], [6 x i8]* %2, i32 0, i32 2
+    store i8 116, i8* %5
+    %6 = getelementptr inbounds [6 x i8], [6 x i8]* %2, i32 0, i32 3
+    store i8 51, i8* %6
+    %7 = getelementptr inbounds [6 x i8], [6 x i8]* %2, i32 0, i32 4
+    store i8 50, i8* %7
+    %8 = getelementptr inbounds [6 x i8], [6 x i8]* %2, i32 0, i32 5
+    store i8 0, i8* %8
+    %9 = getelementptr inbounds [6 x i8], [6 x i8]* %2, i32 0, i32 0
+    ret i8* %9
 }
-define i8* @int32.text(i32* %5) {
+define i32 @string.length(i8** %12) {
 entry:
-    %6 = alloca [6 x i8], align 1
-    %7 = getelementptr inbounds [6 x i8], [6 x i8]* %6, i32 0, i32 0
-    store i8 105, i8* %7
-    %8 = getelementptr inbounds [6 x i8], [6 x i8]* %6, i32 0, i32 1
-    store i8 110, i8* %8
-    %9 = getelementptr inbounds [6 x i8], [6 x i8]* %6, i32 0, i32 2
-    store i8 116, i8* %9
-    %10 = getelementptr inbounds [6 x i8], [6 x i8]* %6, i32 0, i32 3
-    store i8 51, i8* %10
-    %11 = getelementptr inbounds [6 x i8], [6 x i8]* %6, i32 0, i32 4
-    store i8 50, i8* %11
-    %12 = getelementptr inbounds [6 x i8], [6 x i8]* %6, i32 0, i32 5
-    store i8 0, i8* %12
-    %13 = getelementptr inbounds [6 x i8], [6 x i8]* %6, i32 0, i32 0
-    ret i8* %13
+    %13 = call i32 @str_length(i8** %12)
+    ret i32 %13
 }

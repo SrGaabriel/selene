@@ -2,7 +2,7 @@ import com.github.jengelman.gradle.plugins.shadow.tasks.ShadowJar
 
 plugins {
     application
-    kotlin("jvm")
+    kotlin("multiplatform")
     alias(libs.plugins.shadow)
 }
 
@@ -10,25 +10,31 @@ repositories {
     mavenCentral()
 }
 
-dependencies {
-    implementation(project(":frontend"))
-    implementation(project(":analysis"))
-    implementation(project(":ir"))
-    implementation(libs.mordant)
-    implementation(libs.kotlinx.serialization.json)
-}
-
-application {
-    mainClass = "me.gabriel.gwydion.compiler.CompilerKt"
-}
-
-tasks.withType<Jar> {
-    manifest {
-        attributes["Main-Class"] = "me.gabriel.gwydion.compiler.CompilerKt"
-        attributes["Class-Path"] = configurations.runtimeClasspath.get().joinToString(" ") { "libs/$it" }
+kotlin {
+    jvm {
+       withJava()
+    }
+    iosArm64()
+    macosX64()
+    js().browser()
+    sourceSets {
+        val commonMain by getting {
+            dependencies {
+                implementation(project(":analysis"))
+                implementation(project(":frontend"))
+                implementation(project(":ir"))
+                implementation(libs.mordant)
+                implementation(libs.kotlinx.io)
+                implementation(libs.kotlinx.serialization.json)
+            }
+        }
     }
 }
 
 tasks.withType<ShadowJar> {
     archiveFileName.set("gwydion.jar")
+}
+
+application {
+    mainClass = "me.gabriel.gwydion.compiler.jvm.JvmLauncherKt"
 }

@@ -1,13 +1,24 @@
 plugins {
-    kotlin("jvm")
+    kotlin("multiplatform")
 }
 
 repositories {
     mavenCentral()
 }
 
-dependencies {
-    compileOnly(project(":analysis"))
-    compileOnly(project(":frontend"))
-    implementation(project(":llvm"))
+kotlin {
+    jvm()
+    iosArm64()
+    macosX64()
+    js().browser()
+
+    sourceSets {
+        val commonMain by getting {
+            dependencies {
+                api(project(":analysis"))
+                api(project(":frontend"))
+                api(project(":llvm"))
+            }
+        }
+    }
 }

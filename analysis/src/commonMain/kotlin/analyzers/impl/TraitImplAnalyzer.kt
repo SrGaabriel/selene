@@ -57,7 +57,6 @@ class TraitImplAnalyzer: SingleNodeAnalyzer<TraitImplNode>(TraitImplNode::class)
         val newBlock = block.surfaceSearchChild(node)
             ?: error("Block for trait impl ${node.trait} for ${node.type.signature} was not created")
 
-        // Here we'll check if the impl has all the required functions
         val trait = signatures.traits.find { it.name == node.trait }
         if (trait == null) return newBlock
 

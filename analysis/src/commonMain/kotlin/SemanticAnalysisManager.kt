@@ -4,8 +4,7 @@ import me.gabriel.gwydion.analysis.analyzers.ISemanticAnalyzer
 import me.gabriel.gwydion.analysis.analyzers.TypeInferenceVisitor
 import me.gabriel.gwydion.analysis.analyzers.impl.*
 import me.gabriel.gwydion.analysis.signature.Signatures
-import me.gabriel.gwydion.frontend.parsing.SyntaxTree
-import me.gabriel.gwydion.frontend.parsing.SyntaxTreeNode
+import me.gabriel.gwydion.frontend.parsing.*
 import me.gabriel.gwydion.tools.GwydionLogger
 import me.gabriel.gwydion.tools.LogLevel
 
@@ -78,7 +77,9 @@ class SemanticAnalysisManager(
             switchBlock
         }.firstOrNull() ?: block
 
-        (node.getChildren() - alreadyVisitedChildren).forEach {
+        (node.getChildren() - alreadyVisitedChildren).asSequence().sortedBy {
+            getOrder(it)
+        }.forEach {
             registerNodeSymbols(newBlock, it)
         }
     }
@@ -104,5 +105,14 @@ class SemanticAnalysisManager(
         unknown.forEach { nodeName ->
             logger.log(LogLevel.WARN) { +"No analyzers found for node $nodeName" }
         }
+    }
+
+    fun getOrder(node: SyntaxTreeNode): Int = when (node) {
+        is RootNode -> 0
+        is DataStructureNode -> 1
+        is TraitNode -> 2
+        is TraitImplNode -> 3
+        is FunctionNode -> 4
+        else -> 5
     }
 }

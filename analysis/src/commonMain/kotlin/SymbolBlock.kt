@@ -3,7 +3,7 @@ package me.gabriel.gwydion.analysis
 import me.gabriel.gwydion.frontend.GwydionType
 import me.gabriel.gwydion.frontend.parsing.*
 
-class SymbolRepository(val module: String,) {
+class SymbolRepository(val module: String) {
     val root = SymbolBlock(
         module,
         null,

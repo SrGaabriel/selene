@@ -762,7 +762,7 @@ class LLVMCodeAdaptationProcess(
 
     private fun registerTraitObject(traitMem: MemoryUnit.Unsized, structName: String, functions: List<String>) {
         // Create new key if trait doesn't exist, otherwise add to the list of functions.
-        traitObjects.computeIfAbsent(traitMem) { mutableListOf() }
+        traitObjects.getOrPut(traitMem) { mutableListOf() }
             .add(TraitObject(
                 register = traitMem.register,
                 name = structName,
