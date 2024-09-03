@@ -25,8 +25,7 @@ class NativeCompilerPlatform(
         logger.log(LogLevel.DEBUG) { +"Reading the directory: ${directory}" }
         val builder = StringBuilder()
         FileSystem.SYSTEM.list(directory).forEach {
-            println("Reading $it")
-//            if (it.extension != "wy") return@forEach
+            if (it.fileExtensionOrNull != "wy") return@forEach
             logger.log(LogLevel.DEBUG) { +"Reading the file: ${it.name}" }
             builder.appendLine(FileSystem.SYSTEM.read(it) { readUtf8() })
         }

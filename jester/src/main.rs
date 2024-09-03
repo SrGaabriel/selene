@@ -129,7 +129,7 @@ fn compile(
 
         output.status.success()
     } else {
-        let mut command = Command::new("./gwydion");
+        let mut command = Command::new("./compiler");
         command.arg(target_root)
             .arg(name)
             .current_dir(&output_dir);

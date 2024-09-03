@@ -31,7 +31,6 @@ kotlin {
                 implementation(project(":ir"))
                 implementation(libs.mordant)
                 implementation(libs.okio)
-                implementation(libs.kotlinx.serialization.core)
                 implementation(libs.kotlinx.serialization.json)
             }
         }
