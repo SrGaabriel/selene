@@ -8,14 +8,16 @@ repositories {
 
 kotlin {
     jvm()
+    mingwX64()
     iosArm64()
+    linuxX64()
     macosX64()
     js().browser()
     sourceSets {
         val commonMain by getting {
             dependencies {
-                compileOnly(project(":frontend"))
-                compileOnly(libs.kotlinx.serialization.json)
+                implementation(project(":frontend"))
+                implementation(libs.kotlinx.serialization.core)
             }
         }
     }

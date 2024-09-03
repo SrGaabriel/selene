@@ -7,44 +7,53 @@ import me.gabriel.gwydion.frontend.lexing.TokenKind
 @Serializable
 sealed class GwydionType(
     val id: kotlin.String,
-    val signature: kotlin.String = id
+    val signature: kotlin.String
 ) {
+    // Overloaded constructor for convenience when signature equals id
+    constructor(id: kotlin.String) : this(id, id)
+
+    // Replacing `data object` with `object` to avoid Kotlin/Native issues
     @Serializable
-    data object Any : GwydionType("any")
+    object Any : GwydionType("any")
     @Serializable
-    data object Int8 : GwydionType("int8")
+    object Int8 : GwydionType("int8")
     @Serializable
-    data object Int16 : GwydionType("int16")
+    object Int16 : GwydionType("int16")
     @Serializable
-    data object Int32 : GwydionType("int32")
+    object Int32 : GwydionType("int32")
     @Serializable
-    data object Int64 : GwydionType("int64")
+    object Int64 : GwydionType("int64")
     @Serializable
-    data object UInt8 : GwydionType("uint8")
+    object UInt8 : GwydionType("uint8")
     @Serializable
-    data object UInt16 : GwydionType("uint16")
+    object UInt16 : GwydionType("uint16")
     @Serializable
-    data object UInt32 : GwydionType("uint32")
+    object UInt32 : GwydionType("uint32")
     @Serializable
-    data object UInt64 : GwydionType("uint64")
+    object UInt64 : GwydionType("uint64")
     @Serializable
-    data object Float32 : GwydionType("float32")
+    object Float32 : GwydionType("float32")
     @Serializable
-    data object Float64 : GwydionType("float64")
+    object Float64 : GwydionType("float64")
     @Serializable
-    data object String : GwydionType("string")
+    object String : GwydionType("string")
     @Serializable
-    data object Self: GwydionType("self")
+    object Self: GwydionType("self")
     @Serializable
-    data object Void : GwydionType("void")
+    object Void : GwydionType("void")
     @Serializable
-    data object Boolean : GwydionType("bool")
-    data object Unknown : GwydionType("unknown")
+    object Boolean : GwydionType("bool")
+    @Serializable
+    object Unknown : GwydionType("unknown") // Marking this as @Serializable
+
+    @Serializable
     data class UnknownReference(val reference: kotlin.String, val mutable: kotlin.Boolean): GwydionType("unknown", reference)
+
     @Serializable
     data class DynamicArray(
         val baseType: GwydionType,
     ): GwydionType("fixed array", "${baseType.signature}[]")
+
     @Serializable
     data class FixedArray(
         val baseType: GwydionType,

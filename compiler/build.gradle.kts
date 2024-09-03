@@ -14,6 +14,12 @@ kotlin {
     jvm {
        withJava()
     }
+    mingwX64("native") {
+        binaries {
+            executable()
+        }
+    }
+    linuxX64()
     iosArm64()
     macosX64()
     js().browser()
@@ -24,7 +30,8 @@ kotlin {
                 implementation(project(":frontend"))
                 implementation(project(":ir"))
                 implementation(libs.mordant)
-                implementation(libs.kotlinx.io)
+                implementation(libs.okio)
+                implementation(libs.kotlinx.serialization.core)
                 implementation(libs.kotlinx.serialization.json)
             }
         }
