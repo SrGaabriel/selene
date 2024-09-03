@@ -6,7 +6,7 @@ use std::time::Duration;
 
 fn main() {
     let args = std::env::args().collect::<Vec<String>>();
-    let native = args.iter().any(|arg| arg == "--native");
+    let native = args.contains(&String::from("--native"));
     if native {
         println!("Building native executable");
     }
@@ -138,7 +138,7 @@ fn compile(
             command.arg("--internal-stdlib");
         }
 
-        let output = command.output().expect("Failed to execute java process");
+        let output = command.output().expect("Failed to execute native binary");
         output.stdout.iter().for_each(|b| print!("{}", *b as char));
         output.stderr.iter().for_each(|b| eprint!("{}", *b as char));
 

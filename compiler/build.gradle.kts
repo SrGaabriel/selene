@@ -14,14 +14,31 @@ kotlin {
     jvm {
        withJava()
     }
-    mingwX64("native") {
+    mingwX64("windowsX64") {
         binaries {
             executable()
         }
     }
-    linuxX64()
-    iosArm64()
-    macosX64()
+    linuxX64("linuxX64") {
+        binaries {
+            executable()
+        }
+    }
+    watchosX64("watchosX64") {
+        binaries {
+            executable()
+        }
+    }
+    iosArm64("iosArm64") {
+        binaries {
+            executable()
+        }
+    }
+    macosX64("macosX64") {
+        binaries {
+            executable()
+        }
+    }
     js().browser()
     sourceSets {
         val commonMain by getting {
@@ -33,6 +50,24 @@ kotlin {
                 implementation(libs.okio)
                 implementation(libs.kotlinx.serialization.json)
             }
+        }
+        val nativeMain by creating {
+            dependsOn(commonMain)
+        }
+        val linuxX64Main by getting {
+            dependsOn(nativeMain)
+        }
+        val iosArm64Main by getting {
+            dependsOn(nativeMain)
+        }
+        val macosX64Main by getting {
+            dependsOn(nativeMain)
+        }
+        val windowsX64Main by getting {
+            dependsOn(nativeMain)
+        }
+        val watchosX64Main by getting {
+            dependsOn(nativeMain)
         }
     }
 }
