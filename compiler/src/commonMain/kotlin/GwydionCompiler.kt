@@ -4,6 +4,7 @@ import com.github.ajalt.mordant.rendering.TextColors
 import me.gabriel.gwydion.analysis.SemanticAnalysisManager
 import me.gabriel.gwydion.analysis.SymbolRepository
 import me.gabriel.gwydion.analysis.signature.Signatures
+import me.gabriel.gwydion.compiler.io.LoggedResourceManager
 import me.gabriel.gwydion.compiler.log.bold
 import me.gabriel.gwydion.compiler.log.color
 import me.gabriel.gwydion.frontend.lexing.lexers.StringLexer
@@ -21,13 +22,19 @@ class GwydionCompiler(
         val logger by platform::logger
         val cli by platform::cli
 
+        val resources = LoggedResourceManager(
+            logger,
+            cli,
+            platform.io
+        )
+
         val isStdlib = platform.cli.option("internal-stdlib")
         if (cli.isEmpty()) {
             logger.log(LogLevel.ERROR) { +"The argument should be the path to the file to compile" }
             platform.exitProcess(1)
         }
         val name = cli.moduleNameOrNull() ?: "program"
-        val signatures = platform.parseSignatures()
+        val signatures = resources.parseSignatures()
 
         logger.log(LogLevel.INFO) { +"Starting the Gwydion compiler..." }
         val symbols = SymbolRepository(name)
@@ -35,19 +42,19 @@ class GwydionCompiler(
         val llvmCodeAdapter = LLVMCodeAdapter()
         llvmCodeAdapter.registerIntrinsicFunction(*INTRINSICS)
 
-        val sources = platform.readSources()
+        val sources = resources.readSources()
         val tree = parse(logger, sources, symbols, signatures)
 
         logger.log(LogLevel.INFO) { +"Memory and symbol analysis was successful" }
 
         val generated = llvmCodeAdapter.generate(name, tree, symbols, signatures, isStdlib)
         logger.log(LogLevel.INFO) { +"Code generated successfully" }
-        platform.createIrFile(
+        resources.createIrFile(
             llvmIr = generated,
             outputFileName = name
         )
         logger.log(LogLevel.INFO) { +"Generated files successfully" }
-        platform.saveSignatures(
+        resources.saveSignatures(
             signatures
         )
         platform.exitProcess(0)

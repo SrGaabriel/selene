@@ -6,8 +6,7 @@ import me.gabriel.gwydion.compiler.log.MordantLogger
 fun main(args: Array<String>) {
     val platform = NativeCompilerPlatform(
         logger = MordantLogger(),
-        cli = CommandLine(args),
-        json = Json { encodeDefaults = false }
+        cli = CommandLine(args)
     )
     val compiler = GwydionCompiler(platform)
     compiler.start()
