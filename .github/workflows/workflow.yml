@@ -61,17 +61,28 @@ jobs:
     
     - name: Download all artifacts
       uses: actions/download-artifact@v3
-      with:
-        path: artifacts
     
+    - name: Display structure of downloaded files
+      run: ls -R
+    
+    - name: Generate release tag
+      id: tag
+      run: |
+        echo "release_tag=release-$(date +'%Y.%m.%d-%H%M%S')" >> $GITHUB_OUTPUT
+
     - name: Create pre-release
       uses: softprops/action-gh-release@v1
       with:
         files: |
-          artifacts/compiler/gwydion.jar
-          artifacts/compiler/compiler.kexe
-          artifacts/compiler/compiler.exe
-          artifacts/jester/jester
+          compiler/gwydion.jar
+          compiler/compiler.kexe
+          compiler/compiler.exe
+          jester/jester
+        prerelease: true
+        tag_name: ${{ steps.tag.outputs.release_tag }}
+        name: Pre-release ${{ steps.tag.outputs.release_tag }}
+      env:
+        GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         prerelease: true
         tag_name: ${{ github.sha }}
         name: Pre-release ${{ github.sha }}
