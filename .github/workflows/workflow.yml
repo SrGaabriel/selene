@@ -1,0 +1,88 @@
+name: Gwydion CI/CD
+
+on:
+  push:
+    branches: [ "main" ]
+  pull_request:
+    branches: [ "main" ]
+
+jobs:
+  build:
+    strategy:
+      matrix:
+        os: [ubuntu-latest, windows-latest]
+    runs-on: ${{ matrix.os }}
+    
+    steps:
+    - uses: actions/checkout@v3
+    
+    - name: Set up JDK 11
+      uses: actions/setup-java@v3
+      with:
+        java-version: '11'
+        distribution: 'temurin'
+    
+    - name: Setup Gradle
+      uses: gradle/gradle-build-action@v2
+    
+    - name: Build with Gradle
+      run: ./gradlew build
+    
+    - name: Build Jester (Ubuntu)
+      if: matrix.os == 'ubuntu-latest'
+      run: |
+        cd jester
+        cargo build --release
+    
+    - name: Build Jester (Windows)
+      if: matrix.os == 'windows-latest'
+      run: |
+        cd jester
+        cargo build --release
+    
+    - name: Upload JVM module artifacts
+      uses: actions/upload-artifact@v3
+      with:
+        name: jvm-modules-${{ matrix.os }}
+        path: |
+          */build/libs/*-jvm.jar
+          !compiler/build/libs/*-jvm.jar
+    
+    - name: Upload compiler artifacts
+      uses: actions/upload-artifact@v3
+      with:
+        name: compiler-${{ matrix.os }}
+        path: |
+          compiler/build/libs/gwydion.jar
+          compiler/build/bin/${{ matrix.os == 'ubuntu-latest' && 'linuxX64' || 'windowsX64' }}/releaseExecutable/compiler${{ matrix.os == 'ubuntu-latest' && '.kexe' || '.exe' }}
+    
+    - name: Upload Jester artifact
+      uses: actions/upload-artifact@v3
+      with:
+        name: jester-${{ matrix.os }}
+        path: jester/target/release/jester${{ matrix.os == 'windows-latest' && '.exe' || '' }}
+
+  pre-release:
+    needs: build
+    runs-on: ubuntu-latest
+    if: github.event_name == 'push' && github.ref == 'refs/heads/main'
+    
+    steps:
+    - uses: actions/checkout@v3
+    
+    - name: Download all artifacts
+      uses: actions/download-artifact@v3
+    
+    - name: Create pre-release
+      uses: softprops/action-gh-release@v1
+      with:
+        files: |
+          compiler-*/compiler/build/libs/gwydion.jar
+          compiler-*/compiler/build/bin/*/releaseExecutable/compiler*
+          jester-*/jester
+          jester-*/jester.exe
+        prerelease: true
+        tag_name: ${{ github.sha }}
+        name: Pre-release ${{ github.sha }}
+      env:
+        GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
