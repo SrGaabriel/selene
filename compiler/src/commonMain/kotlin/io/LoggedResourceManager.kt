@@ -2,6 +2,7 @@ package me.gabriel.selene.compiler.io
 
 import kotlinx.serialization.encodeToString
 import me.gabriel.selene.analysis.signature.Signatures
+import me.gabriel.selene.compiler.SeleneCompilerPlatform
 import me.gabriel.selene.compiler.cli.CommandLine
 import me.gabriel.selene.compiler.util.fileExtensionOrNull
 import me.gabriel.selene.tools.SeleneLogger
@@ -21,7 +22,7 @@ class LoggedResourceManager(
         logger.log(LogLevel.DEBUG) { +"Reading the directory: ${directory}" }
         val builder = StringBuilder()
         fileSystem.list(directory).forEach {
-            if (it.fileExtensionOrNull != "wy") return@forEach
+            if (it.fileExtensionOrNull !in SeleneCompilerPlatform.FILE_EXTENSIONS) return@forEach
             logger.log(LogLevel.DEBUG) { +"Reading the file: ${it.name}" }
             builder.appendLine(fileSystem.read(it) { readUtf8() })
         }

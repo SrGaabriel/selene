@@ -8,4 +8,8 @@ interface SeleneCompilerPlatform {
     val logger: SeleneLogger
 
     fun exitProcess(status: Int): Nothing
+
+    companion object {
+        val FILE_EXTENSIONS = arrayOf("sl")
+    }
 }
