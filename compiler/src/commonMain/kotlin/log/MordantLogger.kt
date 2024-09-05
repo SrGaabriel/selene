@@ -1,14 +1,14 @@
-package me.gabriel.gwydion.compiler.log
+package me.gabriel.selene.compiler.log
 
 import com.github.ajalt.mordant.rendering.AnsiLevel
 import com.github.ajalt.mordant.rendering.TextColors
 import com.github.ajalt.mordant.rendering.TextStyles
 import com.github.ajalt.mordant.terminal.Terminal
-import me.gabriel.gwydion.tools.GwydionLogger
-import me.gabriel.gwydion.tools.LogBuilder
-import me.gabriel.gwydion.tools.LogLevel
+import me.gabriel.selene.tools.SeleneLogger
+import me.gabriel.selene.tools.LogBuilder
+import me.gabriel.selene.tools.LogLevel
 
-class MordantLogger: GwydionLogger {
+class MordantLogger: SeleneLogger {
     private val terminal = Terminal(tabWidth = 4, ansiLevel = AnsiLevel.TRUECOLOR)
 
     override fun log(level: LogLevel, message: LogBuilder.() -> Unit) {

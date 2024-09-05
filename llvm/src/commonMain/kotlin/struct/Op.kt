@@ -1,4 +1,4 @@
-package me.gabriel.gwydion.llvm.struct
+package me.gabriel.selene.llvm.struct
 
 enum class BinaryOp(val llvm: String, val floatLlvm: String) {
     Addition("add", "fadd"),

@@ -1,11 +1,11 @@
-package me.gabriel.gwydion.analysis.analyzers.impl
+package me.gabriel.selene.analysis.analyzers.impl
 
-import me.gabriel.gwydion.analysis.SymbolBlock
-import me.gabriel.gwydion.analysis.analyzers.SingleNodeAnalyzer
-import me.gabriel.gwydion.analysis.analyzers.TypeInferenceVisitor
-import me.gabriel.gwydion.analysis.signature.Signatures
-import me.gabriel.gwydion.frontend.GwydionType
-import me.gabriel.gwydion.frontend.parsing.VariableReferenceNode
+import me.gabriel.selene.analysis.SymbolBlock
+import me.gabriel.selene.analysis.analyzers.SingleNodeAnalyzer
+import me.gabriel.selene.analysis.analyzers.TypeInferenceVisitor
+import me.gabriel.selene.analysis.signature.Signatures
+import me.gabriel.selene.frontend.SeleneType
+import me.gabriel.selene.frontend.parsing.VariableReferenceNode
 
 class VariableReferenceAnalyzer: SingleNodeAnalyzer<VariableReferenceNode>(VariableReferenceNode::class) {
     override fun register(
@@ -14,7 +14,7 @@ class VariableReferenceAnalyzer: SingleNodeAnalyzer<VariableReferenceNode>(Varia
         signatures: Signatures,
         visitor: TypeInferenceVisitor
     ): SymbolBlock {
-        block.defineSymbol(node, block.resolveSymbol(node.name) ?: GwydionType.Unknown)
+        block.defineSymbol(node, block.resolveSymbol(node.name) ?: SeleneType.Unknown)
         return block
     }
 }

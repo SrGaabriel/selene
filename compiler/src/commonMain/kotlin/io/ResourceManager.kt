@@ -1,6 +1,6 @@
-package me.gabriel.gwydion.compiler.io
+package me.gabriel.selene.compiler.io
 
-import me.gabriel.gwydion.analysis.signature.Signatures
+import me.gabriel.selene.analysis.signature.Signatures
 
 interface ResourceManager {
     val ioPlatform: IoPlatform

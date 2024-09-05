@@ -1,7 +1,7 @@
-package me.gabriel.gwydion.analysis
+package me.gabriel.selene.analysis
 
-import me.gabriel.gwydion.frontend.GwydionType
-import me.gabriel.gwydion.frontend.parsing.*
+import me.gabriel.selene.frontend.SeleneType
+import me.gabriel.selene.frontend.parsing.*
 
 class SymbolRepository(val module: String) {
     val root = SymbolBlock(
@@ -14,7 +14,7 @@ class SymbolRepository(val module: String) {
     fun createBlock(
         id: SyntaxTreeNode,
         parent: SymbolBlock,
-        self: GwydionType? = parent.self
+        self: SeleneType? = parent.self
     ): SymbolBlock {
         val block = SymbolBlock(module, id, parent, mutableListOf(), self)
         parent.children.add(block)
@@ -27,10 +27,10 @@ class SymbolBlock(
     val id: SyntaxTreeNode?,
     val parent: SymbolBlock?,
     val children: MutableList<SymbolBlock> = mutableListOf(),
-    var self: GwydionType? = parent?.self
+    var self: SeleneType? = parent?.self
 ) {
-    private val symbols = mutableMapOf<String, GwydionType>()
-    private val definitions = mutableMapOf<SyntaxTreeNode, GwydionType>()
+    private val symbols = mutableMapOf<String, SeleneType>()
+    private val definitions = mutableMapOf<SyntaxTreeNode, SeleneType>()
 
     val name get() = when (id) {
         is FunctionNode -> id.name
@@ -40,7 +40,7 @@ class SymbolBlock(
 
     fun createChild(
         id: SyntaxTreeNode,
-        self: GwydionType? = this.self
+        self: SeleneType? = this.self
     ): SymbolBlock {
         val block = SymbolBlock(module, id, this, mutableListOf(), self)
         children.add(block)
@@ -51,19 +51,19 @@ class SymbolBlock(
         return children.find { it.id == id }
     }
 
-    fun declareSymbol(name: String, type: GwydionType) {
+    fun declareSymbol(name: String, type: SeleneType) {
         symbols[name] = type
     }
 
-    fun defineSymbol(node: SyntaxTreeNode, type: GwydionType) {
+    fun defineSymbol(node: SyntaxTreeNode, type: SeleneType) {
         definitions[node] = type
     }
 
-    fun resolveSymbol(name: String): GwydionType? {
+    fun resolveSymbol(name: String): SeleneType? {
         return symbols[name] ?: parent?.resolveSymbol(name)
     }
 
-    fun resolveExpression(node: SyntaxTreeNode): GwydionType? {
+    fun resolveExpression(node: SyntaxTreeNode): SeleneType? {
         return when (node) {
             is TypedSyntaxTreeNode -> node.type
             is VariableReferenceNode -> resolveSymbol(node.name)

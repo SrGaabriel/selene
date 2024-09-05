@@ -1,8 +1,8 @@
-package me.gabriel.gwydion.frontend.lexing.lexers
+package me.gabriel.selene.frontend.lexing.lexers
 
-import me.gabriel.gwydion.frontend.lexing.TokenStream
-import me.gabriel.gwydion.frontend.lexing.error.LexingError
-import me.gabriel.gwydion.tools.Either
+import me.gabriel.selene.frontend.lexing.TokenStream
+import me.gabriel.selene.frontend.lexing.error.LexingError
+import me.gabriel.selene.tools.Either
 
 interface Lexer {
     fun tokenize(): Either<LexingError, TokenStream>

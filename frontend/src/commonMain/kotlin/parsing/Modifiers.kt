@@ -1,4 +1,4 @@
-package me.gabriel.gwydion.frontend.parsing
+package me.gabriel.selene.frontend.parsing
 
 import kotlinx.serialization.Serializable
 

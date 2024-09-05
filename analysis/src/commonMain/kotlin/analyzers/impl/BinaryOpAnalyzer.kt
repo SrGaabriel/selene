@@ -1,14 +1,13 @@
-package me.gabriel.gwydion.analysis.analyzers.impl
+package me.gabriel.selene.analysis.analyzers.impl
 
-import me.gabriel.gwydion.analysis.AnalysisError
-import me.gabriel.gwydion.analysis.AnalysisResult
-import me.gabriel.gwydion.analysis.SymbolBlock
-import me.gabriel.gwydion.analysis.analyzers.SingleNodeAnalyzer
-import me.gabriel.gwydion.analysis.analyzers.TypeInferenceVisitor
-import me.gabriel.gwydion.analysis.signature.Signatures
-import me.gabriel.gwydion.analysis.util.doesProvidedTypeAccordToExpectedType
-import me.gabriel.gwydion.frontend.GwydionType
-import me.gabriel.gwydion.frontend.parsing.BinaryOperatorNode
+import me.gabriel.selene.analysis.AnalysisError
+import me.gabriel.selene.analysis.AnalysisResult
+import me.gabriel.selene.analysis.SymbolBlock
+import me.gabriel.selene.analysis.analyzers.SingleNodeAnalyzer
+import me.gabriel.selene.analysis.analyzers.TypeInferenceVisitor
+import me.gabriel.selene.analysis.signature.Signatures
+import me.gabriel.selene.frontend.SeleneType
+import me.gabriel.selene.frontend.parsing.BinaryOperatorNode
 
 class BinaryOpAnalyzer: SingleNodeAnalyzer<BinaryOperatorNode>(BinaryOperatorNode::class) {
     override fun register(
@@ -18,7 +17,7 @@ class BinaryOpAnalyzer: SingleNodeAnalyzer<BinaryOperatorNode>(BinaryOperatorNod
         visitor: TypeInferenceVisitor
     ): SymbolBlock {
         visitor.visit(node.left) {
-            block.defineSymbol(node, block.resolveExpression(node.left) ?: GwydionType.Unknown)
+            block.defineSymbol(node, block.resolveExpression(node.left) ?: SeleneType.Unknown)
         }
         return block
     }
@@ -29,8 +28,8 @@ class BinaryOpAnalyzer: SingleNodeAnalyzer<BinaryOperatorNode>(BinaryOperatorNod
         signatures: Signatures,
         results: AnalysisResult
     ): SymbolBlock {
-        val left = block.resolveExpression(node.left) ?: GwydionType.Unknown
-        val right = block.resolveExpression(node.right) ?: GwydionType.Unknown
+        val left = block.resolveExpression(node.left) ?: SeleneType.Unknown
+        val right = block.resolveExpression(node.right) ?: SeleneType.Unknown
 
         if (left != right) {
             results.errors.add(

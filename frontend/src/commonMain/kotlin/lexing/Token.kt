@@ -1,7 +1,7 @@
-package me.gabriel.gwydion.frontend.lexing
+package me.gabriel.selene.frontend.lexing
 
 import kotlinx.serialization.Serializable
-import me.gabriel.gwydion.frontend.parsing.Modifiers
+import me.gabriel.selene.frontend.parsing.Modifiers
 
 @Serializable
 enum class TokenKind {

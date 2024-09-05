@@ -1,9 +1,9 @@
-package me.gabriel.gwydion.frontend.parsing
+package me.gabriel.selene.frontend.parsing
 
-import me.gabriel.gwydion.frontend.GwydionType
-import me.gabriel.gwydion.frontend.lexing.*
-import me.gabriel.gwydion.frontend.lexing.error.ParsingError
-import me.gabriel.gwydion.tools.Either
+import me.gabriel.selene.frontend.SeleneType
+import me.gabriel.selene.frontend.lexing.*
+import me.gabriel.selene.frontend.lexing.error.ParsingError
+import me.gabriel.selene.tools.Either
 
 class Parser(private val tokens: TokenStream) {
     private var currentPosition: Int = 0
@@ -215,7 +215,7 @@ class Parser(private val tokens: TokenStream) {
             consumeToken(TokenKind.DECLARATION).flatMapRight {
                 parseExpression().flatMapRight { expr ->
                     consumeToken(TokenKind.SEMICOLON).mapRight {
-                        AssignmentNode(name.value, expr, true, GwydionType.Unknown, mutToken)
+                        AssignmentNode(name.value, expr, true, SeleneType.Unknown, mutToken)
                     }
                 }
             }
@@ -291,7 +291,7 @@ class Parser(private val tokens: TokenStream) {
         if (declaration is Either.Left) return Either.Left(declaration.value)
         return parseExpression().flatMapRight { expr ->
             consumeToken(TokenKind.SEMICOLON).mapRight {
-                AssignmentNode(name, expr, false, GwydionType.Unknown, declaration.unwrap())
+                AssignmentNode(name, expr, false, SeleneType.Unknown, declaration.unwrap())
             }
         }
     }
@@ -491,7 +491,7 @@ class Parser(private val tokens: TokenStream) {
         val number = consumeToken(TokenKind.NUMBER)
         if (number is Either.Left) return Either.Left(number.value)
         val token = number.unwrap()
-        return Either.Right(NumberNode(token.value, false, GwydionType.Int32, token))
+        return Either.Right(NumberNode(token.value, false, SeleneType.Int32, token))
     }
 
     private fun parseStringExpression(): Either<ParsingError, StringNode> {
@@ -556,19 +556,19 @@ class Parser(private val tokens: TokenStream) {
                     LambdaParameterNode(name.value, type, name)
                 }
             } else {
-                Either.Right(LambdaParameterNode(name.value, GwydionType.Unknown, name))
+                Either.Right(LambdaParameterNode(name.value, SeleneType.Unknown, name))
             }
         }
     }
 
-    private fun parseType(): Either<ParsingError, GwydionType> {
+    private fun parseType(): Either<ParsingError, SeleneType> {
         if (peekToken().kind == TokenKind.LAMBDA) {
             consumeToken()
             return consumeToken(TokenKind.OPENING_PARENTHESES).flatMapRight {
                 parseCommaSeparatedList(::parseType, TokenKind.CLOSING_PARENTHESES).flatMapRight { params ->
                     consumeToken(TokenKind.LAMBDA_RETURN).flatMapRight {
                         parseType().mapRight { returnType ->
-                            GwydionType.Lambda(params, returnType)
+                            SeleneType.Lambda(params, returnType)
                         }
                     }
                 }
@@ -581,11 +581,11 @@ class Parser(private val tokens: TokenStream) {
         return if (peekToken().kind == TokenKind.OPENING_BRACKETS) {
             parseArrayType(baseType, isMutable)
         } else {
-            Either.Right(if (isMutable) GwydionType.Mutable(baseType) else baseType)
+            Either.Right(if (isMutable) SeleneType.Mutable(baseType) else baseType)
         }
     }
 
-    private fun parseBaseType(): GwydionType? {
+    private fun parseBaseType(): SeleneType? {
         val token = peekToken()
         return if (token.kind in TYPE_TOKENS) {
             consumeToken()
@@ -595,20 +595,20 @@ class Parser(private val tokens: TokenStream) {
         }
     }
 
-    private fun parseArrayType(baseType: GwydionType, isMutable: Boolean): Either<ParsingError, GwydionType> {
+    private fun parseArrayType(baseType: SeleneType, isMutable: Boolean): Either<ParsingError, SeleneType> {
         consumeToken() // Consume opening bracket
         return when (peekToken().kind) {
             TokenKind.NUMBER -> {
                 val size = consumeToken().value.toInt()
                 consumeToken(TokenKind.CLOSING_BRACKETS).mapRight {
-                    if (isMutable) GwydionType.Mutable(GwydionType.FixedArray(baseType, size)) else GwydionType.FixedArray(baseType, size)
+                    if (isMutable) SeleneType.Mutable(SeleneType.FixedArray(baseType, size)) else SeleneType.FixedArray(baseType, size)
                 }
             }
 
             TokenKind.TIMES -> {
                 consumeToken()
                 consumeToken(TokenKind.CLOSING_BRACKETS).mapRight {
-                    if (isMutable) GwydionType.Mutable(GwydionType.DynamicArray(baseType)) else GwydionType.DynamicArray(baseType)
+                    if (isMutable) SeleneType.Mutable(SeleneType.DynamicArray(baseType)) else SeleneType.DynamicArray(baseType)
                 }
             }
 
@@ -626,13 +626,13 @@ class Parser(private val tokens: TokenStream) {
         return when {
             peekToken().kind == TokenKind.SELF -> {
                 val token = consumeToken()
-                Either.Right(ParameterNode("self", GwydionType.Self, token))
+                Either.Right(ParameterNode("self", SeleneType.Self, token))
             }
 
             peekToken().kind == TokenKind.MUT && peekNextToken().kind == TokenKind.SELF -> {
                 consumeToken() // Consume MUT
                 val token = consumeToken() // Consume SELF
-                Either.Right(ParameterNode("self", GwydionType.Mutable(GwydionType.Self), token))
+                Either.Right(ParameterNode("self", SeleneType.Mutable(SeleneType.Self), token))
             }
 
             else -> parseIdentifier().flatMapRight { name ->
@@ -651,12 +651,12 @@ class Parser(private val tokens: TokenStream) {
         }
     }
 
-    private fun parseReturnType(): Either<ParsingError, GwydionType> {
+    private fun parseReturnType(): Either<ParsingError, SeleneType> {
         return if (peekToken().kind == TokenKind.RETURN_TYPE_DECLARATION) {
             consumeToken()
             parseType()
         } else {
-            Either.Right(GwydionType.Void)
+            Either.Right(SeleneType.Void)
         }
     }
 
@@ -726,26 +726,26 @@ class Parser(private val tokens: TokenStream) {
         }
     }
 
-    private fun tokenKindToType(token: Token, mutable: Boolean): GwydionType {
+    private fun tokenKindToType(token: Token, mutable: Boolean): SeleneType {
         val base = when (token.kind) {
-            TokenKind.ANY_TYPE -> GwydionType.Any
-            TokenKind.VOID -> return GwydionType.Void
-            TokenKind.INT8_TYPE -> GwydionType.Int8
-            TokenKind.INT16_TYPE -> GwydionType.Int16
-            TokenKind.INT32_TYPE -> GwydionType.Int32
-            TokenKind.INT64_TYPE -> GwydionType.Int64
-            TokenKind.UINT8_TYPE -> GwydionType.UInt8
-            TokenKind.UINT16_TYPE -> GwydionType.UInt16
-            TokenKind.UINT32_TYPE -> GwydionType.UInt32
-            TokenKind.UINT64_TYPE -> GwydionType.UInt64
-            TokenKind.FLOAT32_TYPE -> GwydionType.Float32
-            TokenKind.FLOAT64_TYPE -> GwydionType.Float64
-            TokenKind.BOOL_TYPE -> GwydionType.Boolean
-            TokenKind.STRING_TYPE -> GwydionType.String
-            TokenKind.IDENTIFIER -> GwydionType.UnknownReference(token.value, mutable)
+            TokenKind.ANY_TYPE -> SeleneType.Any
+            TokenKind.VOID -> return SeleneType.Void
+            TokenKind.INT8_TYPE -> SeleneType.Int8
+            TokenKind.INT16_TYPE -> SeleneType.Int16
+            TokenKind.INT32_TYPE -> SeleneType.Int32
+            TokenKind.INT64_TYPE -> SeleneType.Int64
+            TokenKind.UINT8_TYPE -> SeleneType.UInt8
+            TokenKind.UINT16_TYPE -> SeleneType.UInt16
+            TokenKind.UINT32_TYPE -> SeleneType.UInt32
+            TokenKind.UINT64_TYPE -> SeleneType.UInt64
+            TokenKind.FLOAT32_TYPE -> SeleneType.Float32
+            TokenKind.FLOAT64_TYPE -> SeleneType.Float64
+            TokenKind.BOOL_TYPE -> SeleneType.Boolean
+            TokenKind.STRING_TYPE -> SeleneType.String
+            TokenKind.IDENTIFIER -> SeleneType.UnknownReference(token.value, mutable)
             else -> throw IllegalArgumentException("Unexpected token kind for type: ${token.kind}")
         }
-        return if (mutable) GwydionType.Mutable(base) else base
+        return if (mutable) SeleneType.Mutable(base) else base
     }
 
     companion object {

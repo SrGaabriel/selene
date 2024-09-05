@@ -1,18 +1,17 @@
-package me.gabriel.gwydion.analysis.analyzers.impl
+package me.gabriel.selene.analysis.analyzers.impl
 
-import me.gabriel.gwydion.analysis.AnalysisError
-import me.gabriel.gwydion.analysis.AnalysisResult
-import me.gabriel.gwydion.analysis.SymbolBlock
-import me.gabriel.gwydion.analysis.analyzers.SingleNodeAnalyzer
-import me.gabriel.gwydion.analysis.analyzers.TypeInferenceVisitor
-import me.gabriel.gwydion.analysis.signature.SignatureFunction
-import me.gabriel.gwydion.analysis.signature.SignatureTraitImpl
-import me.gabriel.gwydion.analysis.signature.Signatures
-import me.gabriel.gwydion.analysis.util.unknownReferenceSignatureToType
-import me.gabriel.gwydion.frontend.GwydionType
-import me.gabriel.gwydion.frontend.parsing.FunctionNode
-import me.gabriel.gwydion.frontend.parsing.ParameterNode
-import me.gabriel.gwydion.frontend.parsing.TraitImplNode
+import me.gabriel.selene.analysis.AnalysisError
+import me.gabriel.selene.analysis.AnalysisResult
+import me.gabriel.selene.analysis.SymbolBlock
+import me.gabriel.selene.analysis.analyzers.SingleNodeAnalyzer
+import me.gabriel.selene.analysis.analyzers.TypeInferenceVisitor
+import me.gabriel.selene.analysis.signature.SignatureFunction
+import me.gabriel.selene.analysis.signature.SignatureTraitImpl
+import me.gabriel.selene.analysis.signature.Signatures
+import me.gabriel.selene.analysis.util.unknownReferenceSignatureToType
+import me.gabriel.selene.frontend.SeleneType
+import me.gabriel.selene.frontend.parsing.FunctionNode
+import me.gabriel.selene.frontend.parsing.TraitImplNode
 
 class TraitImplAnalyzer: SingleNodeAnalyzer<TraitImplNode>(TraitImplNode::class) {
     override fun register(
@@ -22,7 +21,7 @@ class TraitImplAnalyzer: SingleNodeAnalyzer<TraitImplNode>(TraitImplNode::class)
         visitor: TypeInferenceVisitor
     ): SymbolBlock {
         node.type = unknownReferenceSignatureToType(signatures, node.type)
-        if (node.type is GwydionType.UnknownReference) return block
+        if (node.type is SeleneType.UnknownReference) return block
 
         val trait = signatures.traits.find { it.name == node.trait }
         if (trait == null) return block
@@ -61,7 +60,7 @@ class TraitImplAnalyzer: SingleNodeAnalyzer<TraitImplNode>(TraitImplNode::class)
         if (trait == null) return newBlock
 
         val missingFunctions = mutableListOf<SignatureFunction>()
-        val wrongFunctions = mutableMapOf<FunctionNode, List<GwydionType>>()
+        val wrongFunctions = mutableMapOf<FunctionNode, List<SeleneType>>()
 
         trait.functions.forEach { traitFunction ->
             val implFunction = node.functions.find { it.name == traitFunction.name }
@@ -100,7 +99,7 @@ class TraitImplAnalyzer: SingleNodeAnalyzer<TraitImplNode>(TraitImplNode::class)
         return newBlock
     }
 
-    private fun doParametersMatch(provided: List<GwydionType>, required: List<GwydionType>): Boolean {
+    private fun doParametersMatch(provided: List<SeleneType>, required: List<SeleneType>): Boolean {
         if (provided.size != required.size) return false
         return provided.zip(required).all { (provided, required) ->
             provided == required

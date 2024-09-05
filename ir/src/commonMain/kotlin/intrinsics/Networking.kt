@@ -1,4 +1,4 @@
-package me.gabriel.gwydion.ir.intrinsics
+package me.gabriel.selene.ir.intrinsics
 
 class SocketFunction : IntrinsicMirrorFunction(
     name = "socket",

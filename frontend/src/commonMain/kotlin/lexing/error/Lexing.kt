@@ -1,4 +1,4 @@
-package me.gabriel.gwydion.frontend.lexing.error
+package me.gabriel.selene.frontend.lexing.error
 
 // I won't use exceptions because they generate too much overhead by default, and I'm not going to use them for control flow.
 sealed class LexingError(val message: String, val position: Int) {

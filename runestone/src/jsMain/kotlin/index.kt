@@ -4,9 +4,8 @@ import kotlinx.html.dom.*
 import kotlinx.html.js.*
 import org.w3c.dom.*
 import org.w3c.dom.events.Event
-import me.gabriel.gwydion.frontend.lexing.Token
-import me.gabriel.gwydion.frontend.lexing.TokenKind
-import me.gabriel.gwydion.frontend.lexing.lexers.StringLexer
+import me.gabriel.selene.frontend.lexing.TokenKind
+import me.gabriel.selene.frontend.lexing.lexers.StringLexer
 
 fun main() {
     document.body!!.append.div {

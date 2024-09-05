@@ -1,14 +1,14 @@
-package me.gabriel.gwydion.compiler.jvm
+package me.gabriel.selene.compiler.jvm
 
 import kotlinx.serialization.json.Json
-import me.gabriel.gwydion.compiler.GwydionCompilerPlatform
-import me.gabriel.gwydion.compiler.io.IoPlatform
-import me.gabriel.gwydion.tools.GwydionLogger
+import me.gabriel.selene.compiler.SeleneCompilerPlatform
+import me.gabriel.selene.compiler.io.IoPlatform
+import me.gabriel.selene.tools.SeleneLogger
 import okio.FileSystem
 
 class JvmCompilerPlatform(
-    override val logger: GwydionLogger
-): GwydionCompilerPlatform {
+    override val logger: SeleneLogger
+): SeleneCompilerPlatform {
     override val io: IoPlatform = Io
 
     override fun exitProcess(status: Int): Nothing {

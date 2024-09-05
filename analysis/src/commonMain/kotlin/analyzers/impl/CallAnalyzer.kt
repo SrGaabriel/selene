@@ -1,14 +1,14 @@
-package me.gabriel.gwydion.analysis.analyzers.impl
+package me.gabriel.selene.analysis.analyzers.impl
 
-import me.gabriel.gwydion.analysis.AnalysisError
-import me.gabriel.gwydion.analysis.AnalysisResult
-import me.gabriel.gwydion.analysis.SymbolBlock
-import me.gabriel.gwydion.analysis.analyzers.SingleNodeAnalyzer
-import me.gabriel.gwydion.analysis.analyzers.TypeInferenceVisitor
-import me.gabriel.gwydion.analysis.signature.Signatures
-import me.gabriel.gwydion.frontend.GwydionType
-import me.gabriel.gwydion.frontend.parsing.CallNode
-import me.gabriel.gwydion.frontend.parsing.Modifiers
+import me.gabriel.selene.analysis.AnalysisError
+import me.gabriel.selene.analysis.AnalysisResult
+import me.gabriel.selene.analysis.SymbolBlock
+import me.gabriel.selene.analysis.analyzers.SingleNodeAnalyzer
+import me.gabriel.selene.analysis.analyzers.TypeInferenceVisitor
+import me.gabriel.selene.analysis.signature.Signatures
+import me.gabriel.selene.frontend.SeleneType
+import me.gabriel.selene.frontend.parsing.CallNode
+import me.gabriel.selene.frontend.parsing.Modifiers
 
 class CallAnalyzer: SingleNodeAnalyzer<CallNode>(CallNode::class) {
     override fun register(
@@ -18,7 +18,7 @@ class CallAnalyzer: SingleNodeAnalyzer<CallNode>(CallNode::class) {
         visitor: TypeInferenceVisitor
     ): SymbolBlock {
         val potentialLambda = block.resolveSymbol(node.name)
-        if (potentialLambda is GwydionType.Lambda) {
+        if (potentialLambda is SeleneType.Lambda) {
             registerCall(block, node, potentialLambda.parameters, visitor)
             block.defineSymbol(node, potentialLambda.returnType)
             return block
@@ -35,14 +35,14 @@ class CallAnalyzer: SingleNodeAnalyzer<CallNode>(CallNode::class) {
     private fun registerCall(
         block: SymbolBlock,
         node: CallNode,
-        parameters: List<GwydionType>,
+        parameters: List<SeleneType>,
         visitor: TypeInferenceVisitor
     ) {
         for ((index, argument) in node.arguments.withIndex()) {
             visitor.visit(argument) {
-                val type = block.resolveExpression(argument) ?: GwydionType.Unknown
-                if (type == GwydionType.Unknown) {
-                    val expectedType = parameters.getOrNull(index) ?: GwydionType.Unknown
+                val type = block.resolveExpression(argument) ?: SeleneType.Unknown
+                if (type == SeleneType.Unknown) {
+                    val expectedType = parameters.getOrNull(index) ?: SeleneType.Unknown
                     block.defineSymbol(argument, expectedType)
                 }
             }
@@ -58,7 +58,7 @@ class CallAnalyzer: SingleNodeAnalyzer<CallNode>(CallNode::class) {
         val function = signatures.functions.find { it.name == node.name }
         if (function == null) {
             val potentialLambda = block.resolveSymbol(node.name)
-            if (potentialLambda !is GwydionType.Lambda) {
+            if (potentialLambda !is SeleneType.Lambda) {
                 results.errors.add(AnalysisError.UndefinedFunction(
                     node = node,
                 ))

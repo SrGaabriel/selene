@@ -1,26 +1,26 @@
-package me.gabriel.gwydion.compiler
+package me.gabriel.selene.compiler
 
 import com.github.ajalt.mordant.rendering.TextColors
-import me.gabriel.gwydion.analysis.SemanticAnalysisManager
-import me.gabriel.gwydion.analysis.SymbolRepository
-import me.gabriel.gwydion.analysis.signature.Signatures
-import me.gabriel.gwydion.compiler.cli.CommandLine
-import me.gabriel.gwydion.compiler.io.LoggedResourceManager
-import me.gabriel.gwydion.compiler.log.bold
-import me.gabriel.gwydion.compiler.log.color
-import me.gabriel.gwydion.frontend.lexing.lexers.StringLexer
-import me.gabriel.gwydion.frontend.parsing.Parser
-import me.gabriel.gwydion.frontend.parsing.SyntaxTree
-import me.gabriel.gwydion.ir.LLVMCodeAdapter
-import me.gabriel.gwydion.ir.intrinsics.INTRINSICS
-import me.gabriel.gwydion.tools.*
+import me.gabriel.selene.analysis.SemanticAnalysisManager
+import me.gabriel.selene.analysis.SymbolRepository
+import me.gabriel.selene.analysis.signature.Signatures
+import me.gabriel.selene.compiler.cli.CommandLine
+import me.gabriel.selene.compiler.io.LoggedResourceManager
+import me.gabriel.selene.compiler.log.bold
+import me.gabriel.selene.compiler.log.color
+import me.gabriel.selene.frontend.lexing.lexers.StringLexer
+import me.gabriel.selene.frontend.parsing.Parser
+import me.gabriel.selene.frontend.parsing.SyntaxTree
+import me.gabriel.selene.ir.LLVMCodeAdapter
+import me.gabriel.selene.ir.intrinsics.INTRINSICS
+import me.gabriel.selene.tools.*
 
-class GwydionCompiler(
-    private val platform: GwydionCompilerPlatform,
+class SeleneCompiler(
+    private val platform: SeleneCompilerPlatform,
     private val cli: CommandLine
 ) {
     fun start() {
-        println("Gwydion Compiler") // Let's signal that the compiler has been reached, just in case we face an issue with build tools or whatever!
+        println("Selene Compiler") // Let's signal that the compiler has been reached, just in case we face an issue with build tools or whatever!
         val logger by platform::logger
 
         val resources = LoggedResourceManager(
@@ -37,7 +37,7 @@ class GwydionCompiler(
         val name = cli.moduleNameOrNull() ?: "program"
         val signatures = resources.parseSignatures()
 
-        logger.log(LogLevel.INFO) { +"Starting the Gwydion compiler..." }
+        logger.log(LogLevel.INFO) { +"Starting the Selene compiler..." }
         val symbols = SymbolRepository(name)
 
         val llvmCodeAdapter = LLVMCodeAdapter()
@@ -61,7 +61,7 @@ class GwydionCompiler(
         platform.exitProcess(0)
     }
 
-    fun parse(logger: GwydionLogger, text: String, symbols: SymbolRepository, signatures: Signatures): SyntaxTree {
+    fun parse(logger: SeleneLogger, text: String, symbols: SymbolRepository, signatures: Signatures): SyntaxTree {
         val lexer = StringLexer(text)
         val result = lexer.tokenize()
         if (result.isLeft()) {

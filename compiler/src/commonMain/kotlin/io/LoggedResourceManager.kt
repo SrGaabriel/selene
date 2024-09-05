@@ -1,16 +1,16 @@
-package me.gabriel.gwydion.compiler.io
+package me.gabriel.selene.compiler.io
 
 import kotlinx.serialization.encodeToString
-import me.gabriel.gwydion.analysis.signature.Signatures
-import me.gabriel.gwydion.compiler.cli.CommandLine
-import me.gabriel.gwydion.compiler.util.fileExtensionOrNull
-import me.gabriel.gwydion.tools.GwydionLogger
-import me.gabriel.gwydion.tools.LogLevel
+import me.gabriel.selene.analysis.signature.Signatures
+import me.gabriel.selene.compiler.cli.CommandLine
+import me.gabriel.selene.compiler.util.fileExtensionOrNull
+import me.gabriel.selene.tools.SeleneLogger
+import me.gabriel.selene.tools.LogLevel
 import okio.Path
 import okio.Path.Companion.toPath
 
 class LoggedResourceManager(
-    private val logger: GwydionLogger,
+    private val logger: SeleneLogger,
     private val cli: CommandLine,
     override val ioPlatform: IoPlatform
 ): ResourceManager {

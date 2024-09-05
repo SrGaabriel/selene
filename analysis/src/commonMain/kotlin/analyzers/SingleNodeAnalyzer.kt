@@ -1,6 +1,6 @@
-package me.gabriel.gwydion.analysis.analyzers
+package me.gabriel.selene.analysis.analyzers
 
-import me.gabriel.gwydion.frontend.parsing.SyntaxTreeNode
+import me.gabriel.selene.frontend.parsing.SyntaxTreeNode
 import kotlin.reflect.KClass
 
 abstract class SingleNodeAnalyzer<T : SyntaxTreeNode>(

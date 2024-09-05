@@ -1,4 +1,4 @@
-package me.gabriel.gwydion.llvm.struct
+package me.gabriel.selene.llvm.struct
 
 class TraitObject(
     val prefix: String = PREFIX,

@@ -1,4 +1,4 @@
-package me.gabriel.gwydion.llvm.struct
+package me.gabriel.selene.llvm.struct
 
 sealed class LLVMType(
     val llvm: String,

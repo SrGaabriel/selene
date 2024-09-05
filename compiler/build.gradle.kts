@@ -73,9 +73,9 @@ kotlin {
 }
 
 tasks.withType<ShadowJar> {
-    archiveFileName.set("gwydion.jar")
+    archiveFileName.set("selene.jar")
 }
 
 application {
-    mainClass = "me.gabriel.gwydion.compiler.jvm.JvmLauncherKt"
+    mainClass = "me.gabriel.selene.compiler.jvm.JvmLauncherKt"
 }

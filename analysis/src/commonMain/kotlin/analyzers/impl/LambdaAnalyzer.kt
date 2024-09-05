@@ -1,13 +1,13 @@
-package me.gabriel.gwydion.analysis.analyzers.impl
+package me.gabriel.selene.analysis.analyzers.impl
 
-import me.gabriel.gwydion.analysis.AnalysisError
-import me.gabriel.gwydion.analysis.AnalysisResult
-import me.gabriel.gwydion.analysis.SymbolBlock
-import me.gabriel.gwydion.analysis.analyzers.SingleNodeAnalyzer
-import me.gabriel.gwydion.analysis.analyzers.TypeInferenceVisitor
-import me.gabriel.gwydion.analysis.signature.Signatures
-import me.gabriel.gwydion.frontend.GwydionType
-import me.gabriel.gwydion.frontend.parsing.LambdaNode
+import me.gabriel.selene.analysis.AnalysisError
+import me.gabriel.selene.analysis.AnalysisResult
+import me.gabriel.selene.analysis.SymbolBlock
+import me.gabriel.selene.analysis.analyzers.SingleNodeAnalyzer
+import me.gabriel.selene.analysis.analyzers.TypeInferenceVisitor
+import me.gabriel.selene.analysis.signature.Signatures
+import me.gabriel.selene.frontend.SeleneType
+import me.gabriel.selene.frontend.parsing.LambdaNode
 
 class LambdaAnalyzer: SingleNodeAnalyzer<LambdaNode>(LambdaNode::class) {
     override fun register(
@@ -20,7 +20,7 @@ class LambdaAnalyzer: SingleNodeAnalyzer<LambdaNode>(LambdaNode::class) {
             id = node
         )
 
-        block.defineSymbol(node, GwydionType.Unknown)
+        block.defineSymbol(node, SeleneType.Unknown)
         return newBlock
     }
 
@@ -33,8 +33,8 @@ class LambdaAnalyzer: SingleNodeAnalyzer<LambdaNode>(LambdaNode::class) {
         val lambdaBlock = block.surfaceSearchChild(node)
             ?: error("Lambda block not registered")
 
-        val type = block.resolveExpression(node) ?: GwydionType.Unknown
-        if (type == GwydionType.Unknown) {
+        val type = block.resolveExpression(node) ?: SeleneType.Unknown
+        if (type == SeleneType.Unknown) {
             results.errors.add(
                 AnalysisError.LambdaTypeCannotBeInferred(
                     node

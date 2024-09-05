@@ -3,7 +3,7 @@ plugins {
     alias(libs.plugins.kotlinx.serialization) apply false
 }
 
-group = "me.gabriel.gwydion"
+group = "me.gabriel.selene"
 version = "0.0.1-ALPHA"
 
 repositories {

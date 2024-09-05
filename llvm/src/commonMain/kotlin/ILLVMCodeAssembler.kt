@@ -1,9 +1,9 @@
-package me.gabriel.gwydion.llvm
+package me.gabriel.selene.llvm
 
-import me.gabriel.gwydion.llvm.struct.BinaryOp
-import me.gabriel.gwydion.llvm.struct.LLVMType
-import me.gabriel.gwydion.llvm.struct.MemoryUnit
-import me.gabriel.gwydion.llvm.struct.Value
+import me.gabriel.selene.llvm.struct.BinaryOp
+import me.gabriel.selene.llvm.struct.LLVMType
+import me.gabriel.selene.llvm.struct.MemoryUnit
+import me.gabriel.selene.llvm.struct.Value
 
 interface ILLVMCodeAssembler {
     fun addDependency(dependency: String)

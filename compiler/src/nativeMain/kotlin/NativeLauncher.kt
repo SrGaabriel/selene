@@ -1,12 +1,12 @@
-import me.gabriel.gwydion.compiler.GwydionCompiler
-import me.gabriel.gwydion.compiler.cli.CommandLine
-import me.gabriel.gwydion.compiler.log.MordantLogger
+import me.gabriel.selene.compiler.SeleneCompiler
+import me.gabriel.selene.compiler.cli.CommandLine
+import me.gabriel.selene.compiler.log.MordantLogger
 
 fun main(args: Array<String>) {
     val platform = NativeCompilerPlatform(
         logger = MordantLogger()
     )
-    val compiler = GwydionCompiler(
+    val compiler = SeleneCompiler(
         platform = platform,
         cli = CommandLine(args)
     )

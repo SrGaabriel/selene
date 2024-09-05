@@ -1,13 +1,13 @@
-package me.gabriel.gwydion.analysis.util
+package me.gabriel.selene.analysis.util
 
-import me.gabriel.gwydion.frontend.GwydionType
+import me.gabriel.selene.frontend.SeleneType
 
-fun String.castToType(type: GwydionType): String = when (type) {
-    GwydionType.Int8 -> this.toByte().toString()
-    GwydionType.Int16 -> this.toShort().toString()
-    GwydionType.Int32 -> this.toInt().toString()
-    GwydionType.Int64 -> this.toLong().toString()
-    GwydionType.Float32 -> this.toFloat().toString()
-    GwydionType.Float64 -> this.toDouble().toString()
+fun String.castToType(type: SeleneType): String = when (type) {
+    SeleneType.Int8 -> this.toByte().toString()
+    SeleneType.Int16 -> this.toShort().toString()
+    SeleneType.Int32 -> this.toInt().toString()
+    SeleneType.Int64 -> this.toLong().toString()
+    SeleneType.Float32 -> this.toFloat().toString()
+    SeleneType.Float64 -> this.toDouble().toString()
     else -> this
 }

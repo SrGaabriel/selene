@@ -1,6 +1,6 @@
-package me.gabriel.gwydion.llvm
+package me.gabriel.selene.llvm
 
-import me.gabriel.gwydion.llvm.struct.*
+import me.gabriel.selene.llvm.struct.*
 
 interface ILLVMCodeGenerator {
     fun stackMemoryAllocation(type: LLVMType, alignment: Int = type.defaultAlignment): String

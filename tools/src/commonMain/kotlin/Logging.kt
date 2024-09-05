@@ -1,6 +1,6 @@
-package me.gabriel.gwydion.tools
+package me.gabriel.selene.tools
 
-interface GwydionLogger {
+interface SeleneLogger {
     fun log(level: LogLevel, message: LogBuilder.() -> Unit)
 }
 
