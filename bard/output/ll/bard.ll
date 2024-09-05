@@ -46,24 +46,24 @@ entry:
     %19 = getelementptr inbounds [14 x i8], [14 x i8]* %4, i32 0, i32 0
     call void @println_str(i8* %19)
     %21 = add i32 2, 0
-    call i1 @callback(i32 %21, ptr @lambda_1181227816)
+    call i1 @callback(i32 %21, ptr @lambda_1487500813)
     %25 = add i32 4, 0
-    call i1 @callback(i32 %25, ptr @lambda_1181228456)
+    call i1 @callback(i32 %25, ptr @lambda_1886491834)
     %29 = add i32 8, 0
-    call i1 @callback(i32 %29, ptr @lambda_1181229096)
+    call i1 @callback(i32 %29, ptr @lambda_1536471117)
     ret void
 }
-define i32 @lambda_1181227816(i32 %22) {
+define i32 @lambda_1487500813(i32 %22) {
 entry:
     %33 = add i32 %22, 12
     ret i32 %33
 }
-define i32 @lambda_1181228456(i32 %26) {
+define i32 @lambda_1886491834(i32 %26) {
 entry:
     %34 = add i32 %26, 24
     ret i32 %34
 }
-define i32 @lambda_1181229096(i32 %30) {
+define i32 @lambda_1536471117(i32 %30) {
 entry:
     %35 = add i32 %30, 36
     ret i32 %35

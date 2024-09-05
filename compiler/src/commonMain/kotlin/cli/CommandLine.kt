@@ -11,7 +11,7 @@ class CommandLine(private val args: Array<String>) {
     fun argumentAtOrNull(index: Int) =
         args.filter { !it.startsWith("--") }.getOrNull(index)
 
-    fun isStdlib() = option(STDLIB_FLAG)
+    fun isCompileIntrinsics() = option(COMPILE_INTRINSICS_FLAG)
 
     fun isEmpty() = args.isEmpty()
 
@@ -19,7 +19,7 @@ class CommandLine(private val args: Array<String>) {
     fun moduleNameOrNull() = argumentAtOrNull(MODULE_NAME_INDEX)
 
     companion object {
-        const val STDLIB_FLAG = "--internal-stdlib"
+        const val COMPILE_INTRINSICS_FLAG = "compile-intrinsics"
 
         const val MODULE_NAME_INDEX = 1
     }

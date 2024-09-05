@@ -4,6 +4,7 @@ import com.github.ajalt.mordant.rendering.TextColors
 import me.gabriel.gwydion.analysis.SemanticAnalysisManager
 import me.gabriel.gwydion.analysis.SymbolRepository
 import me.gabriel.gwydion.analysis.signature.Signatures
+import me.gabriel.gwydion.compiler.cli.CommandLine
 import me.gabriel.gwydion.compiler.io.LoggedResourceManager
 import me.gabriel.gwydion.compiler.log.bold
 import me.gabriel.gwydion.compiler.log.color
@@ -16,11 +17,11 @@ import me.gabriel.gwydion.tools.*
 
 class GwydionCompiler(
     private val platform: GwydionCompilerPlatform,
+    private val cli: CommandLine
 ) {
     fun start() {
         println("Gwydion Compiler") // Let's signal that the compiler has been reached, just in case we face an issue with build tools or whatever!
         val logger by platform::logger
-        val cli by platform::cli
 
         val resources = LoggedResourceManager(
             logger,
@@ -28,7 +29,7 @@ class GwydionCompiler(
             platform.io
         )
 
-        val isStdlib = platform.cli.option("internal-stdlib")
+        val isStdlib = cli.isCompileIntrinsics()
         if (cli.isEmpty()) {
             logger.log(LogLevel.ERROR) { +"The argument should be the path to the file to compile" }
             platform.exitProcess(1)

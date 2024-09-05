@@ -120,7 +120,7 @@ fn compile(
             .current_dir(&output_dir);
 
         if is_stdlib {
-            command.arg("--internal-stdlib");
+            command.arg("--compile-intrinsics");
         }
 
         let output = command.output().expect("Failed to execute java process");
@@ -135,7 +135,7 @@ fn compile(
             .current_dir(&output_dir);
 
         if is_stdlib {
-            command.arg("--internal-stdlib");
+            command.arg("--compile-intrinsics");
         }
 
         let output = command.output().expect("Failed to execute native binary");

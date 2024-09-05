@@ -1,13 +1,14 @@
-import kotlinx.serialization.json.Json
 import me.gabriel.gwydion.compiler.GwydionCompiler
 import me.gabriel.gwydion.compiler.cli.CommandLine
 import me.gabriel.gwydion.compiler.log.MordantLogger
 
 fun main(args: Array<String>) {
     val platform = NativeCompilerPlatform(
-        logger = MordantLogger(),
+        logger = MordantLogger()
+    )
+    val compiler = GwydionCompiler(
+        platform = platform,
         cli = CommandLine(args)
     )
-    val compiler = GwydionCompiler(platform)
     compiler.start()
 }
