@@ -74,9 +74,9 @@ jobs:
       uses: softprops/action-gh-release@v1
       with:
         files: |
-          compiler/gwydion.jar
-          compiler/compiler.kexe
-          compiler/compiler.exe
+          compiler/libs/gwydion.jar
+          compiler/bin/linuxX64/releaseExecutable/compiler.kexe
+          compiler/bin/windowsX64/releaseExecutable/compiler.exe
           jester/jester
         prerelease: true
         tag_name: ${{ steps.tag.outputs.release_tag }}
