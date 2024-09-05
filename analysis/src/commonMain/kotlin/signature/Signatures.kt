@@ -1,8 +1,8 @@
-package me.gabriel.gwydion.analysis.signature
+package me.gabriel.selene.analysis.signature
 
-import me.gabriel.gwydion.frontend.GwydionType
+import me.gabriel.selene.frontend.SeleneType
 import kotlinx.serialization.Serializable
-import me.gabriel.gwydion.frontend.parsing.Modifiers
+import me.gabriel.selene.frontend.parsing.Modifiers
 
 @Serializable
 data class Signatures(
@@ -32,7 +32,7 @@ data class Signatures(
 data class SignatureStruct(
     val name: String,
     val module: String,
-    val fields: Map<String, GwydionType>
+    val fields: Map<String, SeleneType>
 )
 
 @Serializable
@@ -46,8 +46,8 @@ data class SignatureTrait(
 data class SignatureFunction(
     val module: String,
     val name: String,
-    val returnType: GwydionType,
-    val parameters: List<GwydionType>,
+    val returnType: SeleneType,
+    val parameters: List<SeleneType>,
     val modifiers: List<Modifiers>
 )
 
@@ -57,5 +57,5 @@ data class SignatureTraitImpl(
     val trait: String,
     var index: Int?,
     var module: String?,
-    val types: List<GwydionType>
+    val types: List<SeleneType>
 )

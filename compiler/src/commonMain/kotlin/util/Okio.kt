@@ -1,4 +1,4 @@
-package me.gabriel.gwydion.compiler.util
+package me.gabriel.selene.compiler.util
 
 import okio.Path
 

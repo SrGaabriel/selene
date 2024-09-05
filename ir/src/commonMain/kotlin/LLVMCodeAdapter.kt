@@ -1,9 +1,9 @@
-package me.gabriel.gwydion.ir
+package me.gabriel.selene.ir
 
-import me.gabriel.gwydion.analysis.SymbolRepository
-import me.gabriel.gwydion.analysis.signature.Signatures
-import me.gabriel.gwydion.frontend.parsing.SyntaxTree
-import me.gabriel.gwydion.ir.intrinsics.IntrinsicFunction
+import me.gabriel.selene.analysis.SymbolRepository
+import me.gabriel.selene.analysis.signature.Signatures
+import me.gabriel.selene.frontend.parsing.SyntaxTree
+import me.gabriel.selene.ir.intrinsics.IntrinsicFunction
 
 class LLVMCodeAdapter {
     private val intrinsics = mutableListOf<IntrinsicFunction>()

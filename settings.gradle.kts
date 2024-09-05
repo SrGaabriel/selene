@@ -1,4 +1,4 @@
-rootProject.name = "gwydion"
+rootProject.name = "selene"
 
 dependencyResolutionManagement {
     versionCatalogs {

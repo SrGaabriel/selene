@@ -1,8 +1,8 @@
-package me.gabriel.gwydion.frontend.parsing
+package me.gabriel.selene.frontend.parsing
 
-import me.gabriel.gwydion.frontend.GwydionType
-import me.gabriel.gwydion.frontend.lexing.Token
-import me.gabriel.gwydion.frontend.lexing.TokenKind
+import me.gabriel.selene.frontend.SeleneType
+import me.gabriel.selene.frontend.lexing.Token
+import me.gabriel.selene.frontend.lexing.TokenKind
 
 data class SyntaxTree(val root: RootNode = RootNode(mutableListOf())) {
     fun addAllNodes(nodes: List<SyntaxTreeNode>) {
@@ -14,7 +14,7 @@ sealed class SyntaxTreeNode(val mark: Token) {
     abstract fun getChildren(): List<SyntaxTreeNode>
 }
 
-sealed class TypedSyntaxTreeNode(open var type: GwydionType, mark: Token) : SyntaxTreeNode(mark)
+sealed class TypedSyntaxTreeNode(open var type: SeleneType, mark: Token) : SyntaxTreeNode(mark)
 
 class RootNode(private val children: MutableList<SyntaxTreeNode>) : SyntaxTreeNode(Token(TokenKind.BOF, "", 0)) {
     fun addNode(node: SyntaxTreeNode) {
@@ -32,7 +32,7 @@ class RootNode(private val children: MutableList<SyntaxTreeNode>) : SyntaxTreeNo
 
 class FunctionNode(
     val name: String,
-    var returnType: GwydionType,
+    var returnType: SeleneType,
     val parameters: List<ParameterNode>,
     val body: BlockNode,
     val modifiers: MutableList<Modifiers>,
@@ -52,7 +52,7 @@ class BlockNode(
 
 class ParameterNode(
     val name: String,
-    type: GwydionType,
+    type: SeleneType,
     mark: Token
 ) : TypedSyntaxTreeNode(type, mark) {
     override fun getChildren(): List<SyntaxTreeNode> = emptyList()
@@ -64,7 +64,7 @@ class AssignmentNode(
     val name: String,
     val expression: SyntaxTreeNode,
     val mutable: Boolean,
-    type: GwydionType,
+    type: SeleneType,
     mark: Token
 ) : TypedSyntaxTreeNode(type, mark) {
     override fun getChildren(): List<SyntaxTreeNode> = listOf(expression)
@@ -135,7 +135,7 @@ class DataStructureReferenceNode(
 class NumberNode(
     var value: String,
     val explicit: Boolean,
-    override var type: GwydionType,
+    override var type: SeleneType,
     mark: Token
 ) : TypedSyntaxTreeNode(type, mark) {
     override fun getChildren(): List<SyntaxTreeNode> = emptyList()
@@ -147,7 +147,7 @@ class StringNode(
     val value: String,
     val segments: List<Segment>,
     mark: Token
-) : TypedSyntaxTreeNode(GwydionType.String, mark) {
+) : TypedSyntaxTreeNode(SeleneType.String, mark) {
     override fun getChildren(): List<SyntaxTreeNode> = emptyList()
 
     sealed class Segment {
@@ -162,7 +162,7 @@ class StringNode(
 class BooleanNode(
     val value: Boolean,
     mark: Token
-) : TypedSyntaxTreeNode(GwydionType.Boolean, mark) {
+) : TypedSyntaxTreeNode(SeleneType.Boolean, mark) {
     override fun getChildren(): List<SyntaxTreeNode> = emptyList()
 
     override fun toString(): String = "BooleanNode(value=$value)"
@@ -222,7 +222,7 @@ class DataStructureNode(
 
 class DataFieldNode(
     val name: String,
-    var type: GwydionType,
+    var type: SeleneType,
     mark: Token
 ) : SyntaxTreeNode(mark) {
     override fun getChildren(): List<SyntaxTreeNode> = listOf()
@@ -242,7 +242,7 @@ class TraitNode(
 
 class TraitFunctionNode(
     val name: String,
-    var returnType: GwydionType,
+    var returnType: SeleneType,
     val parameters: List<ParameterNode>,
     mark: Token
 ) : SyntaxTreeNode(mark) {
@@ -252,7 +252,7 @@ class TraitFunctionNode(
 }
 
 class TraitImplNode(
-    var type: GwydionType,
+    var type: SeleneType,
     val trait: String,
     val functions: List<FunctionNode>,
     mark: Token
@@ -338,7 +338,7 @@ class LambdaNode(
 
 class LambdaParameterNode(
     val name: String,
-    val type: GwydionType,
+    val type: SeleneType,
     mark: Token
 ) : SyntaxTreeNode(mark) {
     override fun getChildren(): List<SyntaxTreeNode> = emptyList()

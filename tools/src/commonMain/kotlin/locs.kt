@@ -1,4 +1,4 @@
-package me.gabriel.gwydion.tools
+package me.gabriel.selene.tools
 
 data class RowInfo(val content: String, val relativeIndex: Int)
 

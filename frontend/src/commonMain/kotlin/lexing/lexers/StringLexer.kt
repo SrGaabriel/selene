@@ -1,10 +1,10 @@
-package me.gabriel.gwydion.frontend.lexing.lexers
+package me.gabriel.selene.frontend.lexing.lexers
 
-import me.gabriel.gwydion.frontend.lexing.Token
-import me.gabriel.gwydion.frontend.lexing.TokenKind
-import me.gabriel.gwydion.frontend.lexing.TokenStream
-import me.gabriel.gwydion.frontend.lexing.error.LexingError
-import me.gabriel.gwydion.tools.Either
+import me.gabriel.selene.frontend.lexing.Token
+import me.gabriel.selene.frontend.lexing.TokenKind
+import me.gabriel.selene.frontend.lexing.TokenStream
+import me.gabriel.selene.frontend.lexing.error.LexingError
+import me.gabriel.selene.tools.Either
 
 class StringLexer(private val data: String): Lexer {
     private var position = 0
@@ -27,7 +27,7 @@ class StringLexer(private val data: String): Lexer {
                 '"' -> return Either.left(lexString(tokens) ?: continue)
                 in '0'..'9' -> tokens.add(number())
                 in 'a'..'z', in 'A'..'Z', '_' -> {
-                    val identifier = identifier(token.toString())
+                    val identifier = identifier()
                     if (identifier.isLeft()) {
                         return Either.Left(identifier.getLeft())
                     }
@@ -104,7 +104,7 @@ class StringLexer(private val data: String): Lexer {
         return Token(TokenKind.NUMBER, data.substring(start, position), position)
     }
 
-    fun identifier(value: String): Either<LexingError, Token> {
+    fun identifier(): Either<LexingError, Token> {
         val start = position
         while (position < data.length && (data[position].isLetterOrDigit() || data[position] == '_')) {
             position++

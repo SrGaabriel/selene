@@ -1,9 +1,9 @@
-package me.gabriel.gwydion.analysis
+package me.gabriel.selene.analysis
 
-import me.gabriel.gwydion.frontend.GwydionType
-import me.gabriel.gwydion.frontend.lexing.TokenKind
-import me.gabriel.gwydion.frontend.parsing.CallNode
-import me.gabriel.gwydion.frontend.parsing.SyntaxTreeNode
+import me.gabriel.selene.frontend.SeleneType
+import me.gabriel.selene.frontend.lexing.TokenKind
+import me.gabriel.selene.frontend.parsing.CallNode
+import me.gabriel.selene.frontend.parsing.SyntaxTreeNode
 
 data class AnalysisResult(
     val errors: MutableList<AnalysisError> = mutableListOf(),
@@ -11,7 +11,7 @@ data class AnalysisResult(
 )
 
 sealed class AnalysisError(val message: String, val node: SyntaxTreeNode) {
-    class InvalidOperation(node: SyntaxTreeNode, leftType: GwydionType, operator: TokenKind, rightType: GwydionType) : AnalysisError(
+    class InvalidOperation(node: SyntaxTreeNode, leftType: SeleneType, operator: TokenKind, rightType: SeleneType) : AnalysisError(
         "invalid operation: cannot run $operator.sig on ${leftType.signature} and ${rightType.signature}",
         node
     )
@@ -24,7 +24,7 @@ sealed class AnalysisError(val message: String, val node: SyntaxTreeNode) {
         node
     )
 
-    class ReturnTypeMismatch(node: SyntaxTreeNode, expected: GwydionType, actual: GwydionType) : AnalysisError(
+    class ReturnTypeMismatch(node: SyntaxTreeNode, expected: SeleneType, actual: SeleneType) : AnalysisError(
         "return type mismatch: expected ${expected.signature}, got ${actual.signature}",
         node
     )
@@ -44,12 +44,12 @@ sealed class AnalysisError(val message: String, val node: SyntaxTreeNode) {
         node
     )
 
-    class UnknownType(node: SyntaxTreeNode, type: GwydionType) : AnalysisError(
+    class UnknownType(node: SyntaxTreeNode, type: SeleneType) : AnalysisError(
         "unknown type: ${type.signature}",
         node
     )
 
-    class InvalidCondition(node: SyntaxTreeNode, type: GwydionType) : AnalysisError(
+    class InvalidCondition(node: SyntaxTreeNode, type: SeleneType) : AnalysisError(
         "invalid condition: condition must be a boolean expression, got ${type.signature}",
         node
     )
@@ -58,7 +58,7 @@ sealed class AnalysisError(val message: String, val node: SyntaxTreeNode) {
         "undefined array: $name",
         node
     )
-    class NotAnArray(node: SyntaxTreeNode, type: GwydionType) : AnalysisError(
+    class NotAnArray(node: SyntaxTreeNode, type: SeleneType) : AnalysisError(
         "not an array: ${type.signature}",
         node
     )
@@ -71,7 +71,7 @@ sealed class AnalysisError(val message: String, val node: SyntaxTreeNode) {
     class MissingArgumentsForInstantiation(
         node: SyntaxTreeNode,
         name: String,
-        arguments: Map<String, GwydionType>
+        arguments: Map<String, SeleneType>
     ) : AnalysisError(
         "missing arguments for instantiation of $name: ${arguments.keys.joinToString(", ") { 
             "$it (${arguments[it]!!.signature})"
@@ -122,7 +122,7 @@ sealed class AnalysisError(val message: String, val node: SyntaxTreeNode) {
         function: String,
         trait: String,
         struct: String,
-        correct: List<GwydionType>,
+        correct: List<SeleneType>,
     ) : AnalysisError(
         "wrong function signature `$function` in trait impl $trait for $struct, expected${
             if (correct.isEmpty()) " no parameters"
@@ -131,7 +131,7 @@ sealed class AnalysisError(val message: String, val node: SyntaxTreeNode) {
         node
     )
 
-    class BinaryOpTypeMismatch(node: SyntaxTreeNode, left: GwydionType, right: GwydionType) : AnalysisError(
+    class BinaryOpTypeMismatch(node: SyntaxTreeNode, left: SeleneType, right: SeleneType) : AnalysisError(
         "binary operation type mismatch: ${left.signature} and ${right.signature}",
         node
     )
@@ -141,7 +141,7 @@ sealed class AnalysisError(val message: String, val node: SyntaxTreeNode) {
         node
     )
 
-    class WrongArgumentTypeForInstantiation(node: SyntaxTreeNode, expected: GwydionType, provided: GwydionType) : AnalysisError(
+    class WrongArgumentTypeForInstantiation(node: SyntaxTreeNode, expected: SeleneType, provided: SeleneType) : AnalysisError(
         "wrong argument type for instantiation: expected ${expected.signature}, got ${provided.signature}",
         node
     )
@@ -162,19 +162,19 @@ sealed class AnalysisError(val message: String, val node: SyntaxTreeNode) {
     class ArrayElementTypeMismatch(
         node: SyntaxTreeNode,
         index: Int,
-        provided: GwydionType,
-        expected: GwydionType
+        provided: SeleneType,
+        expected: SeleneType
     ): AnalysisError(
         "array element type mismatch: expected ${expected.signature}, got ${provided.signature} at index $index",
         node
     )
 
-    class NotADataStructure(node: SyntaxTreeNode, type: GwydionType) : AnalysisError(
+    class NotADataStructure(node: SyntaxTreeNode, type: SeleneType) : AnalysisError(
         "not a data structure: ${type.signature}",
         node
     )
 
-    class InvalidStructAccess(node: SyntaxTreeNode, struct: GwydionType) : AnalysisError(
+    class InvalidStructAccess(node: SyntaxTreeNode, struct: SeleneType) : AnalysisError(
         "invalid struct access: ${struct.signature}",
         node
     )
@@ -184,12 +184,12 @@ sealed class AnalysisError(val message: String, val node: SyntaxTreeNode) {
         node
     )
 
-    class WrongArgumentTypeForFunctionCall(node: SyntaxTreeNode, expected: GwydionType, actual: GwydionType) : AnalysisError(
+    class WrongArgumentTypeForFunctionCall(node: SyntaxTreeNode, expected: SeleneType, actual: SeleneType) : AnalysisError(
         "wrong argument type for function call: expected ${expected.signature}, got ${actual.signature}",
         node
     )
 
-    class TypeCannotBeMutable(node: SyntaxTreeNode, type: GwydionType) : AnalysisError(
+    class TypeCannotBeMutable(node: SyntaxTreeNode, type: SeleneType) : AnalysisError(
         "type cannot be mutable: ${type.signature}",
         node
     )

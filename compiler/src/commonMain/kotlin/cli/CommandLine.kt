@@ -1,4 +1,4 @@
-package me.gabriel.gwydion.compiler.cli
+package me.gabriel.selene.compiler.cli
 
 // Temporary
 class CommandLine(private val args: Array<String>) {

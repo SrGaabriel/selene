@@ -1,7 +1,7 @@
-package me.gabriel.gwydion.ir.intrinsics
+package me.gabriel.selene.ir.intrinsics
 
-import me.gabriel.gwydion.frontend.GwydionType
-import me.gabriel.gwydion.frontend.parsing.CallNode
+import me.gabriel.selene.frontend.SeleneType
+import me.gabriel.selene.frontend.parsing.CallNode
 
 class ArrayLengthFunction: IntrinsicFunction(
     name = "arraylen",
@@ -44,11 +44,11 @@ class ArrayLengthFunction: IntrinsicFunction(
         )
     }
 
-    override fun handleCall(call: CallNode, types: Collection<GwydionType>, arguments: String): String {
+    override fun handleCall(call: CallNode, types: Collection<SeleneType>, arguments: String): String {
         val type = types.firstOrNull()
         return when (type) {
-            GwydionType.String -> return "call i32 @str_length(${arguments})"
-            is GwydionType.FixedArray -> "add i32 ${type.length}, 0"
+            SeleneType.String -> return "call i32 @str_length(${arguments})"
+            is SeleneType.FixedArray -> "add i32 ${type.length}, 0"
             else -> error("Invalid type (${type}) for arraylen function")
         }
     }

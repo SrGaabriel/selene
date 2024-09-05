@@ -1,4 +1,4 @@
-name: Gwydion CI/CD
+name: Selene CI/CD
 
 on:
   push:
@@ -48,9 +48,9 @@ jobs:
     - name: Rename and upload compiler artifacts
       run: |
         mkdir -p artifacts
-        cp compiler/build/libs/gwydion.jar artifacts/gwydion-compiler-jvm.jar
-        cp compiler/build/bin/linuxX64/releaseExecutable/compiler.kexe artifacts/gwydion-compiler-linuxX64
-        cp compiler/build/bin/windowsX64/releaseExecutable/compiler.exe artifacts/gwydion-compiler-windowsX64.exe
+        cp compiler/build/libs/selene.jar artifacts/selene-compiler-jvm.jar
+        cp compiler/build/bin/linuxX64/releaseExecutable/compiler.kexe artifacts/selene-compiler-linuxX64
+        cp compiler/build/bin/windowsX64/releaseExecutable/compiler.exe artifacts/selene-compiler-windowsX64.exe
     - uses: actions/upload-artifact@v3
       with:
         name: compiler-artifacts
@@ -80,9 +80,9 @@ jobs:
       uses: softprops/action-gh-release@v1
       with:
         files: |
-          compiler-artifacts/gwydion-compiler-jvm.jar
-          compiler-artifacts/gwydion-compiler-linuxX64
-          compiler-artifacts/gwydion-compiler-windowsX64.exe
+          compiler-artifacts/selene-compiler-jvm.jar
+          compiler-artifacts/selene-compiler-linuxX64
+          compiler-artifacts/selene-compiler-windowsX64.exe
           jester/jester
       env:
         GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}

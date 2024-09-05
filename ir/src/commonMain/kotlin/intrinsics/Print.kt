@@ -1,7 +1,7 @@
-package me.gabriel.gwydion.ir.intrinsics
+package me.gabriel.selene.ir.intrinsics
 
-import me.gabriel.gwydion.frontend.GwydionType
-import me.gabriel.gwydion.frontend.parsing.CallNode
+import me.gabriel.selene.frontend.SeleneType
+import me.gabriel.selene.frontend.parsing.CallNode
 
 class PrintlnFunction: IntrinsicFunction(
     "println",
@@ -56,13 +56,13 @@ class PrintlnFunction: IntrinsicFunction(
         )
     }
 
-    override fun handleCall(call: CallNode, types: Collection<GwydionType>, arguments: String): String {
-        val type = types.firstOrNull() ?: GwydionType.Unknown
+    override fun handleCall(call: CallNode, types: Collection<SeleneType>, arguments: String): String {
+        val type = types.firstOrNull() ?: SeleneType.Unknown
         return when (type) {
-            GwydionType.String -> "call void @println_str(${arguments})"
-            GwydionType.Int32 -> "call void @println_i32(${arguments})"
-            GwydionType.Float64 -> "call void @println_f64(${arguments})"
-            GwydionType.Boolean -> "call void @println_bool(${arguments})"
+            SeleneType.String -> "call void @println_str(${arguments})"
+            SeleneType.Int32 -> "call void @println_i32(${arguments})"
+            SeleneType.Float64 -> "call void @println_f64(${arguments})"
+            SeleneType.Boolean -> "call void @println_bool(${arguments})"
             else -> error("Unsupported type $type for intrinsic $name")
         }
     }

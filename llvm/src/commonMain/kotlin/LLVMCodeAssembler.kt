@@ -1,7 +1,6 @@
-package me.gabriel.gwydion.llvm
+package me.gabriel.selene.llvm
 
-import me.gabriel.gwydion.llvm.struct.*
-import kotlin.math.min
+import me.gabriel.selene.llvm.struct.*
 
 class LLVMCodeAssembler(val generator: ILLVMCodeGenerator): ILLVMCodeAssembler {
     private val ir = mutableListOf<String>()

@@ -1,13 +1,13 @@
-package me.gabriel.gwydion.analysis.analyzers.impl
+package me.gabriel.selene.analysis.analyzers.impl
 
-import me.gabriel.gwydion.analysis.AnalysisResult
-import me.gabriel.gwydion.analysis.SymbolBlock
-import me.gabriel.gwydion.analysis.analyzers.SingleNodeAnalyzer
-import me.gabriel.gwydion.analysis.analyzers.TypeInferenceVisitor
-import me.gabriel.gwydion.analysis.signature.Signatures
-import me.gabriel.gwydion.analysis.util.resolveTraitForExpression
-import me.gabriel.gwydion.frontend.GwydionType
-import me.gabriel.gwydion.frontend.parsing.TraitFunctionCallNode
+import me.gabriel.selene.analysis.AnalysisResult
+import me.gabriel.selene.analysis.SymbolBlock
+import me.gabriel.selene.analysis.analyzers.SingleNodeAnalyzer
+import me.gabriel.selene.analysis.analyzers.TypeInferenceVisitor
+import me.gabriel.selene.analysis.signature.Signatures
+import me.gabriel.selene.analysis.util.resolveTraitForExpression
+import me.gabriel.selene.frontend.SeleneType
+import me.gabriel.selene.frontend.parsing.TraitFunctionCallNode
 
 class TraitFunctionCallAnalyzer: SingleNodeAnalyzer<TraitFunctionCallNode>(TraitFunctionCallNode::class) {
     override fun register(
@@ -20,7 +20,7 @@ class TraitFunctionCallAnalyzer: SingleNodeAnalyzer<TraitFunctionCallNode>(Trait
             block.resolveExpression(node.trait) ?: return@visit
         }
 
-        if (traitType is GwydionType.Trait) {
+        if (traitType is SeleneType.Trait) {
             val function = traitType.functions.firstOrNull { it.name == node.function }
             if (function != null) {
                 block.defineSymbol(node, function.returnType)

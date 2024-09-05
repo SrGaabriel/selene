@@ -1,15 +1,15 @@
-package me.gabriel.gwydion.analysis
+package me.gabriel.selene.analysis
 
-import me.gabriel.gwydion.analysis.analyzers.ISemanticAnalyzer
-import me.gabriel.gwydion.analysis.analyzers.TypeInferenceVisitor
-import me.gabriel.gwydion.analysis.analyzers.impl.*
-import me.gabriel.gwydion.analysis.signature.Signatures
-import me.gabriel.gwydion.frontend.parsing.*
-import me.gabriel.gwydion.tools.GwydionLogger
-import me.gabriel.gwydion.tools.LogLevel
+import me.gabriel.selene.analysis.analyzers.ISemanticAnalyzer
+import me.gabriel.selene.analysis.analyzers.TypeInferenceVisitor
+import me.gabriel.selene.analysis.analyzers.impl.*
+import me.gabriel.selene.analysis.signature.Signatures
+import me.gabriel.selene.frontend.parsing.*
+import me.gabriel.selene.tools.SeleneLogger
+import me.gabriel.selene.tools.LogLevel
 
 class SemanticAnalysisManager(
-    private val logger: GwydionLogger,
+    private val logger: SeleneLogger,
     private val symbols: SymbolRepository,
     private val signatures: Signatures,
 ) {
@@ -65,7 +65,7 @@ class SemanticAnalysisManager(
         }
 
         val newBlock = analyzers.map { analyzer ->
-            val visitor = TypeInferenceVisitor(node)
+            val visitor = TypeInferenceVisitor()
 
             val switchBlock = @Suppress("UNCHECKED_CAST")
                 (analyzer as ISemanticAnalyzer<SyntaxTreeNode>).register(block, node, signatures, visitor)

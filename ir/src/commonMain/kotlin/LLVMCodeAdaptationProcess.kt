@@ -1,17 +1,17 @@
-package me.gabriel.gwydion.ir
+package me.gabriel.selene.ir
 
-import me.gabriel.gwydion.analysis.SymbolBlock
-import me.gabriel.gwydion.analysis.signature.SignatureTraitImpl
-import me.gabriel.gwydion.analysis.signature.Signatures
-import me.gabriel.gwydion.analysis.util.castToType
-import me.gabriel.gwydion.analysis.util.resolveTraitForExpression
-import me.gabriel.gwydion.frontend.GwydionType
-import me.gabriel.gwydion.frontend.lexing.TokenKind
-import me.gabriel.gwydion.frontend.parsing.*
-import me.gabriel.gwydion.ir.intrinsics.IntrinsicFunction
-import me.gabriel.gwydion.llvm.LLVMCodeAssembler
-import me.gabriel.gwydion.llvm.LLVMCodeGenerator
-import me.gabriel.gwydion.llvm.struct.*
+import me.gabriel.selene.analysis.SymbolBlock
+import me.gabriel.selene.analysis.signature.SignatureTraitImpl
+import me.gabriel.selene.analysis.signature.Signatures
+import me.gabriel.selene.analysis.util.castToType
+import me.gabriel.selene.analysis.util.resolveTraitForExpression
+import me.gabriel.selene.frontend.SeleneType
+import me.gabriel.selene.frontend.lexing.TokenKind
+import me.gabriel.selene.frontend.parsing.*
+import me.gabriel.selene.ir.intrinsics.IntrinsicFunction
+import me.gabriel.selene.llvm.LLVMCodeAssembler
+import me.gabriel.selene.llvm.LLVMCodeGenerator
+import me.gabriel.selene.llvm.struct.*
 
 /*
  * I decided to use exceptions instead of errors because the exceptions should be caught in
@@ -88,7 +88,7 @@ class LLVMCodeAdaptationProcess(
         block: SymbolBlock,
         node: SyntaxTreeNode,
         store: Boolean = false,
-        self: GwydionType? = null
+        self: SeleneType? = null
     ): Value = when (node) {
         is RootNode, is BlockNode -> blockAdaptChildren(block, node)
         is FunctionNode -> generateFunction(block, node, self)
@@ -122,14 +122,14 @@ class LLVMCodeAdaptationProcess(
         return NullMemoryUnit
     }
 
-    private fun generateFunction(block: SymbolBlock, node: FunctionNode, self: GwydionType?): NullMemoryUnit {
+    private fun generateFunction(block: SymbolBlock, node: FunctionNode, self: SeleneType?): NullMemoryUnit {
         if (node.modifiers.contains(Modifiers.INTRINSIC)) return NullMemoryUnit
 
         val parameters = mutableListOf<MemoryUnit>()
         val block = block.surfaceSearchChild(node)
             ?: error("Block ${node.name} not found in block ${block.name}")
         node.parameters.forEach { param ->
-            if (param.type is GwydionType.Trait) {
+            if (param.type is SeleneType.Trait) {
                 val vtable = MemoryUnit.Unsized(
                     register = assembler.nextRegister(),
                     type = LLVMType.Ptr
@@ -143,7 +143,7 @@ class LLVMCodeAdaptationProcess(
                     data = data,
                     type = LLVMType.Trait(
                         name = node.name,
-                        functions = (param.type as GwydionType.Trait).functions.size
+                        functions = (param.type as SeleneType.Trait).functions.size
                     )
                 )
                 putMemoryUnit(block, param.name, trait)
@@ -152,7 +152,7 @@ class LLVMCodeAdaptationProcess(
                 parameters.add(data)
                 return@forEach
             }
-            val type = if (param.type.base !is GwydionType.Self) getProperReturnType(param.type) else self?.asLLVM()?.let { LLVMType.Pointer(it) } ?: error("Self type not found")
+            val type = if (param.type.base !is SeleneType.Self) getProperReturnType(param.type) else self?.asLLVM()?.let { LLVMType.Pointer(it) } ?: error("Self type not found")
 
             val unit = MemoryUnit.Sized(
                 register = assembler.nextRegister(),
@@ -173,7 +173,7 @@ class LLVMCodeAdaptationProcess(
             returnType = properReturnType
         ) {
             acceptNode(block, node.body)
-            if (node.returnType == GwydionType.Void) {
+            if (node.returnType == SeleneType.Void) {
                 assembler.returnVoid()
             }
         }
@@ -187,7 +187,7 @@ class LLVMCodeAdaptationProcess(
         store: Boolean
     ): Value {
         val potentialLambda = block.resolveSymbol(node.name)
-        if (potentialLambda != null && potentialLambda is GwydionType.Lambda) {
+        if (potentialLambda != null && potentialLambda is SeleneType.Lambda) {
             val parameters = mutableListOf<Value>()
             node.arguments.forEachIndexed { index, arg ->
                 val result = acceptNode(block, arg)
@@ -228,16 +228,16 @@ class LLVMCodeAdaptationProcess(
             }
 
             val functionTypeEquivalent = expectedParameters[index]
-            if (result is MemoryUnit.TraitData && functionTypeEquivalent is GwydionType.Trait) {
+            if (result is MemoryUnit.TraitData && functionTypeEquivalent is SeleneType.Trait) {
                 arguments.add(result.vtable)
                 arguments.add(result.loadedData ?: error("TraitData was not loaded"))
-            } else if (functionTypeEquivalent is GwydionType.Trait) {
+            } else if (functionTypeEquivalent is SeleneType.Trait) {
                 val trait = signatures.traits.firstOrNull {
                     it.name == functionTypeEquivalent.identifier
                 } ?: error("Trait ${functionTypeEquivalent.identifier} not found in signatures")
 
                 val type = block.resolveExpression(arg)
-                if (type == null || type is GwydionType.Trait) error("TraitData was not generated from a trait")
+                if (type == null || type is SeleneType.Trait) error("TraitData was not generated from a trait")
 
                 val impl = trait.impls.firstOrNull {
                     it.struct == type.signature
@@ -365,7 +365,7 @@ class LLVMCodeAdaptationProcess(
             ?: error("Couldn't resolve binary operation type at ${block.name} for ${node.left}")
 
         val op = getBinaryOp(node.operator.kind)
-        if (type == GwydionType.String) {
+        if (type == SeleneType.String) {
             val left = acceptNode(block, node.left) as MemoryUnit.Sized
             val right = acceptNode(block, node.right) as MemoryUnit.Sized
             val resultString = assembler.allocateHeapMemory(
@@ -639,9 +639,9 @@ class LLVMCodeAdaptationProcess(
         } else NullMemoryUnit
 
         val arguments = mutableListOf<Value>()
-        if (!(node.static || !function.parameters.contains(GwydionType.Self))) {
+        if (!(node.static || !function.parameters.contains(SeleneType.Self))) {
             val variableMemory = acceptNode(block, node.trait)
-            if (variableType !is GwydionType.Trait) {
+            if (variableType !is SeleneType.Trait) {
                 arguments.add(0, variableMemory)
             } else {
                 val traitMemory = variableMemory as? MemoryUnit.TraitData ?: error("Trait memory not found")
@@ -665,7 +665,7 @@ class LLVMCodeAdaptationProcess(
     }
 
     private fun generateFor(block: SymbolBlock, node: ForNode): NullMemoryUnit {
-        val type = GwydionType.Int32
+        val type = SeleneType.Int32
         val llvmType = type.asLLVM()
         val allocation = assembler.allocateStackMemory(
             type = llvmType,
@@ -743,7 +743,7 @@ class LLVMCodeAdaptationProcess(
             putMemoryUnit(lambdaBlock, param.name, unit)
             parameters.add(unit)
         }
-        val returnType = (block.resolveExpression(node) as? GwydionType.Lambda)?.returnType
+        val returnType = (block.resolveExpression(node) as? SeleneType.Lambda)?.returnType
             ?: error("Return type not found for lambda $node")
 
         lambdas.add(
@@ -831,6 +831,6 @@ class LLVMCodeAdaptationProcess(
         val node: LambdaNode,
         val parameters: List<MemoryUnit>,
         val block: SymbolBlock,
-        val returnType: GwydionType,
+        val returnType: SeleneType,
     )
 }

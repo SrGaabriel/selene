@@ -1,4 +1,4 @@
-package me.gabriel.gwydion.frontend.lexing
+package me.gabriel.selene.frontend.lexing
 
 class TokenStream(private val tokens: List<Token>) : Iterator<Token> by tokens.iterator() {
     fun count(): Int = tokens.size

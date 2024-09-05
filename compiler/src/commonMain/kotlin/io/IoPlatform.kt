@@ -1,4 +1,4 @@
-package me.gabriel.gwydion.compiler.io
+package me.gabriel.selene.compiler.io
 
 import kotlinx.serialization.json.Json
 import okio.FileSystem

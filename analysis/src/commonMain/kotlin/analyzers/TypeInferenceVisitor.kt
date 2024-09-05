@@ -1,8 +1,8 @@
-package me.gabriel.gwydion.analysis.analyzers
+package me.gabriel.selene.analysis.analyzers
 
-import me.gabriel.gwydion.frontend.parsing.SyntaxTreeNode
+import me.gabriel.selene.frontend.parsing.SyntaxTreeNode
 
-class TypeInferenceVisitor(private val node: SyntaxTreeNode) {
+class TypeInferenceVisitor {
     val queuedVisits = mutableListOf<Pair<SyntaxTreeNode, () -> Any>>()
 
     fun <T : Any> visit(node: SyntaxTreeNode, block: () -> T) {

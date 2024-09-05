@@ -1,4 +1,4 @@
-package me.gabriel.gwydion.tools
+package me.gabriel.selene.tools
 
 /**
  * Represents a value of one of two possible types (a disjoint union).

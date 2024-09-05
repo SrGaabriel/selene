@@ -1,15 +1,14 @@
-package me.gabriel.gwydion.analysis.analyzers.impl
+package me.gabriel.selene.analysis.analyzers.impl
 
-import me.gabriel.gwydion.analysis.AnalysisError
-import me.gabriel.gwydion.analysis.AnalysisResult
-import me.gabriel.gwydion.analysis.SymbolBlock
-import me.gabriel.gwydion.analysis.analyzers.SingleNodeAnalyzer
-import me.gabriel.gwydion.analysis.analyzers.TypeInferenceVisitor
-import me.gabriel.gwydion.analysis.signature.Signatures
-import me.gabriel.gwydion.analysis.util.doesProvidedTypeAccordToExpectedType
-import me.gabriel.gwydion.frontend.GwydionType
-import me.gabriel.gwydion.frontend.parsing.InstantiationNode
-import kotlin.math.exp
+import me.gabriel.selene.analysis.AnalysisError
+import me.gabriel.selene.analysis.AnalysisResult
+import me.gabriel.selene.analysis.SymbolBlock
+import me.gabriel.selene.analysis.analyzers.SingleNodeAnalyzer
+import me.gabriel.selene.analysis.analyzers.TypeInferenceVisitor
+import me.gabriel.selene.analysis.signature.Signatures
+import me.gabriel.selene.analysis.util.doesProvidedTypeAccordToExpectedType
+import me.gabriel.selene.frontend.SeleneType
+import me.gabriel.selene.frontend.parsing.InstantiationNode
 
 class InstantiationAnalyzer: SingleNodeAnalyzer<InstantiationNode>(InstantiationNode::class) {
     override fun register(
@@ -20,12 +19,12 @@ class InstantiationAnalyzer: SingleNodeAnalyzer<InstantiationNode>(Instantiation
     ): SymbolBlock {
         val type = signatures.structs.find { it.name == node.name }
             ?.let {
-                GwydionType.Struct(
+                SeleneType.Struct(
                     it.name,
                     it.fields
                 )
             }
-            ?: GwydionType.Unknown
+            ?: SeleneType.Unknown
 
         block.defineSymbol(node, type)
         return block
@@ -37,7 +36,7 @@ class InstantiationAnalyzer: SingleNodeAnalyzer<InstantiationNode>(Instantiation
         signatures: Signatures,
         results: AnalysisResult
     ): SymbolBlock {
-        val struct = block.resolveExpression(node) as? GwydionType.Struct
+        val struct = block.resolveExpression(node) as? SeleneType.Struct
 
         if (struct == null) {
             results.errors.add(

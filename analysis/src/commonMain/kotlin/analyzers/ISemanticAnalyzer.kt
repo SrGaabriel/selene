@@ -1,9 +1,9 @@
-package me.gabriel.gwydion.analysis.analyzers
+package me.gabriel.selene.analysis.analyzers
 
-import me.gabriel.gwydion.analysis.AnalysisResult
-import me.gabriel.gwydion.analysis.SymbolBlock
-import me.gabriel.gwydion.analysis.signature.Signatures
-import me.gabriel.gwydion.frontend.parsing.SyntaxTreeNode
+import me.gabriel.selene.analysis.AnalysisResult
+import me.gabriel.selene.analysis.SymbolBlock
+import me.gabriel.selene.analysis.signature.Signatures
+import me.gabriel.selene.frontend.parsing.SyntaxTreeNode
 
 interface ISemanticAnalyzer<T : SyntaxTreeNode> {
     fun handles(node: SyntaxTreeNode): Boolean

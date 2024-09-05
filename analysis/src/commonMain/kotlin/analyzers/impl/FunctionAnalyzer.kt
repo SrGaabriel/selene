@@ -1,18 +1,18 @@
-package me.gabriel.gwydion.analysis.analyzers.impl
+package me.gabriel.selene.analysis.analyzers.impl
 
-import me.gabriel.gwydion.analysis.AnalysisError
-import me.gabriel.gwydion.analysis.AnalysisResult
-import me.gabriel.gwydion.analysis.AnalysisWarning
-import me.gabriel.gwydion.analysis.SymbolBlock
-import me.gabriel.gwydion.analysis.analyzers.SingleNodeAnalyzer
-import me.gabriel.gwydion.analysis.analyzers.TypeInferenceVisitor
-import me.gabriel.gwydion.analysis.signature.SignatureFunction
-import me.gabriel.gwydion.analysis.signature.Signatures
-import me.gabriel.gwydion.analysis.util.unknownReferenceSignatureToType
-import me.gabriel.gwydion.frontend.GwydionType
-import me.gabriel.gwydion.frontend.parsing.FunctionNode
-import me.gabriel.gwydion.frontend.parsing.Modifiers
-import me.gabriel.gwydion.frontend.parsing.ReturnNode
+import me.gabriel.selene.analysis.AnalysisError
+import me.gabriel.selene.analysis.AnalysisResult
+import me.gabriel.selene.analysis.AnalysisWarning
+import me.gabriel.selene.analysis.SymbolBlock
+import me.gabriel.selene.analysis.analyzers.SingleNodeAnalyzer
+import me.gabriel.selene.analysis.analyzers.TypeInferenceVisitor
+import me.gabriel.selene.analysis.signature.SignatureFunction
+import me.gabriel.selene.analysis.signature.Signatures
+import me.gabriel.selene.analysis.util.unknownReferenceSignatureToType
+import me.gabriel.selene.frontend.SeleneType
+import me.gabriel.selene.frontend.parsing.FunctionNode
+import me.gabriel.selene.frontend.parsing.Modifiers
+import me.gabriel.selene.frontend.parsing.ReturnNode
 
 class FunctionAnalyzer: SingleNodeAnalyzer<FunctionNode>(FunctionNode::class) {
     override fun register(
@@ -57,7 +57,7 @@ class FunctionAnalyzer: SingleNodeAnalyzer<FunctionNode>(FunctionNode::class) {
             return functionBlock
         }
         val returnNode = node.body.getChildren().filter { it is ReturnNode }
-        if (returnNode.isEmpty() && node.returnType != GwydionType.Void) {
+        if (returnNode.isEmpty() && node.returnType != SeleneType.Void) {
             results.errors.add(AnalysisError.MissingReturnStatement(node))
             return functionBlock
         }

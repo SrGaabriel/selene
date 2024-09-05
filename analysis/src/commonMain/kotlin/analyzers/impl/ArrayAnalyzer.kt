@@ -1,15 +1,15 @@
-package me.gabriel.gwydion.analysis.analyzers.impl
+package me.gabriel.selene.analysis.analyzers.impl
 
-import me.gabriel.gwydion.analysis.AnalysisError
-import me.gabriel.gwydion.analysis.AnalysisResult
-import me.gabriel.gwydion.analysis.SymbolBlock
-import me.gabriel.gwydion.analysis.analyzers.SingleNodeAnalyzer
-import me.gabriel.gwydion.analysis.analyzers.TypeInferenceVisitor
-import me.gabriel.gwydion.analysis.signature.Signatures
-import me.gabriel.gwydion.analysis.util.doesProvidedTypeAccordToExpectedType
-import me.gabriel.gwydion.frontend.GwydionType
-import me.gabriel.gwydion.frontend.parsing.ArrayNode
-import me.gabriel.gwydion.frontend.workingBase
+import me.gabriel.selene.analysis.AnalysisError
+import me.gabriel.selene.analysis.AnalysisResult
+import me.gabriel.selene.analysis.SymbolBlock
+import me.gabriel.selene.analysis.analyzers.SingleNodeAnalyzer
+import me.gabriel.selene.analysis.analyzers.TypeInferenceVisitor
+import me.gabriel.selene.analysis.signature.Signatures
+import me.gabriel.selene.analysis.util.doesProvidedTypeAccordToExpectedType
+import me.gabriel.selene.frontend.SeleneType
+import me.gabriel.selene.frontend.parsing.ArrayNode
+import me.gabriel.selene.frontend.workingBase
 
 class ArrayAnalyzer: SingleNodeAnalyzer<ArrayNode>(ArrayNode::class) {
     override fun register(
@@ -20,12 +20,12 @@ class ArrayAnalyzer: SingleNodeAnalyzer<ArrayNode>(ArrayNode::class) {
     ): SymbolBlock {
         val baseType = node.elements.firstOrNull()?.let {
             block.resolveExpression(it)
-        } ?: GwydionType.Unknown
+        } ?: SeleneType.Unknown
 
         val arrayType = if (node.dynamic) {
-            GwydionType.DynamicArray(baseType)
+            SeleneType.DynamicArray(baseType)
         } else {
-            GwydionType.FixedArray(baseType, node.elements.size)
+            SeleneType.FixedArray(baseType, node.elements.size)
         }
 
         block.defineSymbol(node, arrayType)
@@ -43,8 +43,8 @@ class ArrayAnalyzer: SingleNodeAnalyzer<ArrayNode>(ArrayNode::class) {
             ?: error("Type for ArrayNode was not previously defined")
 
         val desiredType = when (arrayType) {
-            is GwydionType.FixedArray -> arrayType.baseType
-            is GwydionType.DynamicArray -> arrayType.baseType
+            is SeleneType.FixedArray -> arrayType.baseType
+            is SeleneType.DynamicArray -> arrayType.baseType
             else -> error("Array type was not previously defined")
         }
 

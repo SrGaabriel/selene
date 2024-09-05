@@ -1,13 +1,13 @@
-package me.gabriel.gwydion.analysis.analyzers.impl
+package me.gabriel.selene.analysis.analyzers.impl
 
-import me.gabriel.gwydion.analysis.AnalysisResult
-import me.gabriel.gwydion.analysis.SymbolBlock
-import me.gabriel.gwydion.analysis.analyzers.SingleNodeAnalyzer
-import me.gabriel.gwydion.analysis.analyzers.TypeInferenceVisitor
-import me.gabriel.gwydion.analysis.signature.Signatures
-import me.gabriel.gwydion.frontend.GwydionType
-import me.gabriel.gwydion.frontend.parsing.ArrayAccessNode
-import me.gabriel.gwydion.frontend.workingBase
+import me.gabriel.selene.analysis.AnalysisResult
+import me.gabriel.selene.analysis.SymbolBlock
+import me.gabriel.selene.analysis.analyzers.SingleNodeAnalyzer
+import me.gabriel.selene.analysis.analyzers.TypeInferenceVisitor
+import me.gabriel.selene.analysis.signature.Signatures
+import me.gabriel.selene.frontend.SeleneType
+import me.gabriel.selene.frontend.parsing.ArrayAccessNode
+import me.gabriel.selene.frontend.workingBase
 
 class ArrayAccessAnalyzer: SingleNodeAnalyzer<ArrayAccessNode>(ArrayAccessNode::class) {
     override fun register(
@@ -18,8 +18,8 @@ class ArrayAccessAnalyzer: SingleNodeAnalyzer<ArrayAccessNode>(ArrayAccessNode::
     ): SymbolBlock {
         val resolved = block.resolveExpression(node.array) ?: return block
         val type = when (val base = resolved.workingBase()) {
-            is GwydionType.FixedArray -> base.baseType
-            is GwydionType.DynamicArray -> base.baseType
+            is SeleneType.FixedArray -> base.baseType
+            is SeleneType.DynamicArray -> base.baseType
             else -> return block
         }
 

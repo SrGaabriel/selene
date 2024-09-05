@@ -1,25 +1,25 @@
-package me.gabriel.gwydion.analysis.util
+package me.gabriel.selene.analysis.util
 
-import me.gabriel.gwydion.analysis.signature.Signatures
-import me.gabriel.gwydion.frontend.GwydionType
-import me.gabriel.gwydion.frontend.mapBase
+import me.gabriel.selene.analysis.signature.Signatures
+import me.gabriel.selene.frontend.SeleneType
+import me.gabriel.selene.frontend.mapBase
 
 internal fun unknownReferenceSignatureToType(
     signatures: Signatures,
-    type: GwydionType,
-): GwydionType = type.mapBase { unknown ->
-    if (unknown !is GwydionType.UnknownReference)
+    type: SeleneType,
+): SeleneType = type.mapBase { unknown ->
+    if (unknown !is SeleneType.UnknownReference)
         return@mapBase unknown
 
     val struct = signatures.structs.find { it.name == unknown.reference }
     if (struct != null) {
-        return@mapBase GwydionType.Struct(struct.name, struct.fields)
+        return@mapBase SeleneType.Struct(struct.name, struct.fields)
     }
 
     val trait = signatures.traits.find { it.name == unknown.reference }
     if (trait != null) {
-        return@mapBase GwydionType.Trait(trait.name, trait.functions.map {
-            GwydionType.VirtualFunction(
+        return@mapBase SeleneType.Trait(trait.name, trait.functions.map {
+            SeleneType.VirtualFunction(
                 it.name,
                 it.returnType,
                 it.parameters

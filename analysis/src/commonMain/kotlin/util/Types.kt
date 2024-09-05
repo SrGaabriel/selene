@@ -1,24 +1,24 @@
-package me.gabriel.gwydion.analysis.util
+package me.gabriel.selene.analysis.util
 
-import me.gabriel.gwydion.analysis.signature.Signatures
-import me.gabriel.gwydion.frontend.GwydionType
+import me.gabriel.selene.analysis.signature.Signatures
+import me.gabriel.selene.frontend.SeleneType
 
 fun doesProvidedTypeAccordToExpectedType(
-    provided: GwydionType,
-    required: GwydionType,
+    provided: SeleneType,
+    required: SeleneType,
     signatures: Signatures
 ): Boolean {
-    if (required == GwydionType.Unknown || required == GwydionType.Any) {
+    if (required == SeleneType.Unknown || required == SeleneType.Any) {
         return true
     }
-    if (required is GwydionType.Mutable || provided is GwydionType.Mutable) {
-        if (provided is GwydionType.Mutable && required !is GwydionType.Mutable) {
+    if (required is SeleneType.Mutable || provided is SeleneType.Mutable) {
+        if (provided is SeleneType.Mutable && required !is SeleneType.Mutable) {
             return doesProvidedTypeAccordToExpectedType(required, provided.baseType, signatures)
-        } else if (provided !is GwydionType.Mutable) {
+        } else if (provided !is SeleneType.Mutable) {
             return false
         }
     }
-    if (required is GwydionType.Trait && provided is GwydionType.Struct) {
+    if (required is SeleneType.Trait && provided is SeleneType.Struct) {
         val trait = signatures.traits.find {
             it.name == required.identifier
         } ?: return false

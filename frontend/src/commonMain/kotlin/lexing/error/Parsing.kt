@@ -1,7 +1,7 @@
-package me.gabriel.gwydion.frontend.lexing.error
+package me.gabriel.selene.frontend.lexing.error
 
-import me.gabriel.gwydion.frontend.lexing.Token
-import me.gabriel.gwydion.frontend.lexing.TokenKind
+import me.gabriel.selene.frontend.lexing.Token
+import me.gabriel.selene.frontend.lexing.TokenKind
 
 sealed class ParsingError(val message: String, val token: Token) {
     class UnexpectedToken(token: Token) : ParsingError("unexpected token: ${token.kind}", token)

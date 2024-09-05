@@ -1,12 +1,12 @@
-package me.gabriel.gwydion.analysis.analyzers.impl
+package me.gabriel.selene.analysis.analyzers.impl
 
-import me.gabriel.gwydion.analysis.AnalysisResult
-import me.gabriel.gwydion.analysis.SymbolBlock
-import me.gabriel.gwydion.analysis.analyzers.SingleNodeAnalyzer
-import me.gabriel.gwydion.analysis.analyzers.TypeInferenceVisitor
-import me.gabriel.gwydion.analysis.signature.Signatures
-import me.gabriel.gwydion.frontend.GwydionType
-import me.gabriel.gwydion.frontend.parsing.AssignmentNode
+import me.gabriel.selene.analysis.AnalysisResult
+import me.gabriel.selene.analysis.SymbolBlock
+import me.gabriel.selene.analysis.analyzers.SingleNodeAnalyzer
+import me.gabriel.selene.analysis.analyzers.TypeInferenceVisitor
+import me.gabriel.selene.analysis.signature.Signatures
+import me.gabriel.selene.frontend.SeleneType
+import me.gabriel.selene.frontend.parsing.AssignmentNode
 
 class AssignmentAnalyzer: SingleNodeAnalyzer<AssignmentNode>(AssignmentNode::class) {
     override fun register(
@@ -19,7 +19,7 @@ class AssignmentAnalyzer: SingleNodeAnalyzer<AssignmentNode>(AssignmentNode::cla
             val type = block.resolveExpression(node.expression) ?: return@visit
 
             if (node.mutable) {
-                block.defineSymbol(node, GwydionType.Mutable(type))
+                block.defineSymbol(node, SeleneType.Mutable(type))
             } else {
                 block.defineSymbol(node, type)
             }

@@ -13,9 +13,9 @@ fn main() {
 
     let binding = std::env::current_dir().expect("Failed to get current directory");
     let project_root = binding.parent().expect("Failed to get parent directory");
-    let gwydion_jar = project_root.join("compiler/build/libs/gwydion.jar");
+    let selene_jar = project_root.join("compiler/build/libs/selene.jar");
 
-    if !gwydion_jar.exists() {
+    if !selene_jar.exists() {
         return;
     }
 
@@ -34,7 +34,7 @@ fn main() {
         &stdlib_props.name,
         &stdlib,
         &project_root,
-        &gwydion_jar,
+        &selene_jar,
         native,
         true,
     );
@@ -48,7 +48,7 @@ fn main() {
         &bard_props.name,
         &bard_dir,
         &project_root,
-        &gwydion_jar,
+        &selene_jar,
         native,
         false,
     );
@@ -101,20 +101,20 @@ fn link_files(project_root: &Path) {
 fn compile(
     name: &String,
     target_root: &Path,
-    gwydion_root: &Path,
-    gwydion_jar: &Path,
+    selene_root: &Path,
+    selene_jar: &Path,
     native: bool,
     is_stdlib: bool
 ) -> bool {
     println!("Compiling {:?}", target_root);
 
-    let output_dir = gwydion_root.join("bard/output/ll");
+    let output_dir = selene_root.join("bard/output/ll");
     fs::create_dir_all(&output_dir).expect("Failed to create output directory");
 
     if !native {
         let mut command = Command::new("java");
         command.arg("-jar")
-            .arg(&gwydion_jar)
+            .arg(&selene_jar)
             .arg(target_root)
             .arg(name)
             .current_dir(&output_dir);
