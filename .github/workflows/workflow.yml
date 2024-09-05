@@ -4,10 +4,7 @@ on: [push, pull_request]
 
 jobs:
   build:
-    strategy:
-      matrix:
-        os: [ubuntu-latest, windows-latest]
-    runs-on: ${{ matrix.os }}
+    runs-on: ubuntu-latest
     
     steps:
     - uses: actions/checkout@v3
@@ -24,14 +21,7 @@ jobs:
     - name: Build with Gradle
       run: ./gradlew build
     
-    - name: Build Jester (Ubuntu)
-      if: matrix.os == 'ubuntu-latest'
-      run: |
-        cd jester
-        cargo build --release
-    
-    - name: Build Jester (Windows)
-      if: matrix.os == 'windows-latest'
+    - name: Build Jester
       run: |
         cd jester
         cargo build --release
@@ -39,7 +29,7 @@ jobs:
     - name: Upload JVM module artifacts
       uses: actions/upload-artifact@v3
       with:
-        name: jvm-modules-${{ matrix.os }}
+        name: jvm-modules
         path: |
           */build/libs/*-jvm.jar
           !compiler/build/libs/*-jvm.jar
@@ -47,21 +37,22 @@ jobs:
     - name: Upload compiler artifacts
       uses: actions/upload-artifact@v3
       with:
-        name: compiler-${{ matrix.os }}
+        name: compiler
         path: |
           compiler/build/libs/gwydion.jar
-          compiler/build/bin/${{ matrix.os == 'ubuntu-latest' && 'linuxX64' || 'windowsX64' }}/releaseExecutable/compiler${{ matrix.os == 'ubuntu-latest' && '.kexe' || '.exe' }}
+          compiler/build/bin/linuxX64/releaseExecutable/compiler.kexe
+          compiler/build/bin/windowsX64/releaseExecutable/compiler.exe
     
     - name: Upload Jester artifact
       uses: actions/upload-artifact@v3
       with:
-        name: jester-${{ matrix.os }}
-        path: jester/target/release/jester${{ matrix.os == 'windows-latest' && '.exe' || '' }}
+        name: jester
+        path: jester/target/release/jester
 
   pre-release:
     needs: build
     runs-on: ubuntu-latest
-    if: github.event_name == 'push' && github.ref == 'refs/heads/main'
+    if: github.event_name == 'push' && github.ref == 'refs/heads/main' || github.ref == 'refs/head/ci'
     
     steps:
     - uses: actions/checkout@v3
@@ -73,10 +64,10 @@ jobs:
       uses: softprops/action-gh-release@v1
       with:
         files: |
-          compiler-*/compiler/build/libs/gwydion.jar
-          compiler-*/compiler/build/bin/*/releaseExecutable/compiler*
-          jester-*/jester
-          jester-*/jester.exe
+          compiler/gwydion.jar
+          compiler/compiler.kexe
+          compiler/compiler.exe
+          jester/jester
         prerelease: true
         tag_name: ${{ github.sha }}
         name: Pre-release ${{ github.sha }}
