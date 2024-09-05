@@ -86,5 +86,4 @@ jobs:
         prerelease: true
         tag_name: ${{ github.sha }}
         name: Pre-release ${{ github.sha }}
-      env:
-        GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
