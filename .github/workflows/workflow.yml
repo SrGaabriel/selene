@@ -45,14 +45,16 @@ jobs:
           */build/libs/*-jvm.jar
           !compiler/build/libs/*-jvm.jar
     
-    - name: Upload compiler artifacts
-      uses: actions/upload-artifact@v3
+    - name: Rename and upload compiler artifacts
+      run: |
+        mkdir -p artifacts
+        cp compiler/build/libs/gwydion.jar artifacts/gwydion-compiler-jvm.jar
+        cp compiler/build/bin/linuxX64/releaseExecutable/compiler.kexe artifacts/gwydion-compiler-linuxX64
+        cp compiler/build/bin/windowsX64/releaseExecutable/compiler.exe artifacts/gwydion-compiler-windowsX64.exe
+    - uses: actions/upload-artifact@v3
       with:
-        name: compiler
-        path: |
-          compiler/build/libs/gwydion.jar
-          compiler/build/bin/linuxX64/releaseExecutable/compiler.kexe
-          compiler/build/bin/windowsX64/releaseExecutable/compiler.exe
+        name: compiler-artifacts
+        path: artifacts/*
     
     - name: Upload Jester artifact
       uses: actions/upload-artifact@v3
@@ -78,9 +80,9 @@ jobs:
       uses: softprops/action-gh-release@v1
       with:
         files: |
-          compiler/libs/gwydion.jar
-          compiler/bin/linuxX64/releaseExecutable/compiler.kexe
-          compiler/bin/windowsX64/releaseExecutable/compiler.exe
+          compiler-artifacts/gwydion-compiler-jvm.jar
+          compiler-artifacts/gwydion-compiler-linuxX64
+          compiler-artifacts/gwydion-compiler-windowsX64.exe
           jester/jester
       env:
         GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
