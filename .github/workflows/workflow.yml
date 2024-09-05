@@ -1,6 +1,14 @@
 name: Gwydion CI/CD
 
-on: [push, pull_request]
+on:
+  push:
+    branches:
+      - '**'
+  pull_request:
+    branches:
+      - '**'
+  release:
+    types: [created]
 
 permissions:
   contents: write
@@ -52,9 +60,10 @@ jobs:
         name: jester
         path: jester/target/release/jester
 
-  pre-release:
+  release:
     needs: build
     runs-on: ubuntu-latest
+    if: github.event_name == 'release' && github.event.action == 'created'
     
     steps:
     - uses: actions/checkout@v3
@@ -65,12 +74,7 @@ jobs:
     - name: Display structure of downloaded files
       run: ls -R
     
-    - name: Generate release tag
-      id: tag
-      run: |
-        echo "release_tag=release-$(date +'%Y.%m.%d-%H%M%S')" >> $GITHUB_OUTPUT
-
-    - name: Create pre-release
+    - name: Upload Release Assets
       uses: softprops/action-gh-release@v1
       with:
         files: |
@@ -78,12 +82,5 @@ jobs:
           compiler/bin/linuxX64/releaseExecutable/compiler.kexe
           compiler/bin/windowsX64/releaseExecutable/compiler.exe
           jester/jester
-        prerelease: true
-        tag_name: ${{ steps.tag.outputs.release_tag }}
-        name: Pre-release ${{ steps.tag.outputs.release_tag }}
       env:
         GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-        prerelease: true
-        tag_name: ${{ github.sha }}
-        name: Pre-release ${{ github.sha }}
-
