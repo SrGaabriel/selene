@@ -17,4 +17,5 @@ include("analysis")
 include("compiler")
 include("tools")
 
+include("ryujin")
 include("runestone")
