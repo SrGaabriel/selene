@@ -2,6 +2,10 @@ package me.gabriel.selene.ir.intrinsics
 
 import me.gabriel.selene.frontend.SeleneType
 import me.gabriel.selene.frontend.parsing.CallNode
+import me.gabriel.selene.llvm.LLVMCodeAssembler
+import me.gabriel.selene.llvm.struct.LLVMConstant
+import me.gabriel.selene.llvm.struct.LLVMType
+import me.gabriel.selene.llvm.struct.Value
 
 class ArrayLengthFunction: IntrinsicFunction(
     name = "arraylen",
@@ -44,11 +48,31 @@ class ArrayLengthFunction: IntrinsicFunction(
         )
     }
 
-    override fun handleCall(call: CallNode, types: Collection<SeleneType>, arguments: String): String {
-        val type = types.firstOrNull()
-        return when (type) {
-            SeleneType.String -> return "call i32 @str_length(${arguments})"
-            is SeleneType.FixedArray -> "add i32 ${type.length}, 0"
+    override fun handleCall(
+        call: CallNode,
+        assignment: Value,
+        types: Collection<SeleneType>,
+        llvmArguments: Collection<Value>,
+        assembler: LLVMCodeAssembler
+    ) {
+        when (val type = types.firstOrNull()) {
+            SeleneType.String -> assembler.callFunction(
+                "str_length",
+                llvmArguments,
+                assignment,
+                local = false
+            )
+            is SeleneType.FixedArray -> assembler.addNumber(
+                type = LLVMType.I32,
+                left = LLVMConstant(
+                    type = LLVMType.I32,
+                    value = type.length
+                ),
+                right = LLVMConstant(
+                    type = LLVMType.I32,
+                    value = 0
+                )
+            )
             else -> error("Invalid type (${type}) for arraylen function")
         }
     }

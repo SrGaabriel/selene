@@ -2,6 +2,8 @@ package me.gabriel.selene.ir.intrinsics
 
 import me.gabriel.selene.frontend.SeleneType
 import me.gabriel.selene.frontend.parsing.CallNode
+import me.gabriel.selene.llvm.LLVMCodeAssembler
+import me.gabriel.selene.llvm.struct.Value
 
 class PrintlnFunction: IntrinsicFunction(
     "println",
@@ -56,15 +58,26 @@ class PrintlnFunction: IntrinsicFunction(
         )
     }
 
-    override fun handleCall(call: CallNode, types: Collection<SeleneType>, arguments: String): String {
-        val type = types.firstOrNull() ?: SeleneType.Undefined
-        return when (type) {
-            SeleneType.String -> "call void @println_str(${arguments})"
-            SeleneType.Int32 -> "call void @println_i32(${arguments})"
-            SeleneType.Float64 -> "call void @println_f64(${arguments})"
-            SeleneType.Boolean -> "call void @println_bool(${arguments})"
-            else -> error("Unsupported type $type for intrinsic $name")
+    override fun handleCall(
+        call: CallNode,
+        assignment: Value,
+        types: Collection<SeleneType>,
+        llvmArguments: Collection<Value>,
+        assembler: LLVMCodeAssembler
+    ) {
+        val name = when (types.firstOrNull()) {
+            SeleneType.String -> "println_str"
+            SeleneType.Int32 -> "println_i32"
+            SeleneType.Float64 -> "println_f64"
+            SeleneType.Boolean -> "println_bool"
+            else -> error("Unsupported type for println")
         }
+        assembler.callFunction(
+            name,
+            llvmArguments,
+            assignment,
+            local = false
+        )
     }
 
     override fun dependencies(): List<String> {

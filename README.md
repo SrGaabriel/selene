@@ -28,11 +28,11 @@ func check_if_typed_apple(reading: string) {
 
 func check_typed() {
     println("");
-    println("Type something: ");
+    printf("Type something: ");
 
     reading := readln();
     println("You typed $reading");
-    
+
     check_if_typed_apple(reading);
 }
 ```

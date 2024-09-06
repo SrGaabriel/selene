@@ -1,21 +1,21 @@
 declare void @memset(i8*, i32, i32)
 declare i8* @malloc(i32)
-@trait_1876443073 = unnamed_addr constant <{ i16, i16, ptr }> <{
+@trait_640113647 = unnamed_addr constant <{ i16, i16, ptr }> <{
     i16 8,
     i16 8,
     ptr @int32.text
 }>, align 8
-@trait_1947896119 = unnamed_addr constant <{ i16, i16, ptr }> <{
+@trait_530042637 = unnamed_addr constant <{ i16, i16, ptr }> <{
     i16 8,
     i16 8,
     ptr @string.text
 }>, align 8
-@trait_35534346 = unnamed_addr constant <{ i16, i16, ptr }> <{
+@trait_1288235781 = unnamed_addr constant <{ i16, i16, ptr }> <{
     i16 8,
     i16 8,
     ptr @string.length
 }>, align 8
-            @trait_1714550218 = unnamed_addr constant <{ i16, i16, ptr, ptr, ptr, ptr, ptr }> <{
+            @trait_758119607 = unnamed_addr constant <{ i16, i16, ptr, ptr, ptr, ptr, ptr }> <{
                 i16 8,
                 i16 8,
                 ptr @List.new, 
@@ -148,7 +148,7 @@ entry:
 }
 define %List* @List.filter(%List* %15, ptr %16) {
 entry:
-    %17 = getelementptr inbounds <{i16, i16, ptr, ptr, ptr, ptr, ptr}>, ptr @trait_1714550218, i32 0, i32 2
+    %17 = getelementptr inbounds <{i16, i16, ptr, ptr, ptr, ptr, ptr}>, ptr @trait_758119607, i32 0, i32 2
     %18 = load ptr, ptr %17
     %19 = call %List* %18()
     %20 = alloca i32, align 4
@@ -169,7 +169,7 @@ for_body1:
     %31 = call i1 %16(i8* %30)
     br i1 %31, label %label3, label %label5
 label3:
-    %32 = getelementptr inbounds <{i16, i16, ptr, ptr, ptr, ptr, ptr}>, ptr @trait_1714550218, i32 0, i32 6
+    %32 = getelementptr inbounds <{i16, i16, ptr, ptr, ptr, ptr, ptr}>, ptr @trait_758119607, i32 0, i32 6
     %33 = load ptr, ptr %32
     %34 = getelementptr inbounds %List, %List* %15, i32 0, i32 0
     %35 = load i8**, i8*** %34

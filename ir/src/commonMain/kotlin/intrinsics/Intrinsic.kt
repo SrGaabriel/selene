@@ -2,13 +2,26 @@ package me.gabriel.selene.ir.intrinsics
 
 import me.gabriel.selene.frontend.SeleneType
 import me.gabriel.selene.frontend.parsing.CallNode
+import me.gabriel.selene.llvm.LLVMCodeAssembler
+import me.gabriel.selene.llvm.struct.Value
 
 abstract class IntrinsicFunction(
     val name: String,
 ) {
     abstract fun llvmIr(): String
 
-    abstract fun handleCall(call: CallNode, types: Collection<SeleneType>, arguments: String): String
+    open fun handleCall(
+        call: CallNode,
+        assignment: Value,
+        types: Collection<SeleneType>,
+        llvmArguments: Collection<Value>,
+        assembler: LLVMCodeAssembler
+    ) = assembler.callFunction(
+        name,
+        llvmArguments,
+        assignment,
+        local = false
+    )
 
     abstract fun declarations(): List<String>
 
@@ -25,9 +38,18 @@ abstract class IntrinsicMirrorFunction(
         return ""
     }
 
-    override fun handleCall(call: CallNode, types: Collection<SeleneType>, arguments: String): String {
-        return "call $llvmName($arguments)"
-    }
+    override fun handleCall(
+        call: CallNode,
+        assignment: Value,
+        types: Collection<SeleneType>,
+        llvmArguments: Collection<Value>,
+        assembler: LLVMCodeAssembler
+    ) = assembler.callFunction(
+        llvmName,
+        llvmArguments,
+        assignment,
+        local = false
+    )
 
     override fun declarations(): List<String> {
         return listOf("declare $name($params)")

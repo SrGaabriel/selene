@@ -284,14 +284,14 @@ class LLVMCodeAdaptationProcess(
                 types = node.arguments.map {
                     block.resolveExpression(it) ?: error("Type not found for argument $it")
                 },
-                arguments = arguments.joinToString(", ") { "${it.type.llvm} ${it.llvm()}" }
+                llvmArguments = arguments,
+                assembler = assembler,
+                assignment = assignment
             )
-            if (type != LLVMType.Void) {
-                assembler.saveToRegister(assignment.register, call)
-                return assignment
+            return if (type != LLVMType.Void) {
+                assignment
             } else {
-                assembler.instruct(call)
-                return LLVMConstant(call, type)
+                LLVMConstant(call, type)
             }
         }
         assembler.callFunction(

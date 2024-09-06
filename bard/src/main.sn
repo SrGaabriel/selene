@@ -1,12 +1,23 @@
-func main() {
-    list := List@new();
-    println(list.size());
-    list.push("hello");
-    list.push("hello");
-    list.push("hello");
-    println(list.size());
-    println("world");
+func main () {
+    check_typed();
+}
 
-    list2 := list.filter(lambda|x: string| x == "hello");
-    println(list2.size());
+func check_if_typed_apple(reading: string) {
+    variable := "apple";
+    if reading == variable {
+        println("You typed 'apple'");
+    } else {
+        println("You didn't type 'apple'.");
+        check_typed();
+    }
+}
+
+func check_typed() {
+    println("");
+    printf("Type something: ");
+
+    reading := readln();
+    println("You typed $reading");
+
+    check_if_typed_apple(reading);
 }
