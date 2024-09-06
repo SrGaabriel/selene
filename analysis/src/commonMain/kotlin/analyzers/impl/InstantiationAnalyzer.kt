@@ -78,7 +78,6 @@ class InstantiationAnalyzer: SingleNodeAnalyzer<InstantiationNode>(Instantiation
         node.arguments.forEachIndexed { index, argumentNode ->
             val expectedType = types[index]
             val providedType = block.resolveExpression(argumentNode)
-            println("Provided type for ${argumentNode} is $providedType")
 
             if (providedType == null) {
                 results.errors.add(
@@ -98,11 +97,9 @@ class InstantiationAnalyzer: SingleNodeAnalyzer<InstantiationNode>(Instantiation
                     block.declareSymbol(argumentNode.name, newType)
                     val assignment = block.resolveAssignment(argumentNode.name)
                     if (assignment != null) {
-                        println("Assigned node $assignment to $newType")
                         block.defineSymbol(assignment, newType)
                     }
                 }
-                println("New type for ${argumentNode} is $newType")
                 return@forEachIndexed
             }
 

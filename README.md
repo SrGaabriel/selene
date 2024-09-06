@@ -124,4 +124,4 @@ func main() {
 
 # Brand
 
-The brand of the language is a leaf. The theme color is #f05133.
+The icon of the language is a leaf. The theme color is #f05133.

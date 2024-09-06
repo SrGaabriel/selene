@@ -10,6 +10,6 @@ interface SeleneCompilerPlatform {
     fun exitProcess(status: Int): Nothing
 
     companion object {
-        val FILE_EXTENSIONS = arrayOf("sl")
+        val FILE_EXTENSIONS = arrayOf("sn")
     }
 }
