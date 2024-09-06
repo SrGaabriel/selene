@@ -119,3 +119,9 @@ func main() {
     callback(8, lambda|x: int32| x + 36);
 }
 ```
+
+---
+
+# Brand
+
+The brand of the language is a leaf. The theme color is #f05133.

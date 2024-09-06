@@ -14,7 +14,7 @@ class VariableReferenceAnalyzer: SingleNodeAnalyzer<VariableReferenceNode>(Varia
         signatures: Signatures,
         visitor: TypeInferenceVisitor
     ): SymbolBlock {
-        block.defineSymbol(node, block.resolveSymbol(node.name) ?: SeleneType.Unknown)
+        block.defineSymbol(node, block.resolveSymbol(node.name) ?: SeleneType.Undefined)
         return block
     }
 }

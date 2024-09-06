@@ -23,7 +23,7 @@ class AssignmentAnalyzer: SingleNodeAnalyzer<AssignmentNode>(AssignmentNode::cla
             } else {
                 block.defineSymbol(node, type)
             }
-
+            block.assignSymbol(node.name, node.expression)
             block.defineSymbol(node, type)
             block.declareSymbol(node.name, type)
         }

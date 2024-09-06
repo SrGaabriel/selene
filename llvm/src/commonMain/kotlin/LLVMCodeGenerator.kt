@@ -128,6 +128,7 @@ class LLVMCodeGenerator: ILLVMCodeGenerator {
     }
 
     override fun createTraitObject(obj: TraitObject): String {
+        println("Object: ${obj.register}")
         return """
             @${obj.prefix}${obj.register} = unnamed_addr constant <{ i16, i16, ${obj.functions.joinToString(", ") { "ptr" }} }> <{
                 i16 ${obj.size},

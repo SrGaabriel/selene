@@ -6,6 +6,7 @@ import me.gabriel.selene.analysis.SymbolRepository
 import me.gabriel.selene.analysis.signature.Signatures
 import me.gabriel.selene.compiler.cli.CommandLine
 import me.gabriel.selene.compiler.io.LoggedResourceManager
+import me.gabriel.selene.compiler.log.ErrorFormatter
 import me.gabriel.selene.compiler.log.bold
 import me.gabriel.selene.compiler.log.color
 import me.gabriel.selene.frontend.lexing.lexers.StringLexer
@@ -19,6 +20,8 @@ class SeleneCompiler(
     private val platform: SeleneCompilerPlatform,
     private val cli: CommandLine
 ) {
+    private val errorFormatter = ErrorFormatter(platform.logger)
+
     fun start() {
         println("Selene Compiler") // Let's signal that the compiler has been reached, just in case we face an issue with build tools or whatever!
         val logger by platform::logger
@@ -48,7 +51,13 @@ class SeleneCompiler(
 
         logger.log(LogLevel.INFO) { +"Memory and symbol analysis was successful" }
 
-        val generated = llvmCodeAdapter.generate(name, tree, symbols, signatures, isStdlib)
+        val generated = try {
+            llvmCodeAdapter.generate(name, tree, symbols, signatures, isStdlib)
+        } catch (e: RuntimeException) {
+            logger.log(LogLevel.ERROR) { +"An error occurred during '$name' code generation: ${e.message}" }
+            e.printStackTrace()
+            platform.exitProcess(1)
+        }
         logger.log(LogLevel.INFO) { +"Code generated successfully" }
         resources.createIrFile(
             llvmIr = generated,
@@ -66,24 +75,13 @@ class SeleneCompiler(
         val result = lexer.tokenize()
         if (result.isLeft()) {
             val error = result.getLeft()
-            val rowInfo =
-                findRowOfIndex(text.split("\n"), error.position) ?: error("Error while finding the line of the error")
-            val (contentTrim, trimWidth) = rowInfo.content.trimIndentReturningWidth()
-            val newRelativeIndex = rowInfo.relativeIndex - trimWidth
-
-            logger.log(LogLevel.ERROR) {
-                +"${bold("[lexing]")} ${error.message}"
-                +"|"
-                +"| row: ${
-                    replaceAtIndex(
-                        contentTrim,
-                        newRelativeIndex,
-                        1,
-                        color(contentTrim[newRelativeIndex].toString(), TextColors.red)
-                    )
-                }"
-                +("| pos: " + " ".repeat(rowInfo.relativeIndex - trimWidth) + "^")
-            }
+            errorFormatter.printError(
+                code = text,
+                prefix = "lexing",
+                start = error.position,
+                end = error.position + error.length,
+                message = error.message
+            )
             platform.exitProcess(1)
         }
         val tokenStream = result.getRight()
@@ -92,17 +90,13 @@ class SeleneCompiler(
         val parsingResult = parser.parse()
         if (parsingResult.isLeft()) {
             val error = parsingResult.getLeft()
-            val position = error.token.position
-            val rowInfo =
-                findRowOfIndex(text.split("\n"), position) ?: error("Error while finding the line of the error")
-            val (contentTrim, trimWidth) = rowInfo.content.trimIndentReturningWidth()
-
-            logger.log(LogLevel.ERROR) {
-                +"${bold("[parsing]")} ${error.message}"
-                +"|"
-                +"| row: ${contentTrim.replace(error.token.value, color(error.token.value, TextColors.red))}"
-                +("| pos: " + " ".repeat(rowInfo.relativeIndex - trimWidth) + "^".repeat(error.token.value.length))
-            }
+            errorFormatter.printError(
+                code = text,
+                prefix = "parsing",
+                start = error.token.position,
+                end = error.token.position + error.token.value.length,
+                message = error.message
+            )
             platform.exitProcess(1)
         } else {
             logger.log(LogLevel.DEBUG) { +"The parsing was successful!" }
@@ -120,21 +114,12 @@ class SeleneCompiler(
                 +"There were ${analysis.errors.size} error(s) during the semantic analysis:"
             }
             analysis.errors.forEachIndexed { _, error ->
-                val position = error.node.mark.position
-                val rowInfo =
-                    findRowOfIndex(text.split("\n"), position) ?: error("Error while finding the line of the error")
-                val (contentTrim, trimWidth) = rowInfo.content.trimIndentReturningWidth()
-                logger.log(LogLevel.ERROR) {
-                    +"${bold("[semantic]")} ${error.message}"
-                    +"|"
-                    +"| row: ${
-                        contentTrim.replace(
-                            error.node.mark.value,
-                            color(error.node.mark.value, TextColors.red)
-                        )
-                    }"
-                    +("| pos: " + " ".repeat(rowInfo.relativeIndex - trimWidth) + "^".repeat(error.node.mark.value.length))
-                }
+                errorFormatter.printError(
+                    code = text,
+                    prefix = "semantic",
+                    node = error.node,
+                    message = error.message
+                )
             }
             platform.exitProcess(1)
         }

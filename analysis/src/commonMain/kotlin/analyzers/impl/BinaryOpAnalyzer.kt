@@ -17,7 +17,7 @@ class BinaryOpAnalyzer: SingleNodeAnalyzer<BinaryOperatorNode>(BinaryOperatorNod
         visitor: TypeInferenceVisitor
     ): SymbolBlock {
         visitor.visit(node.left) {
-            block.defineSymbol(node, block.resolveExpression(node.left) ?: SeleneType.Unknown)
+            block.defineSymbol(node, block.resolveExpression(node.left) ?: SeleneType.Undefined)
         }
         return block
     }
@@ -28,8 +28,8 @@ class BinaryOpAnalyzer: SingleNodeAnalyzer<BinaryOperatorNode>(BinaryOperatorNod
         signatures: Signatures,
         results: AnalysisResult
     ): SymbolBlock {
-        val left = block.resolveExpression(node.left) ?: SeleneType.Unknown
-        val right = block.resolveExpression(node.right) ?: SeleneType.Unknown
+        val left = block.resolveExpression(node.left) ?: SeleneType.Undefined
+        val right = block.resolveExpression(node.right) ?: SeleneType.Undefined
 
         if (left != right) {
             results.errors.add(

@@ -17,8 +17,8 @@ class LLVMCodeAdapter {
         compileIntrinsics: Boolean
     ): String {
         val process = LLVMCodeAdaptationProcess(module, intrinsics, signatures, stdlibDependencies, compileIntrinsics)
-        process.acceptNode(symbols.root, tree.root)
         process.setup()
+        process.acceptNode(symbols.root, tree.root)
         process.finish()
         return process.getGeneratedCode()
     }

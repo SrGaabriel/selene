@@ -8,7 +8,10 @@ import me.gabriel.selene.analysis.analyzers.TypeInferenceVisitor
 import me.gabriel.selene.analysis.signature.Signatures
 import me.gabriel.selene.analysis.util.doesProvidedTypeAccordToExpectedType
 import me.gabriel.selene.frontend.SeleneType
+import me.gabriel.selene.frontend.isUndefined
+import me.gabriel.selene.frontend.mapBase
 import me.gabriel.selene.frontend.parsing.InstantiationNode
+import me.gabriel.selene.frontend.parsing.VariableReferenceNode
 
 class InstantiationAnalyzer: SingleNodeAnalyzer<InstantiationNode>(InstantiationNode::class) {
     override fun register(
@@ -24,7 +27,7 @@ class InstantiationAnalyzer: SingleNodeAnalyzer<InstantiationNode>(Instantiation
                     it.fields
                 )
             }
-            ?: SeleneType.Unknown
+            ?: SeleneType.Undefined
 
         block.defineSymbol(node, type)
         return block
@@ -72,16 +75,34 @@ class InstantiationAnalyzer: SingleNodeAnalyzer<InstantiationNode>(Instantiation
         }
 
         val types = struct.fields.values.toList()
-        node.arguments.forEachIndexed { index, nodeArgument ->
+        node.arguments.forEachIndexed { index, argumentNode ->
             val expectedType = types[index]
-            val providedType = block.resolveExpression(nodeArgument)
+            val providedType = block.resolveExpression(argumentNode)
+            println("Provided type for ${argumentNode} is $providedType")
+
             if (providedType == null) {
                 results.errors.add(
                     AnalysisError.CouldNotResolveType(
-                        nodeArgument,
-                        nodeArgument.mark.value
+                        argumentNode,
+                        argumentNode.mark.value
                     )
                 )
+                return@forEachIndexed
+            }
+            if (providedType.isUndefined()) {
+                val newType = providedType.mapBase {
+                    expectedType
+                }
+                block.defineSymbol(argumentNode,newType)
+                if (argumentNode is VariableReferenceNode) {
+                    block.declareSymbol(argumentNode.name, newType)
+                    val assignment = block.resolveAssignment(argumentNode.name)
+                    if (assignment != null) {
+                        println("Assigned node $assignment to $newType")
+                        block.defineSymbol(assignment, newType)
+                    }
+                }
+                println("New type for ${argumentNode} is $newType")
                 return@forEachIndexed
             }
 
@@ -92,7 +113,7 @@ class InstantiationAnalyzer: SingleNodeAnalyzer<InstantiationNode>(Instantiation
             )) {
                 results.errors.add(
                     AnalysisError.WrongArgumentTypeForInstantiation(
-                        node = nodeArgument,
+                        node = argumentNode,
                         provided = providedType,
                         expected = expectedType
                     )

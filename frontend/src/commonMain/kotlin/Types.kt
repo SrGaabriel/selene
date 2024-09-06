@@ -44,7 +44,7 @@ sealed class SeleneType(
     @Serializable
     object Boolean : SeleneType("bool")
     @Serializable
-    object Unknown : SeleneType("unknown") // Marking this as @Serializable
+    object Undefined : SeleneType("unknown")
 
     @Serializable
     data class UnknownReference(val reference: kotlin.String, val mutable: kotlin.Boolean): SeleneType("unknown", reference)
@@ -127,6 +127,14 @@ fun SeleneType.isNumeric(): Boolean = when (this) {
 fun SeleneType.workingBase(): SeleneType = when (this) {
     is SeleneType.Mutable -> base.workingBase()
     else -> this
+}
+
+fun SeleneType.isUndefined(): Boolean = when (this) {
+    is SeleneType.Undefined -> true
+    is SeleneType.FixedArray -> baseType.isUndefined()
+    is SeleneType.DynamicArray -> baseType.isUndefined()
+    is SeleneType.Mutable -> baseType.isUndefined()
+    else -> false
 }
 
 fun SeleneType.mapBase(mapper: (SeleneType) -> SeleneType): SeleneType = when (this) {

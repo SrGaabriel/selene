@@ -90,7 +90,7 @@ class StringLexer(private val data: String): Lexer {
                         tokens.add(Token(TokenKind.MUTATION, "=", position)).also { position++ }
                     }
                 }
-                else -> return Either.Left(LexingError.UnknownToken(token.toString(), position))
+                else -> return Either.Left(LexingError.UnknownToken(token.toString(), position, 1))
             }
         }
         return Either.Right(TokenStream(tokens))
@@ -164,7 +164,7 @@ class StringLexer(private val data: String): Lexer {
                             position++
                         }
                         if (position == data.length) {
-                            return LexingError.UnterminatedStringVariableReference(variableStart)
+                            return LexingError.UnterminatedStringVariableReference(variableStart, position - variableStart)
                         }
                         tokens.add(Token(TokenKind.STRING_EXPRESSION_REFERENCE, data.substring(variableStart, position), variableStart))
                         position++ // Skip the }
@@ -182,7 +182,7 @@ class StringLexer(private val data: String): Lexer {
         }
 
         if (position == data.length) {
-            return LexingError.UnclosedString(startPosition)
+            return LexingError.UnclosedString(startPosition, position - startPosition)
         }
 
         if (position > startPosition + 1) {

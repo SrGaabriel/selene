@@ -40,9 +40,9 @@ class CallAnalyzer: SingleNodeAnalyzer<CallNode>(CallNode::class) {
     ) {
         for ((index, argument) in node.arguments.withIndex()) {
             visitor.visit(argument) {
-                val type = block.resolveExpression(argument) ?: SeleneType.Unknown
-                if (type == SeleneType.Unknown) {
-                    val expectedType = parameters.getOrNull(index) ?: SeleneType.Unknown
+                val type = block.resolveExpression(argument) ?: SeleneType.Undefined
+                if (type == SeleneType.Undefined) {
+                    val expectedType = parameters.getOrNull(index) ?: SeleneType.Undefined
                     block.defineSymbol(argument, expectedType)
                 }
             }

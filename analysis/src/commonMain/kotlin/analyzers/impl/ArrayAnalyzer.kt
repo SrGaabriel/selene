@@ -20,7 +20,7 @@ class ArrayAnalyzer: SingleNodeAnalyzer<ArrayNode>(ArrayNode::class) {
     ): SymbolBlock {
         val baseType = node.elements.firstOrNull()?.let {
             block.resolveExpression(it)
-        } ?: SeleneType.Unknown
+        } ?: SeleneType.Undefined
 
         val arrayType = if (node.dynamic) {
             SeleneType.DynamicArray(baseType)

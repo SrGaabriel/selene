@@ -86,7 +86,7 @@ class EqualsNode(
     val left: SyntaxTreeNode,
     val right: SyntaxTreeNode,
     mark: Token
-) : SyntaxTreeNode(mark) {
+) : TypedSyntaxTreeNode(SeleneType.Boolean, mark) {
     override fun getChildren(): List<SyntaxTreeNode> = listOf(left, right)
 }
 

@@ -35,7 +35,7 @@ sealed class AnalysisError(val message: String, val node: SyntaxTreeNode) {
     )
 
     class TraitForFunctionNotFound(node: SyntaxTreeNode, name: String, function: String) : AnalysisError(
-        "unknown trait: func `$function` for variable $name could not be found",
+        "unknown trait: func '$function' for variable $name could not be found",
         node
     )
 
@@ -84,7 +84,7 @@ sealed class AnalysisError(val message: String, val node: SyntaxTreeNode) {
         currentModule: String,
         functionModule: String,
     ) : AnalysisError(
-        "cannot call internal function `${node.name}(...)` from different module: $currentModule -> $functionModule",
+        "cannot call internal function '${node.name}(...)' from different module: $currentModule -> $functionModule",
         node
     )
 
@@ -108,7 +108,7 @@ sealed class AnalysisError(val message: String, val node: SyntaxTreeNode) {
         function: String,
         struct: String
     ) : AnalysisError(
-        "missing function `$function` for trait impl: $trait for $struct",
+        "missing function '$function' for trait impl: $trait for $struct",
         node
     )
 
@@ -124,7 +124,7 @@ sealed class AnalysisError(val message: String, val node: SyntaxTreeNode) {
         struct: String,
         correct: List<SeleneType>,
     ) : AnalysisError(
-        "wrong function signature `$function` in trait impl $trait for $struct, expected${
+        "wrong function signature '$function' in trait impl $trait for $struct, expected${
             if (correct.isEmpty()) " no parameters"
             else ": (${correct.joinToString(", ") { it.signature }})"
         }",

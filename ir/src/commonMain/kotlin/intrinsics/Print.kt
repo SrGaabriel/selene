@@ -57,7 +57,7 @@ class PrintlnFunction: IntrinsicFunction(
     }
 
     override fun handleCall(call: CallNode, types: Collection<SeleneType>, arguments: String): String {
-        val type = types.firstOrNull() ?: SeleneType.Unknown
+        val type = types.firstOrNull() ?: SeleneType.Undefined
         return when (type) {
             SeleneType.String -> "call void @println_str(${arguments})"
             SeleneType.Int32 -> "call void @println_i32(${arguments})"

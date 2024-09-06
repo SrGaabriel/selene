@@ -140,7 +140,7 @@ interface ILLVMCodeAssembler {
 
     fun nextRegister(): Int
 
-    fun nextLabel(): String
+    fun nextLabel(prefix: String = "label"): String
 
     fun finish(): String
 }

@@ -30,6 +30,7 @@ class SymbolBlock(
     var self: SeleneType? = parent?.self
 ) {
     private val symbols = mutableMapOf<String, SeleneType>()
+    private val assignments = mutableMapOf<String, SyntaxTreeNode>()
     private val definitions = mutableMapOf<SyntaxTreeNode, SeleneType>()
 
     val name get() = when (id) {
@@ -59,8 +60,16 @@ class SymbolBlock(
         definitions[node] = type
     }
 
+    fun assignSymbol(name: String, node: SyntaxTreeNode) {
+        assignments[name] = node
+    }
+
     fun resolveSymbol(name: String): SeleneType? {
         return symbols[name] ?: parent?.resolveSymbol(name)
+    }
+
+    fun resolveAssignment(name: String): SyntaxTreeNode? {
+        return assignments[name] ?: parent?.resolveAssignment(name)
     }
 
     fun resolveExpression(node: SyntaxTreeNode): SeleneType? {

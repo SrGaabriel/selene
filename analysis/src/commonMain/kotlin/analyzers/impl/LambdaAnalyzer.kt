@@ -20,7 +20,13 @@ class LambdaAnalyzer: SingleNodeAnalyzer<LambdaNode>(LambdaNode::class) {
             id = node
         )
 
-        block.defineSymbol(node, SeleneType.Unknown)
+        val bodyType = block.resolveExpression(node.body)?.let {
+            SeleneType.Lambda(
+                node.parameters.map { it.type },
+                it
+            )
+        }
+        block.defineSymbol(node, bodyType ?: SeleneType.Undefined)
         return newBlock
     }
 
@@ -33,8 +39,8 @@ class LambdaAnalyzer: SingleNodeAnalyzer<LambdaNode>(LambdaNode::class) {
         val lambdaBlock = block.surfaceSearchChild(node)
             ?: error("Lambda block not registered")
 
-        val type = block.resolveExpression(node) ?: SeleneType.Unknown
-        if (type == SeleneType.Unknown) {
+        val type = block.resolveExpression(node)
+        if (type == null) {
             results.errors.add(
                 AnalysisError.LambdaTypeCannotBeInferred(
                     node

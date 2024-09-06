@@ -1,18 +1,32 @@
-@trait_1970982267 = unnamed_addr constant <{ i16, i16, ptr }> <{
+declare void @memset(i8*, i32, i32)
+declare i8* @malloc(i32)
+@trait_1876443073 = unnamed_addr constant <{ i16, i16, ptr }> <{
     i16 8,
     i16 8,
     ptr @int32.text
 }>, align 8
-@trait_495702238 = unnamed_addr constant <{ i16, i16, ptr }> <{
+@trait_1947896119 = unnamed_addr constant <{ i16, i16, ptr }> <{
     i16 8,
     i16 8,
     ptr @string.text
 }>, align 8
-@trait_649329985 = unnamed_addr constant <{ i16, i16, ptr }> <{
+@trait_35534346 = unnamed_addr constant <{ i16, i16, ptr }> <{
     i16 8,
     i16 8,
     ptr @string.length
 }>, align 8
+            @trait_1720339 = unnamed_addr constant <{ i16, i16, ptr, ptr, ptr, ptr, ptr }> <{
+                i16 8,
+                i16 8,
+                ptr @List.new, 
+ptr @List.size, 
+ptr @List.get, 
+ptr @List.filter, 
+ptr @List.push
+            }>, align 8
+%TcpServer = type { i32, i16 }
+%Socket = type { i32, i32, i16, i32 }
+%List = type { i8**, i32 }
 @format_f = private unnamed_addr constant [3 x i8] c"%f\00"
 @format_n = private unnamed_addr constant [3 x i8] c"%d\00"
 @format_s = private unnamed_addr constant [3 x i8] c"%s\00"
@@ -106,32 +120,109 @@ end_read:
 
 declare i32 @getchar()
 @buffer = global [256 x i8] zeroinitializer
-%TcpServer = type { i32, i16 }
-%Socket = type { i32, i32, i16, i32 }
-define i32 @string.length(i8** %2) {
+define %List* @List.new() {
 entry:
-    %3 = call i32 @str_length(i8** %2)
-    ret i32 %3
+    %1 = call i8* @malloc(i32 64)
+    call void @memset(i8* %1, i32 0, i32 64)
+    %2 = bitcast i8* %1 to i8**
+    %3 = alloca %List, align 8
+    %4 = getelementptr inbounds %List, %List* %3, i32 0, i32 0
+    store i8** %2, i8*** %4
+    %5 = getelementptr inbounds %List, %List* %3, i32 0, i32 1
+    store i32 0, i32* %5
+    ret %List* %3
 }
-define i8* @string.text(i8** %4) {
+define i32 @List.size(%List* %6) {
 entry:
-    ret i8** %4
+    %7 = getelementptr inbounds %List, %List* %6, i32 0, i32 1
+    %8 = load i32, i32* %7
+    ret i32 %8
 }
-define i8* @int32.text(i32* %5) {
+define i8* @List.get(%List* %9, i32 %10) {
 entry:
-    %6 = alloca [6 x i8], align 1
-    %7 = getelementptr inbounds [6 x i8], [6 x i8]* %6, i32 0, i32 0
-    store i8 105, i8* %7
-    %8 = getelementptr inbounds [6 x i8], [6 x i8]* %6, i32 0, i32 1
-    store i8 110, i8* %8
-    %9 = getelementptr inbounds [6 x i8], [6 x i8]* %6, i32 0, i32 2
-    store i8 116, i8* %9
-    %10 = getelementptr inbounds [6 x i8], [6 x i8]* %6, i32 0, i32 3
-    store i8 51, i8* %10
-    %11 = getelementptr inbounds [6 x i8], [6 x i8]* %6, i32 0, i32 4
-    store i8 50, i8* %11
-    %12 = getelementptr inbounds [6 x i8], [6 x i8]* %6, i32 0, i32 5
-    store i8 0, i8* %12
-    %13 = getelementptr inbounds [6 x i8], [6 x i8]* %6, i32 0, i32 0
-    ret i8* %13
+    %11 = getelementptr inbounds %List, %List* %9, i32 0, i32 0
+    %12 = load i8**, i8*** %11
+    %13 = getelementptr inbounds i8*, i8** %12, i32 %10
+    %14 = load i8*, i8** %13
+    ret i8* %14
+}
+define %List* @List.filter(%List* %15, ptr %16) {
+entry:
+    %17 = getelementptr inbounds <{i16, i16, ptr, ptr, ptr, ptr, ptr}>, ptr @trait_1720339, i32 0, i32 2
+    %18 = load ptr, ptr %17
+    %19 = call %List* %18()
+    %20 = alloca i32, align 4
+    store i32 0, i32* %20
+    %21 = getelementptr inbounds %List, %List* %15, i32 0, i32 1
+    %22 = load i32, i32* %21
+    br label %for_condition0
+for_condition0:
+    %24 = load i32, i32* %20
+    %25 = icmp sle i32 %24, %22
+    br i1 %25, label %for_body1, label %for_end2
+for_body1:
+    %26 = load i32, i32* %20
+    %27 = getelementptr inbounds %List, %List* %15, i32 0, i32 0
+    %28 = load i8**, i8*** %27
+    %29 = getelementptr inbounds i8*, i8** %28, i32 %26
+    %30 = load i8*, i8** %29
+    %31 = call i1 %16(i8* %30)
+    br i1 %31, label %label3, label %label5
+label3:
+    %32 = getelementptr inbounds <{i16, i16, ptr, ptr, ptr, ptr, ptr}>, ptr @trait_1720339, i32 0, i32 6
+    %33 = load ptr, ptr %32
+    %34 = getelementptr inbounds %List, %List* %15, i32 0, i32 0
+    %35 = load i8**, i8*** %34
+    %36 = getelementptr inbounds i8*, i8** %35, i32 %26
+    %37 = load i8*, i8** %36
+    call i1 %33(%List* %19, i8* %37)
+    br label %label5
+label5:
+    %40 = add i32 %24, 1
+    store i32 %40, i32* %20
+    br label %for_condition0
+for_end2:
+    ret %List* %19
+}
+define void @List.push(%List* %42, i8* %43) {
+entry:
+    %44 = getelementptr inbounds %List, %List* %42, i32 0, i32 0
+    %45 = load i8**, i8*** %44
+    %46 = getelementptr inbounds %List, %List* %42, i32 0, i32 1
+    %47 = load i32, i32* %46
+    %48 = getelementptr inbounds i8*, i8** %45, i32 %47
+    store i8* %43, i8** %48
+    %49 = getelementptr inbounds %List, %List* %42, i32 0, i32 1
+    %50 = load i32, i32* %49
+    %51 = add i32 %50, 1
+    %52 = getelementptr inbounds %List, %List* %42, i32 0, i32 1
+    store i32 %51, i32* %52
+    ret void
+}
+define i32 @string.length(i8** %55) {
+entry:
+    %56 = call i32 @str_length(i8** %55)
+    ret i32 %56
+}
+define i8* @string.text(i8** %57) {
+entry:
+    ret i8** %57
+}
+define i8* @int32.text(i32* %58) {
+entry:
+    %59 = alloca [6 x i8], align 1
+    %60 = getelementptr inbounds [6 x i8], [6 x i8]* %59, i32 0, i32 0
+    store i8 105, i8* %60
+    %61 = getelementptr inbounds [6 x i8], [6 x i8]* %59, i32 0, i32 1
+    store i8 110, i8* %61
+    %62 = getelementptr inbounds [6 x i8], [6 x i8]* %59, i32 0, i32 2
+    store i8 116, i8* %62
+    %63 = getelementptr inbounds [6 x i8], [6 x i8]* %59, i32 0, i32 3
+    store i8 51, i8* %63
+    %64 = getelementptr inbounds [6 x i8], [6 x i8]* %59, i32 0, i32 4
+    store i8 50, i8* %64
+    %65 = getelementptr inbounds [6 x i8], [6 x i8]* %59, i32 0, i32 5
+    store i8 0, i8* %65
+    %66 = getelementptr inbounds [6 x i8], [6 x i8]* %59, i32 0, i32 0
+    ret i8* %66
 }

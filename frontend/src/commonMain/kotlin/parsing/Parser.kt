@@ -215,7 +215,7 @@ class Parser(private val tokens: TokenStream) {
             consumeToken(TokenKind.DECLARATION).flatMapRight {
                 parseExpression().flatMapRight { expr ->
                     consumeToken(TokenKind.SEMICOLON).mapRight {
-                        AssignmentNode(name.value, expr, true, SeleneType.Unknown, mutToken)
+                        AssignmentNode(name.value, expr, true, SeleneType.Undefined, mutToken)
                     }
                 }
             }
@@ -291,7 +291,7 @@ class Parser(private val tokens: TokenStream) {
         if (declaration is Either.Left) return Either.Left(declaration.value)
         return parseExpression().flatMapRight { expr ->
             consumeToken(TokenKind.SEMICOLON).mapRight {
-                AssignmentNode(name, expr, false, SeleneType.Unknown, declaration.unwrap())
+                AssignmentNode(name, expr, false, SeleneType.Undefined, declaration.unwrap())
             }
         }
     }
@@ -556,7 +556,7 @@ class Parser(private val tokens: TokenStream) {
                     LambdaParameterNode(name.value, type, name)
                 }
             } else {
-                Either.Right(LambdaParameterNode(name.value, SeleneType.Unknown, name))
+                Either.Right(LambdaParameterNode(name.value, SeleneType.Undefined, name))
             }
         }
     }

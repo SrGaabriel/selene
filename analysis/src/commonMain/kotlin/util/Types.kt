@@ -8,7 +8,7 @@ fun doesProvidedTypeAccordToExpectedType(
     required: SeleneType,
     signatures: Signatures
 ): Boolean {
-    if (required == SeleneType.Unknown || required == SeleneType.Any) {
+    if (required == SeleneType.Undefined || required == SeleneType.Any) {
         return true
     }
     if (required is SeleneType.Mutable || provided is SeleneType.Mutable) {

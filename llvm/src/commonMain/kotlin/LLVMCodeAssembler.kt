@@ -438,5 +438,5 @@ class LLVMCodeAssembler(val generator: ILLVMCodeGenerator): ILLVMCodeAssembler {
 
     override fun nextRegister(): Int = register++
 
-    override fun nextLabel(): String = "label${label++}"
+    override fun nextLabel(prefix: String): String = "$prefix${label++}"
 }

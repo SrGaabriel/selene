@@ -8,6 +8,7 @@ import me.gabriel.selene.analysis.util.resolveTraitForExpression
 import me.gabriel.selene.frontend.SeleneType
 import me.gabriel.selene.frontend.lexing.TokenKind
 import me.gabriel.selene.frontend.parsing.*
+import me.gabriel.selene.frontend.workingBase
 import me.gabriel.selene.ir.intrinsics.IntrinsicFunction
 import me.gabriel.selene.llvm.LLVMCodeAssembler
 import me.gabriel.selene.llvm.LLVMCodeGenerator
@@ -29,6 +30,8 @@ class LLVMCodeAdaptationProcess(
     private val assembler = LLVMCodeAssembler(llvmGenerator)
 
     private val lambdas = mutableListOf<LambdaData>()
+    // todo: refactor all of below
+    private val externalStructs = mutableListOf<LLVMType.Struct>()
     private val traitObjects = mutableMapOf<MemoryUnit.Unsized, MutableList<TraitObject>>()
     private val traitObjectsImpl = mutableSetOf<String>()
 
@@ -52,22 +55,18 @@ class LLVMCodeAdaptationProcess(
         dependencies.add("@format_s = private unnamed_addr constant [3 x i8] c\"%s\\00\"")
         dependencies.add("@format_n = private unnamed_addr constant [3 x i8] c\"%d\\00\"")
         dependencies.add("@format_f = private unnamed_addr constant [3 x i8] c\"%f\\00\"")
-        traitObjectsImpl.forEach {
-            dependencies.add(it)
-        }
-        (assembler.generator.getGeneratedDependencies() + dependencies).forEach {
+        dependencies.forEach {
             assembler.addDependency(it)
         }
     }
 
     fun finish() {
+        val dependencies = mutableSetOf<String>()
         intrinsicDependencies.forEach {
-            assembler.addDependency(it)
+            dependencies.add(it)
         }
-        traitObjects.forEach { (_, traits) ->
-            traits.forEach { obj ->
-                assembler.addDependency(assembler.generator.createTraitObject(obj = obj))
-            }
+        traitObjectsImpl.forEach {
+            dependencies.add(it)
         }
         lambdas.forEach { lambda ->
             assembler.functionDsl(
@@ -77,6 +76,20 @@ class LLVMCodeAdaptationProcess(
             ) {
                 assembler.returnValue(acceptNode(lambda.block, lambda.node.body))
             }
+        }
+        traitObjects.forEach { (_, traits) ->
+            traits.forEach { obj ->
+                dependencies.add(assembler.generator.createTraitObject(obj = obj))
+            }
+        }
+        assembler.generator.getGeneratedDependencies().forEach {
+            dependencies.add(it)
+        }
+        externalStructs.forEach {
+            assembler.declareStruct(it.name, it.fields)
+        }
+        dependencies.forEach {
+            assembler.addDependency(it)
         }
     }
 
@@ -114,6 +127,7 @@ class LLVMCodeAdaptationProcess(
         is TraitFunctionCallNode -> generateTraitCall(block, node, store)
         is ForNode -> generateFor(block, node)
         is LambdaNode -> generateLambda(block, node, store)
+        is DataStructureReferenceNode -> generateDataStructureReference(block, node)
         else -> error("Node $node not supported")
     }
 
@@ -397,12 +411,17 @@ class LLVMCodeAdaptationProcess(
         val trueLabel = assembler.nextLabel()
         val falseLabel = assembler.nextLabel()
         val endLabel = assembler.nextLabel()
+        val hasElse = node.elseBody != null
 
-        assembler.conditionalBranch(condition, trueLabel, falseLabel)
+        if (hasElse) {
+            assembler.conditionalBranch(condition, trueLabel, falseLabel)
+        } else {
+            assembler.conditionalBranch(condition, trueLabel, endLabel)
+        }
         assembler.createBranch(trueLabel)
         acceptNode(block, node.body)
         assembler.unconditionalBranchTo(endLabel)
-        if (node.elseBody != null) {
+        if (hasElse) {
             assembler.createBranch(falseLabel)
             acceptNode(block, node.elseBody!!)
             assembler.unconditionalBranchTo(endLabel)
@@ -493,10 +512,7 @@ class LLVMCodeAdaptationProcess(
                 ?: error("Struct ${node.name} not found in signatures")
         )
         if (memorySignature.module != module) {
-            assembler.declareStruct(
-                name = node.name,
-                fields = memoryType.fields
-            )
+            externalStructs.add(memoryType)
         }
 
         val heap = false
@@ -595,6 +611,10 @@ class LLVMCodeAdaptationProcess(
     }
 
     private fun generateTraitCall(block: SymbolBlock, node: TraitFunctionCallNode, store: Boolean): MemoryUnit {
+        if (node.static) {
+            acceptNode(block, node.trait, false) // Just to generate the traitun
+        }
+
         val (trait, impl, function, _, variableType) = resolveTraitForExpression(
             block = block,
             variable = node.trait,
@@ -639,7 +659,7 @@ class LLVMCodeAdaptationProcess(
         } else NullMemoryUnit
 
         val arguments = mutableListOf<Value>()
-        if (!(node.static || !function.parameters.contains(SeleneType.Self))) {
+        if (!(node.static || !function.parameters.any { it.workingBase() == SeleneType.Self })) {
             val variableMemory = acceptNode(block, node.trait)
             if (variableType !is SeleneType.Trait) {
                 arguments.add(0, variableMemory)
@@ -664,6 +684,19 @@ class LLVMCodeAdaptationProcess(
         return assignment
     }
 
+    private fun generateDataStructureReference(block: SymbolBlock, node: DataStructureReferenceNode): MemoryUnit {
+        val struct = signatures.structs.find { it.name == node.name }
+            ?: error("Struct ${node.name} not found in signatures")
+        val type = LLVMType.Struct(
+            name = node.name,
+            fields = struct.fields.mapValues { getProperReturnType(it.value.asLLVM()) }
+        )
+        if (struct.module != module) {
+            externalStructs.add(type)
+        }
+        return NullMemoryUnit
+    }
+
     private fun generateFor(block: SymbolBlock, node: ForNode): NullMemoryUnit {
         val type = SeleneType.Int32
         val llvmType = type.asLLVM()
@@ -678,7 +711,7 @@ class LLVMCodeAdaptationProcess(
         )
         val end = acceptNode(block, node.iterable.to)
 
-        val conditionLabel = assembler.nextLabel()
+        val conditionLabel = assembler.nextLabel(prefix = "for_condition")
         assembler.unconditionalBranchTo(conditionLabel)
 
         assembler.createBranch(conditionLabel)
@@ -687,8 +720,8 @@ class LLVMCodeAdaptationProcess(
             left = loaded,
             right = end
         ))
-        val bodyLabel = assembler.nextLabel()
-        val endLabel = assembler.nextLabel()
+        val bodyLabel = assembler.nextLabel(prefix = "for_body")
+        val endLabel = assembler.nextLabel(prefix = "for_end")
         assembler.conditionalBranch(comparison, bodyLabel, endLabel)
 
         assembler.createBranch(bodyLabel)
