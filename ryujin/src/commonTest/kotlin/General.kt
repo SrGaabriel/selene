@@ -3,7 +3,6 @@ import me.gabriel.ryujin.struct.Constant
 import me.gabriel.ryujin.struct.DragonType
 import me.gabriel.ryujin.transcript.DefaultDragonIrTranscriber
 import kotlin.test.Test
-import kotlin.test.assertEquals
 
 class GeneralTest {
 
@@ -32,7 +31,7 @@ class GeneralTest {
         val module = ryujinModule {
             function("main", DragonType.Int32) { arguments ->
                 val three = assign {
-                    add(Constant.Number(2, DragonType.Int32), Constant.Number(1, DragonType.Int32))
+                    add(Constant.Number("2", DragonType.Int32), Constant.Number("1", DragonType.Int32))
                 }
             }
         }
