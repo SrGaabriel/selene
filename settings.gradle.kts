@@ -8,7 +8,7 @@ dependencyResolutionManagement {
     }
 }
 
-include("llvm")
+include("legacy-llvm")
 include("frontend")
 include("compiler")
 include("ir")
@@ -16,6 +16,10 @@ include("runtime")
 include("analysis")
 include("compiler")
 include("tools")
+
+include("backend")
+include("backend:common")
+include("backend:llvm")
 
 include("ryujin")
 include("runestone")

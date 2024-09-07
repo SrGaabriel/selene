@@ -17,10 +17,8 @@ kotlin {
     sourceSets {
         val commonMain by getting {
             dependencies {
-                api(project(":analysis"))
-                api(project(":frontend"))
-                api(project(":legacy-llvm"))
-                implementation(libs.kotlinx.serialization.core)
+                implementation(project(":ryujin"))
+                implementation(project(":backend:common"))
             }
         }
     }

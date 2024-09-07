@@ -1,23 +1,21 @@
 package me.gabriel.selene.compiler
 
-import com.github.ajalt.mordant.rendering.TextColors
 import me.gabriel.selene.analysis.SemanticAnalysisManager
 import me.gabriel.selene.analysis.SymbolRepository
 import me.gabriel.selene.analysis.signature.Signatures
+import me.gabriel.selene.backend.common.SeleneCompilerBackend
+import me.gabriel.selene.backend.common.SeleneCompilerModule
 import me.gabriel.selene.compiler.cli.CommandLine
 import me.gabriel.selene.compiler.io.LoggedResourceManager
 import me.gabriel.selene.compiler.log.ErrorFormatter
-import me.gabriel.selene.compiler.log.bold
-import me.gabriel.selene.compiler.log.color
 import me.gabriel.selene.frontend.lexing.lexers.StringLexer
 import me.gabriel.selene.frontend.parsing.Parser
 import me.gabriel.selene.frontend.parsing.SyntaxTree
-import me.gabriel.selene.ir.LLVMCodeAdapter
-import me.gabriel.selene.ir.intrinsics.INTRINSICS
 import me.gabriel.selene.tools.*
 
 class SeleneCompiler(
     private val platform: SeleneCompilerPlatform,
+    private val backend: SeleneCompilerBackend,
     private val cli: CommandLine
 ) {
     private val errorFormatter = ErrorFormatter(platform.logger)
@@ -43,16 +41,24 @@ class SeleneCompiler(
         logger.log(LogLevel.INFO) { +"Starting the Selene compiler..." }
         val symbols = SymbolRepository(name)
 
-        val llvmCodeAdapter = LLVMCodeAdapter()
-        llvmCodeAdapter.registerIntrinsicFunction(*INTRINSICS)
+        // TODO: register intrinsics
+//        llvmCodeAdapter.registerIntrinsicFunction(*INTRINSICS)
 
         val sources = resources.readSources()
         val tree = parse(logger, sources, symbols, signatures)
 
+        val module = SeleneCompilerModule(
+            name = name,
+            symbols = symbols,
+            astTree = tree,
+            signatures = signatures,
+            stdlib = isStdlib
+        )
+
         logger.log(LogLevel.INFO) { +"Memory and symbol analysis was successful" }
 
         val generated = try {
-            llvmCodeAdapter.generate(name, tree, symbols, signatures, isStdlib)
+            backend.compile(module)
         } catch (e: RuntimeException) {
             logger.log(LogLevel.ERROR) { +"An error occurred during '$name' code generation: ${e.message}" }
             e.printStackTrace()

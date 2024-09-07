@@ -19,8 +19,6 @@ kotlin {
             dependencies {
                 api(project(":analysis"))
                 api(project(":frontend"))
-                api(project(":legacy-llvm"))
-                implementation(libs.kotlinx.serialization.core)
             }
         }
     }

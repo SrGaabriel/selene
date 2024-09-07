@@ -41,6 +41,8 @@ kotlin {
                 implementation(project(":analysis"))
                 implementation(project(":frontend"))
                 implementation(project(":ir"))
+                implementation(project(":backend:common"))
+                implementation(project(":backend:llvm"))
                 implementation(libs.mordant)
                 implementation(libs.okio)
                 implementation(libs.kotlinx.serialization.json)

@@ -18,15 +18,18 @@ class FunctionScopeDsl(
         function.statements.add(statement)
     }
 
-    fun load(target: Memory): LoadStatement =
-        LoadStatement(target)
-
-    fun add(left: Value, right: Value): AddStatement =
-        AddStatement(left, right)
+    fun `return`(value: Value) =
+        statement(ReturnStatement(value))
 
     fun assignment(target: Memory, value: TypedDragonStatement) {
         statement(AssignStatement(target, value))
     }
+
+    fun add(left: Value, right: Value): AddStatement =
+        AddStatement(left, right)
+
+    fun load(target: Memory): LoadStatement =
+        LoadStatement(target)
 
     fun assign(value: (FunctionScopeDsl) -> TypedDragonStatement): Memory =
         value(this).assign()

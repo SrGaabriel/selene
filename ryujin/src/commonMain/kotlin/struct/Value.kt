@@ -16,7 +16,7 @@ abstract class Constant(override val type: DragonType): Value {
     abstract override fun llvm(): kotlin.String
 
     class Number(
-        val value: Long,
+        val value: kotlin.String,
         type: DragonType
     ): Constant(type) {
         override fun llvm(): kotlin.String = "$value"
