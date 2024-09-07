@@ -15,7 +15,7 @@ import me.gabriel.selene.tools.*
 
 class SeleneCompiler(
     private val platform: SeleneCompilerPlatform,
-    private val backend: SeleneCompilerBackend,
+    private val backend: SeleneCompilerBackend<*>,
     private val cli: CommandLine
 ) {
     private val errorFormatter = ErrorFormatter(platform.logger)

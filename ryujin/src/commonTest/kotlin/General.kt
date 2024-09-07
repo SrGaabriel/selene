@@ -51,8 +51,8 @@ class GeneralTest {
         val module = ryujinModule {
             virtualTable(
                 "my_vtable", listOf(
-                    Constant.FunctionPtr("test"),
-                    Constant.FunctionPtr("test2")
+                    Constant.DeclaredConstantPtr("test"),
+                    Constant.DeclaredConstantPtr("test2")
                 )
             )
         }

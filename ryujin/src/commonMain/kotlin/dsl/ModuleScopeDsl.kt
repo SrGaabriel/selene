@@ -36,6 +36,24 @@ class ModuleScopeDsl: DragonModule {
         dsl.block(parameterMemoryUnits)
     }
 
+    fun dependOnFunction(
+        name: String,
+        returnType: DragonType,
+        parameters: List<DragonType>,
+        thoroughlyCheckForDuplicates: Boolean = true
+    ) {
+        if (thoroughlyCheckForDuplicates) {
+            // The dependencies is already a set, but what if the hash codes differs due to same name but different parameters, etc?
+            val alreadyDependsOnFunction = dependencies.any { it is Dependency.Function && it.name == name }
+            if (alreadyDependsOnFunction) return
+        }
+        dependencies.add(Dependency.Function(
+            name = name,
+            returnType = returnType,
+            parameters = parameters
+        ))
+    }
+
     fun virtualTable(
         name: String,
         values: Collection<Value>

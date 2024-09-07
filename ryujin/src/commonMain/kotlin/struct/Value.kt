@@ -22,7 +22,7 @@ abstract class Constant(override val type: DragonType): Value {
         override fun llvm(): kotlin.String = "$value"
     }
 
-    class FunctionPtr(
+    class DeclaredConstantPtr(
         val name: kotlin.String,
     ): Constant(
         type = DragonType.Ptr

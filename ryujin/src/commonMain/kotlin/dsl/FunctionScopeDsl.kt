@@ -2,6 +2,7 @@ package me.gabriel.ryujin.dsl
 
 import me.gabriel.ryujin.function.DragonFunction
 import me.gabriel.ryujin.statement.*
+import me.gabriel.ryujin.struct.DragonType
 import me.gabriel.ryujin.struct.Memory
 import me.gabriel.ryujin.struct.Value
 
@@ -27,6 +28,26 @@ class FunctionScopeDsl(
 
     fun add(left: Value, right: Value): AddStatement =
         AddStatement(left, right)
+
+    fun call(
+        functionName: String,
+        returnType: DragonType,
+        arguments: List<Value>
+    ): CallStatement =
+        CallStatement(functionName, returnType, arguments)
+
+    fun callExternal(
+        functionName: String,
+        returnType: DragonType,
+        arguments: List<Value>
+    ): CallStatement {
+        module.dependOnFunction(
+            name = functionName,
+            returnType = returnType,
+            parameters = arguments.map { it.type }
+        )
+        return call(functionName, returnType, arguments)
+    }
 
     fun load(target: Memory): LoadStatement =
         LoadStatement(target)
