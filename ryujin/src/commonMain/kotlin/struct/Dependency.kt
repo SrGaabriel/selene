@@ -18,10 +18,9 @@ sealed interface Dependency {
 
     data class Constant(
         val name: String,
-        val type: DragonType,
         val value: Value
     ): Dependency {
-        override fun asType(): DragonType = type
+        override fun asType(): DragonType = value.type
     }
 
     fun asType(): DragonType

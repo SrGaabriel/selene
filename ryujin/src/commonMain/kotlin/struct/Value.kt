@@ -12,20 +12,43 @@ data object Void : Value {
     override fun llvm(): String = "void"
 }
 
-data class Constant<T : Any>(val value: T, override val type: DragonType): Value {
-    override fun llvm(): String = value.toString()
-}
+abstract class Constant(override val type: DragonType): Value {
+    abstract override fun llvm(): kotlin.String
 
-data class VirtualTable(
-    val values: List<Value>
-): Value {
-    override val type: DragonType = DragonType.Dynamic(listOf())
+    class Number(
+        val value: Long,
+        type: DragonType
+    ): Constant(type) {
+        override fun llvm(): kotlin.String = "$value"
+    }
 
-    override fun llvm(): String = """
+    class FunctionPtr(
+        val name: kotlin.String,
+    ): Constant(
+        type = DragonType.Ptr
+    ) {
+        override fun llvm(): kotlin.String = "@$name"
+    }
+
+    data class String(
+        val value: kotlin.String
+    ): Constant(
+        type = DragonType.Array(DragonType.Int8, value.length + 1)
+    ) {
+        override fun llvm(): kotlin.String = "c\"$value\\00\""
+    }
+
+    data class VirtualTable(
+        val values: Collection<Value>
+    ): Constant(
+        type = DragonType.VirtualTable(values.map { it.type })
+    ) {
+        override fun llvm(): kotlin.String = """
         |<{
-        ${values.joinToString(",\n") { "|${it.type.llvm} ${it.llvm()}" }}
+        ${values.joinToString(",\n") { "|  ${it.type.llvm} ${it.llvm()}" }}
         |}>
     """.trimMargin()
+    }
 }
 
 sealed class Memory(

@@ -30,11 +30,11 @@ sealed class DragonType(
         val types: Collection<DragonType>
     ) : DragonType("%$name", 8, 0)
 
-    data class Dynamic(
+    data class VirtualTable(
         val types: List<DragonType>
     ): DragonType(types.joinToString(
-        prefix = "<{",
-        postfix = "}>",
+        prefix = "<{ ",
+        postfix = " }>",
         separator = ", "
     ) { it.llvm }, 8, types.sumOf { it.size })
 

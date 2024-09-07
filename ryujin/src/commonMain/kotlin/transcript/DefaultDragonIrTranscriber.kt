@@ -26,17 +26,17 @@ class DefaultDragonIrTranscriber: DragonIrTranscriber {
 
     override fun transcribeFunction(function: DragonFunction): String {
         return buildString {
-            append("define ${function.returnType} @${function.name}(")
-            append(function.parameters.entries.joinToString(", ") { "${it.value} %${it.key}" })
+            append("define ${function.returnType.llvm} @${function.name}(")
+            append(function.parameters.joinToString(", ") { "${it.type.llvm} %${it.register}" })
             append(") {\n")
-            function.statements.forEach { append("  $it\n") }
+            function.statements.forEach { append("  ${it.llvm()}\n") }
             append("}")
         }
     }
 
     private fun transcribeConstantDependency(dependency: Dependency.Constant): String {
         return """
-            |@${dependency.name} = unnamed_addr constant ${dependency.type} ${dependency.value.llvm()}
+            |@${dependency.name} = unnamed_addr constant ${dependency.value.type.llvm} ${dependency.value.llvm()}
         """.trimMargin(marginPrefix = "|")
     }
 

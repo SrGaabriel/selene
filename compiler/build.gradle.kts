@@ -24,11 +24,6 @@ kotlin {
             executable()
         }
     }
-    watchosX64("watchosX64") {
-        binaries {
-            executable()
-        }
-    }
     iosArm64("iosArm64") {
         binaries {
             executable()
@@ -64,9 +59,6 @@ kotlin {
             dependsOn(nativeMain)
         }
         val windowsX64Main by getting {
-            dependsOn(nativeMain)
-        }
-        val watchosX64Main by getting {
             dependsOn(nativeMain)
         }
     }

@@ -24,4 +24,20 @@ interface DragonModule {
     fun removeDependencies(vararg dependencies: Dependency) {
         this.dependencies.removeAll(dependencies)
     }
+
+    fun addFunction(function: DragonFunction) {
+        functions.add(function)
+    }
+
+    fun addFunctions(vararg functions: DragonFunction) {
+        this.functions.addAll(functions)
+    }
+
+    fun removeFunction(function: DragonFunction) {
+        functions.remove(function)
+    }
+
+    fun removeFunctions(vararg functions: DragonFunction) {
+        this.functions.removeAll(functions)
+    }
 }

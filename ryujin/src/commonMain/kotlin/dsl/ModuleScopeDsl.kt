@@ -2,8 +2,7 @@ package me.gabriel.ryujin.dsl
 
 import me.gabriel.ryujin.DragonModule
 import me.gabriel.ryujin.function.DragonFunction
-import me.gabriel.ryujin.struct.Dependency
-import me.gabriel.ryujin.struct.DragonType
+import me.gabriel.ryujin.struct.*
 
 class ModuleScopeDsl: DragonModule {
     override val functions: MutableSet<DragonFunction> = mutableSetOf()
@@ -11,20 +10,45 @@ class ModuleScopeDsl: DragonModule {
 
     fun function(
         name: String,
-        parameters: Map<String, DragonType>,
         returnType: DragonType,
-        block: FunctionScopeDsl.() -> Unit
+        parameters: Collection<DragonType> = emptyList(),
+        block: FunctionScopeDsl.(Collection<Memory>) -> Unit
     ) {
+        val parameterMemoryUnits = parameters.mapIndexed { index, dragonType ->
+            Memory.Sized(
+                type = dragonType,
+                size = dragonType.size,
+                register = index
+            )
+        }
+
         val function = DragonFunction(
             module = this,
             name = name,
-            parameters = parameters,
+            parameters = parameterMemoryUnits,
             returnType = returnType
         )
-        FunctionScopeDsl(
+        functions.add(function)
+        val dsl = FunctionScopeDsl(
             module = this,
             function = function
-        ).apply(block)
+        )
+        dsl.block(parameterMemoryUnits)
+    }
+
+    fun virtualTable(
+        name: String,
+        values: Collection<Value>
+    ) {
+        dependencies.add(Dependency.Constant(
+            name = name,
+            value = Constant.VirtualTable(values)
+        ))
     }
 }
 
+fun ryujinModule(block: ModuleScopeDsl.() -> Unit): ModuleScopeDsl {
+    val module = ModuleScopeDsl()
+    module.apply(block)
+    return module
+}

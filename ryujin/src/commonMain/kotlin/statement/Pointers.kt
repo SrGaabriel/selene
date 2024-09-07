@@ -5,6 +5,16 @@ import me.gabriel.ryujin.struct.Memory
 import me.gabriel.ryujin.struct.Value
 import me.gabriel.ryujin.struct.descendOneLevel
 
+class AssignStatement(
+    val memory: Memory,
+    val value: TypedDragonStatement
+): DragonStatement {
+    override val memoryDependencies: Set<Value> = setOf(memory) + value.memoryDependencies
+
+    override fun llvm(): String =
+        "%${memory.register} = ${value.llvm()}"
+}
+
 class StoreStatement(
     val value: Value,
     val target: Memory
