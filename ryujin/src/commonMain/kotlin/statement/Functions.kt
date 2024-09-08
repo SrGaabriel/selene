@@ -6,7 +6,7 @@ import me.gabriel.ryujin.struct.Value
 class CallStatement(
     val functionName: String,
     override val type: DragonType,
-    val arguments: List<Value>
+    val arguments: Collection<Value>
 ) : TypedDragonStatement {
     override val memoryDependencies: Set<Value> = arguments.toSet()
 

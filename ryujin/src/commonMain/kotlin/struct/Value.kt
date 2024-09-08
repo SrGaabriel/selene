@@ -61,3 +61,7 @@ sealed class Memory(
 
     override fun llvm(): String = "%$register"
 }
+
+data object NullMemory : Memory(-1, DragonType.Void) {
+    override fun llvm(): String = error("NullMemory should not be used in LLVM IR")
+}

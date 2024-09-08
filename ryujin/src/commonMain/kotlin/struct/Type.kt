@@ -38,11 +38,12 @@ sealed class DragonType(
         separator = ", "
     ) { it.llvm }, 8, types.sumOf { it.size })
 
+    data object Vararg : DragonType("...", 0, 0)
+
     override fun toString(): String = llvm
 }
 
 fun DragonType.extractPrimitiveType() = when (this) {
-    is DragonType.Array -> this.type
     is DragonType.Pointer -> this.type
     else -> this
 }

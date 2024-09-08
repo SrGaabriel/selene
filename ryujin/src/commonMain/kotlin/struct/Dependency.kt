@@ -4,7 +4,7 @@ sealed interface Dependency {
     data class Function(
         val name: String,
         val returnType: DragonType,
-        val parameters: List<DragonType>
+        val parameters: Collection<DragonType>
     ): Dependency {
         override fun asType(): DragonType = DragonType.Void
     }
@@ -19,7 +19,12 @@ sealed interface Dependency {
     data class Constant(
         val name: String,
         val value: Value
-    ): Dependency {
+    ): Dependency, Value {
+        override val type: DragonType
+            get() = value.type
+
+        override fun llvm(): String = "@$name"
+
         override fun asType(): DragonType = value.type
     }
 

@@ -1,6 +1,6 @@
-trait Legible(
-    text(self) :: string
-)
+//trait Legible(
+//    text(self) :: string
+//)
 
 intrinsic func printf (message: any) {}
 

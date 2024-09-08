@@ -48,7 +48,7 @@ class DefaultDragonIrTranscriber: DragonIrTranscriber {
 
     private fun transcribeFunctionDependency(dependency: Dependency.Function): String {
         return """
-            |declare ${dependency.returnType} @${dependency.name}(${dependency.parameters.joinToString(", ") {it.llvm}})
+            |declare ${dependency.returnType.llvm} @${dependency.name}(${dependency.parameters.joinToString(", ") {it.llvm}})
         """.trimMargin(marginPrefix = "|")
     }
 }

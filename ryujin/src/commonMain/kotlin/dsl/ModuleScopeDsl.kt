@@ -39,7 +39,7 @@ class ModuleScopeDsl: DragonModule {
     fun dependOnFunction(
         name: String,
         returnType: DragonType,
-        parameters: List<DragonType>,
+        parameters: Collection<DragonType>,
         thoroughlyCheckForDuplicates: Boolean = true
     ) {
         if (thoroughlyCheckForDuplicates) {
@@ -52,6 +52,18 @@ class ModuleScopeDsl: DragonModule {
             returnType = returnType,
             parameters = parameters
         ))
+    }
+
+    fun format(
+        name: String,
+        format: String
+    ): Dependency.Constant {
+        val constant = Dependency.Constant(
+            name = name,
+            value = Constant.String(format)
+        )
+        dependencies.add(constant)
+        return constant
     }
 
     fun virtualTable(

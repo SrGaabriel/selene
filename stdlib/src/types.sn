@@ -1,11 +1,11 @@
-make string into Legible {
-    func text(self) :: string {
-        return self;
-    }
-}
-
-make int32 into Legible {
-    func text(self) :: string {
-        return "int32";
-    }
-}
+//make string into Legible {
+//    func text(self) :: string {
+//        return self;
+//    }
+//}
+//
+//make int32 into Legible {
+//    func text(self) :: string {
+//        return "int32";
+//    }
+//}

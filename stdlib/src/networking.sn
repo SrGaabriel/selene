@@ -1,14 +1,14 @@
-data Socket(
-    id: int32,
-    family: int32,
-    port: int16,
-    ip_address: int32
-)
-
-data TcpServer(
-    ip_address: int32,
-    port: int16
-)
+//data Socket(
+//    id: int32,
+//    family: int32,
+//    port: int16,
+//    ip_address: int32
+//)
+//
+//data TcpServer(
+//    ip_address: int32,
+//    port: int16
+//)
 
 internal intrinsic func socket (family: int32, type: int32, protocol: int32) :: int32 {}
 

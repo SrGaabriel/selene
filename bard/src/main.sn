@@ -1,7 +1,11 @@
-func main() :: int32 {
-    return 42;
-}
-
 func test() :: int32 {
     return 8;
+}
+
+func main() :: int32 {
+    println(test());
+    println(test());
+    println(test());
+    println("Hello, World!");
+    return test();
 }

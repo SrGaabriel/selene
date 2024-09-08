@@ -1,9 +1,9 @@
-trait CharArray(
-    length(self) :: int32
-)
-
-make string into CharArray {
-    func length(self) :: int32 {
-        return arraylen(self);
-    }
-}
+//trait CharArray(
+//    length(self) :: int32
+//)
+//
+//make string into CharArray {
+//    func length(self) :: int32 {
+//        return arraylen(self);
+//    }
+//}

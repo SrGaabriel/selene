@@ -39,7 +39,7 @@ class GeneralTest {
         assertModuleEquals(
             """
             |define i32 @main() {
-            |  %0 = add i32 2, 1
+            |  %1 = add i32 2, 1
             |}
             """,
             transcribed

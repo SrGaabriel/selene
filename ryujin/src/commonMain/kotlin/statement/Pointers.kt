@@ -15,19 +15,9 @@ class AssignStatement(
         "%${memory.register} = ${value.llvm()}"
 }
 
-class StoreStatement(
-    val value: Value,
-    val target: Memory
-): DragonStatement {
-    override val memoryDependencies: Set<Value> = setOf(value, target)
-
-    override fun llvm(): String =
-        "store ${value.type.llvm} ${value.llvm()}, ${target.type.llvm} ${target.llvm()}"
-}
-
 class GetElementPointerStatement(
-    val struct: Memory,
-    override val type: DragonType,
+    val struct: Value,
+    val elementType: DragonType,
     val index: Value,
     val total: Boolean = true,
     val inbounds: Boolean = true
@@ -40,6 +30,7 @@ class GetElementPointerStatement(
         (struct.type as DragonType.Pointer).type
     }
     val pointerType = DragonType.Pointer(originalType)
+    override val type: DragonType = DragonType.Pointer(elementType)
 
     override fun llvm(): String =
         "getelementptr " +
