@@ -115,7 +115,7 @@ class FunctionScopeDsl(
     fun load(target: Memory): LoadStatement =
         LoadStatement(target)
 
-    fun assign(constantOverride: Boolean, value: (FunctionScopeDsl) -> TypedDragonStatement): Memory =
+    fun assign(constantOverride: Boolean? = null, value: (FunctionScopeDsl) -> TypedDragonStatement): Memory =
         value(this).assign(constantOverride = constantOverride)
 
     fun TypedDragonStatement.ignore() =
