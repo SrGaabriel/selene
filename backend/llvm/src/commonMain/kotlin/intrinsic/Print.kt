@@ -33,7 +33,7 @@ class PrintlnIntrinsicFunctionExecutor : IntrinsicFunctionExecutor<DragonHookCon
         }
 
         context.functionDsl.run {
-            val format = useFormat(formatName, formatCode)
+            val format = useFormat(formatName, formatCode).assign(constantOverride = true)
             callExternal(
                 functionName = "printf",
                 returnType = DragonType.Int32,
