@@ -16,6 +16,6 @@ class AddStatement(
 
     override val type: DragonType get() = left.type
 
-    override fun llvm(): String =
+    override fun statementLlvm(): String =
         "add ${type.llvm} ${left.llvm()}, ${right.llvm()}"
 }

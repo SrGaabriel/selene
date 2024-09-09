@@ -8,7 +8,7 @@ class ReturnStatement(
 ) : DragonStatement {
     override val memoryDependencies: Set<Value> = setOf(value)
 
-    override fun llvm(): String {
+    override fun statementLlvm(): String {
         if (value.type == DragonType.Void) {
             return "ret void"
         }

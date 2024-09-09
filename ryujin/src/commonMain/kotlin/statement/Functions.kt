@@ -11,7 +11,7 @@ data class CallStatement(
 ) : TypedDragonStatement {
     override val memoryDependencies: Set<Value> = arguments.toSet()
 
-    override fun llvm(): String {
+    override fun statementLlvm(): String {
         return "call ${type.llvm} @${functionName}(${arguments.joinToString { "${it.type.llvm} ${it.llvm()}" }})"
     }
 }

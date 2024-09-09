@@ -1,6 +1,6 @@
 package me.gabriel.ryujin.struct
 
-sealed interface Value {
+interface Value {
     val type: DragonType
 
     fun llvm(): String

@@ -8,7 +8,7 @@ sealed interface DragonStatement {
 
     fun isValid(): Boolean = true
 
-    fun llvm(): String
+    fun statementLlvm(): String
 }
 
 interface TypedDragonStatement : DragonStatement {

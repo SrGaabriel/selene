@@ -11,7 +11,7 @@ class AllocateStatement(
 
     override val type: DragonType = DragonType.Pointer(allocationType)
 
-    override fun llvm(): String {
+    override fun statementLlvm(): String {
         return "alloca ${type.llvm}, align $alignment"
     }
 }
@@ -28,7 +28,7 @@ class StoreStatement(
         return target.type is DragonType.Pointer
     }
 
-    override fun llvm(): String {
+    override fun statementLlvm(): String {
         return "store ${value.type.llvm} ${value.llvm()}, ${target.type.llvm} ${target.llvm()}"
     }
 }
@@ -46,7 +46,7 @@ class CompositeStoreStatement(
         return uniqueType != null || (target.type as? DragonType.Pointer)?.type == uniqueType
     }
 
-    override fun llvm(): String {
+    override fun statementLlvm(): String {
         return "store ${uniqueType!!.llvm} ${values.joinToString(
             prefix = "[",
             separator = ", ",

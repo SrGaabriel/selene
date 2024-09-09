@@ -29,7 +29,7 @@ class DefaultDragonIrTranscriber: DragonIrTranscriber {
             append("define ${function.returnType.llvm} @${function.name}(")
             append(function.parameters.joinToString(", ") { "${it.type.llvm} %${it.register}" })
             append(") {\n")
-            function.statements.forEach { append("  ${it.llvm()}\n") }
+            function.statements.forEach { append("  ${it.statementLlvm()}\n") }
             append("}")
         }
     }

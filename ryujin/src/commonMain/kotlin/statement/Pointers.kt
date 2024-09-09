@@ -11,8 +11,8 @@ data class AssignStatement(
 ): DragonStatement {
     override val memoryDependencies: Set<Value> = setOf(memory) + value.memoryDependencies
 
-    override fun llvm(): String =
-        "%${memory.register} = ${value.llvm()}"
+    override fun statementLlvm(): String =
+        "%${memory.register} = ${value.statementLlvm()}"
 }
 
 data class GetElementPointerStatement(
@@ -21,7 +21,7 @@ data class GetElementPointerStatement(
     val index: Value,
     val total: Boolean = true,
     val inbounds: Boolean = true
-): TypedDragonStatement {
+): TypedDragonStatement, Value {
     override val memoryDependencies: Set<Value> = setOf(index, struct)
 
     val originalType = if (struct.type !is DragonType.Pointer) {
@@ -32,7 +32,7 @@ data class GetElementPointerStatement(
     val pointerType = DragonType.Pointer(originalType)
     override val type: DragonType = DragonType.Pointer(elementType)
 
-    override fun llvm(): String =
+    override fun statementLlvm(): String =
         "getelementptr " +
         (if (inbounds) {
             "inbounds "
@@ -44,6 +44,19 @@ data class GetElementPointerStatement(
         } else {
             ""
         }) + ", i32 ${index.llvm()}"
+
+    override fun llvm(): String =
+        "getelementptr " +
+                (if (inbounds) {
+                    "inbounds "
+                } else {
+                    ""
+                }) +
+                "(${originalType.llvm}, ${pointerType.llvm} ${struct.llvm()}" + (if (total) {
+            ", i32 0"
+        } else {
+            ""
+        }) + ", i32 ${index.llvm()})"
 }
 
 class LoadStatement(
@@ -56,7 +69,7 @@ class LoadStatement(
 
     override val type: DragonType = target.type.descendOneLevel()
 
-    override fun llvm(): String {
+    override fun statementLlvm(): String {
         require(isValid()) { "Cannot load from non-pointer type" }
         return "load ${type.llvm}, ${target.type.llvm} ${target.llvm()}"
     }
