@@ -7,5 +7,3 @@ impure intrinsic func printf (message: any) {}
 impure intrinsic func println (message: any) {}
 
 impure intrinsic func readln () :: string {}
-
-intrinsic func arraylen (arr: any) :: int32 {}

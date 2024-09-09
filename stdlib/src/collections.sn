@@ -40,3 +40,5 @@
 //        self.size = self.size + 1;
 //    }
 //}
+
+intrinsic func arraylen (arr: any) :: int32 {}

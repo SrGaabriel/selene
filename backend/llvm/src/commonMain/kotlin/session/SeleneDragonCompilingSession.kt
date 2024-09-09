@@ -115,6 +115,10 @@ class SeleneDragonCompilingSession(
             return intrinsics.onCall(context)
         }
         val pure = !signature.modifiers.contains(Modifiers.IMPURE)
+        val ignoreResult = statement || signature.returnType == SeleneType.Void
+        if (pure && ignoreResult) {
+            return NullMemory
+        }
 
         val call =
             if (signature.module != compilerModule.name) {
@@ -132,7 +136,7 @@ class SeleneDragonCompilingSession(
                     pure = pure
                 )
             }
-        if (statement || signature.returnType == SeleneType.Void) {
+        if (ignoreResult) {
             call.ignore()
             return NullMemory
         }
