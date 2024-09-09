@@ -19,10 +19,27 @@ abstract class Constant(override val type: DragonType): Value {
         val value: kotlin.String,
         type: DragonType
     ): Constant(type) {
-        override fun llvm(): kotlin.String = "$value"
+        override fun llvm(): kotlin.String = value
+
+        override fun equals(other: Any?): Boolean {
+            if (this === other) return true
+            if (other !is Number) return false
+
+            if (type != other.type) return false
+            if (value != other.value) return false
+
+            return true
+        }
+
+        override fun hashCode(): Int {
+            var result = type.hashCode()
+            result = 31 * result + value.hashCode()
+            result = 31 * result + type.hashCode()
+            return result
+        }
     }
 
-    class DeclaredConstantPtr(
+    data class DeclaredConstantPtr(
         val name: kotlin.String,
     ): Constant(
         type = DragonType.Ptr
@@ -55,7 +72,25 @@ sealed class Memory(
     val register: Int,
     override val type: DragonType
 ): Value {
-    class Sized(register: Int, type: DragonType, val size: Int) : Memory(register, type)
+    class Sized(register: Int, type: DragonType, val size: Int) : Memory(register, type) {
+        override fun equals(other: Any?): Boolean {
+            if (this === other) return true
+            if (other !is Sized) return false
+
+            if (register != other.register) return false
+            if (type != other.type) return false
+            if (size != other.size) return false
+
+            return true
+        }
+
+        override fun hashCode(): Int {
+            var result = register
+            result = 31 * result + type.hashCode()
+            result = 31 * result + size
+            return result
+        }
+    }
 
     class Unsized(register: Int, type: DragonType) : Memory(register, type)
 

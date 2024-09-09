@@ -80,6 +80,14 @@ class SymbolBlock(
         }
     }
 
+    fun findCurrentFunction(): FunctionNode? {
+        return when {
+            id is FunctionNode -> id
+            parent != null -> parent.findCurrentFunction()
+            else -> null
+        }
+    }
+
     override fun toString(): String {
         return "SymbolBlock(module='$module', self=$self)"
     }

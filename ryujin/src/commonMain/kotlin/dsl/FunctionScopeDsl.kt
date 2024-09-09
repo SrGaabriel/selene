@@ -13,7 +13,11 @@ class FunctionScopeDsl(
 ) {
     var register = function.parameters.size.coerceAtLeast(1)
 
-    fun statement(statement: DragonStatement) {
+    private val memoryAssignments = mutableMapOf<DragonStatement, Memory>()
+
+    fun statement(
+        statement: DragonStatement
+    ) {
         if (!statement.isValid()) {
             throw IllegalArgumentException("Invalid statement: $statement")
         }
@@ -34,22 +38,24 @@ class FunctionScopeDsl(
     fun call(
         functionName: String,
         returnType: DragonType,
-        arguments: Collection<Value>
+        arguments: Collection<Value>,
+        pure: Boolean
     ): CallStatement =
-        CallStatement(functionName, returnType, arguments)
+        CallStatement(functionName, returnType, arguments, pure)
 
     fun callExternal(
         functionName: String,
         returnType: DragonType,
         arguments: Collection<Value>,
-        definition: Collection<DragonType> = arguments.map { it.type }
+        definition: Collection<DragonType> = arguments.map { it.type },
+        pure: Boolean
     ): CallStatement {
         module.dependOnFunction(
             name = functionName,
             returnType = returnType,
             parameters = definition
         )
-        return call(functionName, returnType, arguments)
+        return call(functionName, returnType, arguments, pure)
     }
 
     fun useFormat(
@@ -109,19 +115,31 @@ class FunctionScopeDsl(
     fun load(target: Memory): LoadStatement =
         LoadStatement(target)
 
-    fun assign(value: (FunctionScopeDsl) -> TypedDragonStatement): Memory =
-        value(this).assign()
+    fun assign(constantOverride: Boolean, value: (FunctionScopeDsl) -> TypedDragonStatement): Memory =
+        value(this).assign(constantOverride = constantOverride)
 
     fun TypedDragonStatement.ignore() =
         statement(this)
 
-    fun TypedDragonStatement.assign(): Memory {
+    fun TypedDragonStatement.assign(constantOverride: Boolean? = null): Memory {
+        val constant: Boolean = constantOverride ?: (
+            this is CallStatement && this.pure
+        )
+
         val memory = Memory.Sized(
             type = type,
             size = type.size,
             register = register
         )
-        statement(AssignStatement(memory, this))
+        val statement = AssignStatement(memory, this)
+        if (constant) {
+            val preloadedMemory = memoryAssignments[statement.value]
+            if (preloadedMemory != null) {
+                return preloadedMemory
+            }
+        }
+        memoryAssignments[statement.value] = memory
+        statement(statement)
         return memory
     }
 }

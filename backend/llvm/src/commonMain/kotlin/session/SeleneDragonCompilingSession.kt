@@ -19,10 +19,10 @@ import me.gabriel.selene.frontend.parsing.*
 
 class SeleneDragonCompilingSession(
     val compilerModule: SeleneCompilerModule,
-    val intrinsicFunctionRepository: IntrinsicFunctionRepository<DragonHookContext, Value>
+    val intrinsicFunctionRepository: IntrinsicFunctionRepository<DragonHookContext, ModuleScopeDsl, Value>
 ) {
-    private val dsl = ryujinModule {}
-    private val root = compilerModule.astTree.root
+    val dsl = ryujinModule {}
+    val root = compilerModule.astTree.root
 
     // todo: remove
     var developmentMode: Boolean = true
@@ -33,7 +33,7 @@ class SeleneDragonCompilingSession(
         }
     }
 
-    private fun ModuleScopeDsl.generateModuleLevelDeclarations() {
+    fun ModuleScopeDsl.generateModuleLevelDeclarations() {
         for (child in root.getChildren()) {
             when (child) {
                 is FunctionNode -> generateFunction(child)
@@ -42,8 +42,14 @@ class SeleneDragonCompilingSession(
         }
     }
 
-    private fun ModuleScopeDsl.generateFunction(node: FunctionNode) {
-        if (node.modifiers.contains(Modifiers.INTRINSIC)) return
+    fun ModuleScopeDsl.generateFunction(node: FunctionNode) {
+        if (node.modifiers.contains(Modifiers.INTRINSIC)) {
+            val intrinsic = intrinsicFunctionRepository.find(node.name)
+                ?: if (developmentMode) return else error("Intrinsic function not found: ${node.name}")
+
+            intrinsic.setup(this)
+            return
+        }
 
         val returnType = addPointerToStructs(node.returnType.asDragonType())
         val parameterTypes = node.parameters.map { addPointerToStructs(it.type.asDragonType()) }
@@ -62,7 +68,7 @@ class SeleneDragonCompilingSession(
         }
     }
 
-    private fun FunctionScopeDsl.generateInstruction(
+    fun FunctionScopeDsl.generateInstruction(
         block: SymbolBlock,
         node: SyntaxTreeNode,
         statement: Boolean = false
@@ -76,13 +82,13 @@ class SeleneDragonCompilingSession(
         }
     }
 
-    private fun FunctionScopeDsl.generateReturn(block: SymbolBlock, node: ReturnNode): Value? {
+    fun FunctionScopeDsl.generateReturn(block: SymbolBlock, node: ReturnNode): Value? {
         val value = generateInstruction(block, node.expression)
         `return`(value ?: Void)
         return null
     }
 
-    private fun FunctionScopeDsl.generateCall(
+    fun FunctionScopeDsl.generateCall(
         block: SymbolBlock,
         node: CallNode,
         statement: Boolean
@@ -108,19 +114,22 @@ class SeleneDragonCompilingSession(
                 ?: error("Intrinsic function not found: ${node.name}")
             return intrinsics.onCall(context)
         }
+        val pure = !signature.modifiers.contains(Modifiers.IMPURE)
 
         val call =
             if (signature.module != compilerModule.name) {
                 callExternal(
                     functionName = node.name,
                     returnType = signature.returnType.asDragonType(),
-                    arguments = arguments
+                    arguments = arguments,
+                    pure = pure
                 )
             } else {
                 call(
                     functionName = node.name,
                     returnType = signature.returnType.asDragonType(),
-                    arguments = arguments
+                    arguments = arguments,
+                    pure = pure
                 )
             }
         if (statement || signature.returnType == SeleneType.Void) {
@@ -130,14 +139,14 @@ class SeleneDragonCompilingSession(
         return call.assign()
     }
 
-    private fun FunctionScopeDsl.generateNumber(node: NumberNode): Value {
+    fun FunctionScopeDsl.generateNumber(node: NumberNode): Value {
         return Constant.Number(
             type = node.type.asDragonType(),
             value = node.value
         )
     }
 
-    private fun FunctionScopeDsl.generateString(node: StringNode): Value {
+    fun FunctionScopeDsl.generateString(node: StringNode): Value {
         val text = (node.segments.single() as StringNode.Segment.Text).text
         val format = useFormat("str_${node.hashCode()}", text)
         return format.assign()

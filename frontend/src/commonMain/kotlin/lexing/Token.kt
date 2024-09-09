@@ -41,6 +41,7 @@ enum class TokenKind {
     IN,
     ELSE,
     INTERNAL,
+    IMPURE,
     TYPE_DECLARATION,
     RETURN_TYPE_DECLARATION,
     VOID,
@@ -90,7 +91,8 @@ val TYPE_TOKENS = listOf(
 
 val MODIFIER_TOKENS = mapOf(
     TokenKind.INTRINSIC to Modifiers.INTRINSIC,
-    TokenKind.INTERNAL to Modifiers.INTERNAL
+    TokenKind.INTERNAL to Modifiers.INTERNAL,
+    TokenKind.IMPURE to Modifiers.IMPURE
 )
 
 @Serializable

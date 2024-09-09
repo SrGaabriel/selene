@@ -78,7 +78,7 @@ class Parser(private val tokens: TokenStream) {
                             parameters = params,
                             returnType = returnType,
                             body = block,
-                            modifiers = mutableListOf(),
+                            modifiers = mutableSetOf(),
                             mark = functionToken.unwrap()
                         )
                     }

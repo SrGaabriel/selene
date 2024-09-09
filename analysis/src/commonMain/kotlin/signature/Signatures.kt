@@ -48,7 +48,7 @@ data class SignatureFunction(
     val name: String,
     val returnType: SeleneType,
     val parameters: List<SeleneType>,
-    val modifiers: List<Modifiers>
+    val modifiers: Set<Modifiers>
 )
 
 @Serializable

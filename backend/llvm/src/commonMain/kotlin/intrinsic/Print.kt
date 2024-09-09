@@ -1,5 +1,6 @@
 package me.gabriel.selene.backend.llvm.intrinsic
 
+import me.gabriel.ryujin.dsl.ModuleScopeDsl
 import me.gabriel.ryujin.struct.DragonType
 import me.gabriel.ryujin.struct.NullMemory
 import me.gabriel.ryujin.struct.Value
@@ -7,7 +8,7 @@ import me.gabriel.ryujin.struct.extractPrimitiveType
 import me.gabriel.selene.backend.common.intrinsic.IntrinsicFunctionExecutor
 import me.gabriel.selene.backend.llvm.DragonHookContext
 
-class PrintlnIntrinsicFunctionExecutor : IntrinsicFunctionExecutor<DragonHookContext, Value>() {
+class PrintlnIntrinsicFunctionExecutor : IntrinsicFunctionExecutor<DragonHookContext, ModuleScopeDsl, Value>() {
     override fun onCall(context: DragonHookContext): Value {
         val singleType = context.argumentValues.map { it.type }.distinct().single()
         val (formatName, formatCode) = when (singleType.extractPrimitiveType()) {
@@ -24,19 +25,21 @@ class PrintlnIntrinsicFunctionExecutor : IntrinsicFunctionExecutor<DragonHookCon
                     functionName = "printf",
                     returnType = DragonType.Int32,
                     arguments = listOf(context.argumentValues.single()),
-                    definition = listOf(DragonType.Pointer(DragonType.Int8))
+                    definition = listOf(DragonType.Pointer(DragonType.Int8)),
+                    pure = false
                 ).ignore()
             }
             return NullMemory
         }
 
         context.functionDsl.run {
-            val format = useFormat(formatName, formatCode).assign()
+            val format = useFormat(formatName, formatCode).assign(constantOverride = true)
             callExternal(
                 functionName = "printf",
                 returnType = DragonType.Int32,
                 arguments = listOf(format) + context.argumentValues,
-                definition = listOf(DragonType.Pointer(DragonType.Int8), DragonType.Vararg)
+                definition = listOf(DragonType.Pointer(DragonType.Int8), DragonType.Vararg),
+                pure = false
             ).ignore()
         }
         return NullMemory

@@ -31,7 +31,7 @@ class TraitAnalyzer: SingleNodeAnalyzer<TraitNode>(TraitNode::class) {
                                 it.type = treatedType
                             }
                         },
-                        modifiers = emptyList()
+                        modifiers = emptySet()
                     )
                 }
             )

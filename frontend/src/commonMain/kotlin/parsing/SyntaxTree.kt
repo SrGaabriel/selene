@@ -35,7 +35,7 @@ class FunctionNode(
     var returnType: SeleneType,
     val parameters: List<ParameterNode>,
     val body: BlockNode,
-    val modifiers: MutableList<Modifiers>,
+    val modifiers: MutableSet<Modifiers>,
     mark: Token
 ) : SyntaxTreeNode(mark) {
     override fun getChildren(): List<SyntaxTreeNode> = parameters + body

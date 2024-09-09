@@ -2,10 +2,10 @@
 //    text(self) :: string
 //)
 
-intrinsic func printf (message: any) {}
+impure intrinsic func printf (message: any) {}
 
-intrinsic func println (message: any) {}
+impure intrinsic func println (message: any) {}
 
-intrinsic func readln () :: string {}
+impure intrinsic func readln () :: string {}
 
 intrinsic func arraylen (arr: any) :: int32 {}

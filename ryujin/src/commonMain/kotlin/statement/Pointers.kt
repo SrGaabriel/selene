@@ -5,7 +5,7 @@ import me.gabriel.ryujin.struct.Memory
 import me.gabriel.ryujin.struct.Value
 import me.gabriel.ryujin.struct.descendOneLevel
 
-class AssignStatement(
+data class AssignStatement(
     val memory: Memory,
     val value: TypedDragonStatement
 ): DragonStatement {
@@ -15,7 +15,7 @@ class AssignStatement(
         "%${memory.register} = ${value.llvm()}"
 }
 
-class GetElementPointerStatement(
+data class GetElementPointerStatement(
     val struct: Value,
     val elementType: DragonType,
     val index: Value,

@@ -130,6 +130,7 @@ class StringLexer(private val data: String): Lexer {
             "float64" -> Either.Right(Token(TokenKind.FLOAT64_TYPE, value, start))
             "intrinsic" -> Either.Right(Token(TokenKind.INTRINSIC, value, start))
             "internal" -> Either.Right(Token(TokenKind.INTERNAL, value, start))
+            "impure" -> Either.Right(Token(TokenKind.IMPURE, value, start))
             "for" -> Either.Right(Token(TokenKind.FOR, value, start))
             "in" -> Either.Right(Token(TokenKind.IN, value, start))
             "data" -> Either.Right(Token(TokenKind.DATA, value, start))

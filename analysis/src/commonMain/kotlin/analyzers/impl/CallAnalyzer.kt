@@ -74,6 +74,16 @@ class CallAnalyzer: SingleNodeAnalyzer<CallNode>(CallNode::class) {
                 functionModule = function.module
             ))
         }
+        val currentFunction = block.findCurrentFunction()
+        if (currentFunction == null) {
+            // TODO: add compiler error
+            error("No current function found")
+        }
+
+        if (function.modifiers.contains(Modifiers.IMPURE) && currentFunction != null && !currentFunction.modifiers.contains(Modifiers.IMPURE)) {
+            currentFunction.modifiers.add(Modifiers.IMPURE)
+        }
+
         return block
     }
 }

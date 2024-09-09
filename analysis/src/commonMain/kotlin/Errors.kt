@@ -49,6 +49,11 @@ sealed class AnalysisError(val message: String, val node: SyntaxTreeNode) {
         node
     )
 
+    class ImpureFunctionCall(node: CallNode, impure: String, from: String) : AnalysisError(
+        "impure function call from pure function: $impure() from $from",
+        node
+    )
+
     class InvalidCondition(node: SyntaxTreeNode, type: SeleneType) : AnalysisError(
         "invalid condition: condition must be a boolean expression, got ${type.signature}",
         node
