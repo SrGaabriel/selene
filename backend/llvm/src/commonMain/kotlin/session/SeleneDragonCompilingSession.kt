@@ -36,7 +36,9 @@ class SeleneDragonCompilingSession(
     fun ModuleScopeDsl.generateModuleLevelDeclarations() {
         for (child in root.getChildren()) {
             when (child) {
+                is DataStructureNode -> generateStruct(child)
                 is FunctionNode -> generateFunction(child)
+                is TraitImplNode -> generateTraitImpl(child)
                 else -> if (developmentMode) continue else error("Unsupported module-level node: $child")
             }
         }
@@ -51,21 +53,11 @@ class SeleneDragonCompilingSession(
             return
         }
 
-        val returnType = addPointerToStructs(node.returnType.asDragonType())
-        val parameterTypes = node.parameters.map { addPointerToStructs(it.type.asDragonType()) }
-
-        val block = compilerModule.symbols.root.surfaceSearchChild(node)
-            ?: error("Function block not found for function: ${node.name}")
-
-        function(
-            name = node.name,
-            returnType = returnType,
-            parameters = parameterTypes,
-        ) {
-            for (instruction in node.body.getChildren()) {
-                generateInstruction(block, instruction, true)
-            }
-        }
+        createFunction(
+            moduleDsl = this,
+            parent = compilerModule.symbols.root,
+            node = node
+        )
     }
 
     fun FunctionScopeDsl.generateInstruction(
@@ -152,7 +144,74 @@ class SeleneDragonCompilingSession(
 
     fun FunctionScopeDsl.generateString(node: StringNode): Value {
         val text = (node.segments.single() as StringNode.Segment.Text).text
-        val format = useFormat("str_${node.hashCode()}", text)
-        return format.assign()
+        val format = useFormat("str_${text.hashCode()}", text)
+        return format.assign(constantOverride = true)
+    }
+
+    fun ModuleScopeDsl.generateStruct(node: DataStructureNode) {
+        val struct = compilerModule.signatures.structs.find { it.name == node.name }
+            ?: error("Struct ${node.name} not found in signatures")
+
+        val types = struct.fields.values.map { addPointerToStructs(it.asDragonType()) }
+
+        struct(
+            name = node.name,
+            types = types
+        )
+    }
+
+    fun ModuleScopeDsl.generateTraitImpl(node: TraitImplNode): Value? {
+        val traitSignature = compilerModule.signatures.traits.find { it.name == node.trait }
+            ?: error("Trait ${node.trait} not found in signatures")
+
+        val index = traitSignature.hashCode()
+        virtualTable("vtable_trait_$index", node.functions.map {
+            Constant.DeclaredConstantPtr(getNameForTraitImplFunction(node, it.name))
+        })
+
+        val traitBlock = compilerModule.symbols.root.surfaceSearchChild(node)
+            ?: error("Trait ${node.trait} not found in root block")
+
+        for (function in node.functions) {
+            generateTraitFunction(traitBlock, node, function)
+        }
+
+        return null
+    }
+
+    fun ModuleScopeDsl.generateTraitFunction(
+        traitBlock: SymbolBlock,
+        traitImpl: TraitImplNode,
+        functionNode: FunctionNode
+    ): Value? {
+        createFunction(this, traitBlock, functionNode, getNameForTraitImplFunction(traitImpl, functionNode.name))
+        return null
+    }
+
+    private fun createFunction(
+        moduleDsl: ModuleScopeDsl,
+        parent: SymbolBlock,
+        node: FunctionNode,
+        customName: String? = null
+    ) {
+        val returnType = addPointerToStructs(node.returnType.asDragonType())
+        val parameterTypes = node.parameters.map { addPointerToStructs(it.type.asDragonType()) }
+
+        val block = parent.surfaceSearchChild(node)
+            ?: error("Function block not found for function: ${node.name}")
+
+        return moduleDsl.function(
+            name = customName ?: node.name,
+            returnType = returnType,
+            parameters = parameterTypes,
+        ) {
+            for (instruction in node.body.getChildren()) {
+                generateInstruction(block, instruction, true)
+            }
+        }
+    }
+
+    fun getNameForTraitImplFunction(impl: TraitImplNode, functionName: String): String {
+        return "${functionName}_for_${impl.hashCode()}"
     }
 }

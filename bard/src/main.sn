@@ -1,3 +1,17 @@
+data Map(
+    remainder: int32
+)
+
+trait Fooable(
+    fooat() :: int32
+)
+
+make Map into Fooable {
+    func fooat() :: int32 {
+        return 5;
+    }
+}
+
 func test() :: int32 {
     return 8;
 }
@@ -6,6 +20,7 @@ func main() :: int32 {
     println(test());
     println(test());
     println(test());
+    println("Hello, World!");
     println("Hello, World!");
     return test();
 }

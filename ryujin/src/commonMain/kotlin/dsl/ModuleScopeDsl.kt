@@ -54,6 +54,18 @@ class ModuleScopeDsl: DragonModule {
         ))
     }
 
+    fun struct(
+        name: String,
+        types: Collection<DragonType>
+    ): Dependency.Struct {
+        val type = Dependency.Struct(
+            name = name,
+            types = types
+        )
+        dependencies.add(type)
+        return type
+    }
+
     fun format(
         name: String,
         format: String
