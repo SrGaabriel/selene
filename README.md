@@ -8,9 +8,9 @@ The language is designed to be as easy to grasp as possible, while still providi
 
 ---
 
-# Examples
+# Examples (from main branch)
 
-Basic input/output:
+Basic input/output: 
 ```go
 func main () {
     check_typed();
