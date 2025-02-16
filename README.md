@@ -2,9 +2,7 @@
 
 ---
 
-Selene is a statically-typed, imperative and procedural programming language compiled to LLVM IR.
-
-The language is designed to be as easy to grasp as possible, while still providing a powerful set of features. It aims to combine the best of all worlds, providing a simple and easy-to-understand syntax, while still being powerful enough to be used in real-world applications.
+My first programming langauge I made to learn more about PL design. Most probably won't be finished in favor of [soma](https://github.com/SrGaabriel/soma) or [seren](https://github.com/SrGaabriel/seren)!
 
 ---
 
